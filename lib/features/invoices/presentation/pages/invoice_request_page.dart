@@ -17,58 +17,87 @@ class InvoiceRequestPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Nova NFS-e',
-      child: ListView(
-        padding: const EdgeInsets.all(16),
+      child: Stack(
         children: [
-          const _StepHeader(current: 1),
-          const SizedBox(height: 14),
-          AppCard(
-            child: Column(
-              children: const [
-                AppTextField(
-                  label: 'Empresa/CNPJ emissor',
-                  initialValue: 'Clínica Marina Saúde - 12.345.678/0001-90',
-                  readOnly: true,
-                  suffixIcon: Icon(Icons.expand_more),
+          const Positioned.fill(child: _InvoicesWatermark()),
+          ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              const _StepHeader(current: 1),
+              const SizedBox(height: 14),
+              AppCard(
+                child: Column(
+                  children: const [
+                    AppTextField(
+                      label: 'Empresa/CNPJ emissor',
+                      initialValue: 'Clínica Marina Saúde - 12.345.678/0001-90',
+                      readOnly: true,
+                      suffixIcon: Icon(Icons.expand_more),
+                    ),
+                    SizedBox(height: 12),
+                    AppTextField(label: 'Município'),
+                    SizedBox(height: 12),
+                    AppTextField(label: 'Tomador/CNPJ'),
+                    SizedBox(height: 12),
+                    AppTextField(
+                      label: 'Data',
+                      readOnly: true,
+                      suffixIcon: Icon(Icons.calendar_today_outlined),
+                    ),
+                    SizedBox(height: 12),
+                    AppTextField(
+                        label: 'Valor', keyboardType: TextInputType.number),
+                    SizedBox(height: 12),
+                    AppTextField(
+                      label: 'Código de tributação',
+                      initialValue: AppConstants.defaultTaxCode,
+                      readOnly: true,
+                    ),
+                    SizedBox(height: 12),
+                    AppTextField(label: 'Serviço prestado'),
+                  ],
                 ),
-                SizedBox(height: 12),
-                AppTextField(label: 'Município'),
-                SizedBox(height: 12),
-                AppTextField(label: 'Tomador/CNPJ'),
-                SizedBox(height: 12),
-                AppTextField(
-                  label: 'Data',
-                  readOnly: true,
-                  suffixIcon: Icon(Icons.calendar_today_outlined),
-                ),
-                SizedBox(height: 12),
-                AppTextField(
-                    label: 'Valor', keyboardType: TextInputType.number),
-                SizedBox(height: 12),
-                AppTextField(
-                  label: 'Código de tributação',
-                  initialValue: AppConstants.defaultTaxCode,
-                  readOnly: true,
-                ),
-                SizedBox(height: 12),
-                AppTextField(label: 'Serviço prestado'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          const InsightCard(
-            title: 'Dica Novva',
-            description:
-                'Use o nome do hospital ou clínica no tomador para facilitar seus relatórios de faturamento.',
-            icon: Icons.lightbulb_outline,
-          ),
-          const SizedBox(height: 18),
-          AppButton(
-            label: 'Continuar para descrição',
-            icon: Icons.arrow_forward,
-            onPressed: () => context.go(RouteNames.invoiceDescription),
+              ),
+              const SizedBox(height: 16),
+              const InsightCard(
+                title: 'Dica Novva',
+                description:
+                    'Use o nome do hospital ou clínica no tomador para facilitar seus relatórios de faturamento.',
+                icon: Icons.lightbulb_outline,
+              ),
+              const SizedBox(height: 18),
+              AppButton(
+                label: 'Continuar para descrição',
+                icon: Icons.arrow_forward,
+                onPressed: () => context.go(RouteNames.invoiceDescription),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _InvoicesWatermark extends StatelessWidget {
+  const _InvoicesWatermark();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(-0.68, 0.38),
+        child: Opacity(
+          opacity: 0.045,
+          child: Transform.rotate(
+            angle: 0.16,
+            child: Image.asset(
+              'assets/images/logo.png',
+              width: MediaQuery.sizeOf(context).width * 1.1,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
       ),
     );
   }

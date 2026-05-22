@@ -41,7 +41,7 @@ class _LoginPasswordPageState extends ConsumerState<LoginPasswordPage> {
         children: [
           Positioned.fill(
             child: Image.asset(
-              'assets/images/passwordpage.png',
+              'assets/images/mascotenovva4.jpeg',
               fit: BoxFit.cover,
             ),
           ),
@@ -73,52 +73,64 @@ class _LoginPasswordPageState extends ConsumerState<LoginPasswordPage> {
                       icon: const Icon(Icons.arrow_back),
                     ),
                   ),
-                  const Spacer(),
-                  SingleChildScrollView(
-                    child: Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.92),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.72),
-                        ),
-                      ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(top: 18),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            'Informe sua senha',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w700),
+                          SizedBox(
+                            height: MediaQuery.sizeOf(context).height * 0.42,
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Entre para acompanhar suas obrigações contábeis.',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 20),
-                          AppTextField(
-                            label: 'Senha',
-                            controller: _passwordController,
-                            obscureText: true,
-                          ),
-                          const SizedBox(height: 16),
-                          AppButton(
-                            label: 'Entrar',
-                            icon: Icons.login,
-                            loading: state.isLoading,
-                            onPressed: () => ref
-                                .read(authControllerProvider.notifier)
-                                .login(widget.cpf, _passwordController.text),
-                          ),
-                          TextButton(
-                            onPressed: () =>
-                                context.push(RouteNames.forgotPassword),
-                            child: const Text('Esqueceu a senha?'),
+                          Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.72),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Informe sua senha',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Entre para acompanhar suas obrigações contábeis.',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 20),
+                                AppTextField(
+                                  label: 'Senha',
+                                  controller: _passwordController,
+                                  obscureText: true,
+                                ),
+                                const SizedBox(height: 16),
+                                AppButton(
+                                  label: 'Entrar',
+                                  icon: Icons.login,
+                                  loading: state.isLoading,
+                                  onPressed: () => ref
+                                      .read(authControllerProvider.notifier)
+                                      .login(
+                                        widget.cpf,
+                                        _passwordController.text,
+                                      ),
+                                ),
+                                TextButton(
+                                  onPressed: () =>
+                                      context.push(RouteNames.forgotPassword),
+                                  child: const Text('Esqueceu a senha?'),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

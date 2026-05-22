@@ -345,54 +345,83 @@ class TimelineStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var index = 0; index < steps.length; index++) ...[
-          Expanded(
-            child: Column(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    color: index <= currentStep
-                        ? AppColors.accent
-                        : AppColors.border,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    index < currentStep ? Icons.check : Icons.circle,
-                    color: Colors.white,
-                    size: index < currentStep ? 15 : 7,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  steps[index],
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (index != steps.length - 1)
-            Expanded(
-              child: Container(
-                height: 2,
-                margin: const EdgeInsets.only(bottom: 26),
-                color:
-                    index < currentStep ? AppColors.accent : AppColors.border,
+    return SizedBox(
+      height: 58,
+      child: Stack(
+        children: [
+          Positioned(
+            top: 12,
+            left: 24,
+            right: 24,
+            child: Container(
+              height: 2,
+              decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(999),
               ),
             ),
+          ),
+          Positioned(
+            top: 12,
+            left: 24,
+            right: 24,
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: steps.length <= 1
+                  ? 0
+                  : (currentStep / (steps.length - 1)).clamp(0, 1),
+              child: Container(
+                height: 2,
+                decoration: BoxDecoration(
+                  color: AppColors.accent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+            ),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var index = 0; index < steps.length; index++)
+                Expanded(
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 220),
+                        width: 26,
+                        height: 26,
+                        decoration: BoxDecoration(
+                          color: index <= currentStep
+                              ? AppColors.accent
+                              : AppColors.border,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          index < currentStep ? Icons.check : Icons.circle,
+                          color: Colors.white,
+                          size: index < currentStep ? 15 : 7,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        steps[index],
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
         ],
-      ],
+      ),
     );
   }
 }

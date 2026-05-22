@@ -35,45 +35,75 @@ class DocumentsPage extends ConsumerWidget {
           icon: const Icon(Icons.add),
           label: const Text('Nova solicitação'),
         ),
-        child: Column(
+        child: Stack(
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: _DocumentSummary(),
-            ),
-            const TabBar(
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              tabs: [
-                Tab(text: 'Solicitar'),
-                Tab(text: 'Enviados'),
-                Tab(text: 'Recebidos'),
-                Tab(text: 'Pendentes'),
+            const Positioned.fill(child: _DocumentsWatermark()),
+            Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _DocumentSummary(),
+                ),
+                const TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  tabs: [
+                    Tab(text: 'Solicitar'),
+                    Tab(text: 'Enviados'),
+                    Tab(text: 'Recebidos'),
+                    Tab(text: 'Pendentes'),
+                  ],
+                ),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _DocumentRequestTab(documents: documents),
+                      _DocumentList(documents: documents),
+                      _DocumentList(
+                        documents: documents
+                            .where(
+                                (doc) => doc.status == DocumentStatus.approved)
+                            .toList(),
+                        emptyMessage: 'Nenhum documento recebido ainda.',
+                      ),
+                      _DocumentList(
+                        documents: documents
+                            .where((doc) =>
+                                doc.status == DocumentStatus.pending ||
+                                doc.status == DocumentStatus.rejected)
+                            .toList(),
+                        emptyMessage: 'Tudo certo por aqui. Sem pendências.',
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            Expanded(
-              child: TabBarView(
-                children: [
-                  _DocumentRequestTab(documents: documents),
-                  _DocumentList(documents: documents),
-                  _DocumentList(
-                    documents: documents
-                        .where((doc) => doc.status == DocumentStatus.approved)
-                        .toList(),
-                    emptyMessage: 'Nenhum documento recebido ainda.',
-                  ),
-                  _DocumentList(
-                    documents: documents
-                        .where((doc) =>
-                            doc.status == DocumentStatus.pending ||
-                            doc.status == DocumentStatus.rejected)
-                        .toList(),
-                    emptyMessage: 'Tudo certo por aqui. Sem pendências.',
-                  ),
-                ],
-              ),
-            ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentsWatermark extends StatelessWidget {
+  const _DocumentsWatermark();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(0.72, 0.34),
+        child: Opacity(
+          opacity: 0.045,
+          child: Transform.rotate(
+            angle: -0.18,
+            child: Image.asset(
+              'assets/images/logo.png',
+              width: MediaQuery.sizeOf(context).width * 1.08,
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
       ),
     );

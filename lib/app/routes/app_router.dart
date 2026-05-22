@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/presentation/pages/create_password_page.dart';
@@ -22,6 +23,7 @@ import '../../features/payments/presentation/pages/payments_page.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/splash_page.dart';
+import '../../core/widgets/app_scaffold.dart';
 import '../../core/widgets/error_state.dart';
 import 'route_names.dart';
 
@@ -40,66 +42,98 @@ final appRouter = GoRouter(
     return null;
   },
   routes: [
-    GoRoute(path: RouteNames.splash, builder: (_, __) => const SplashPage()),
-    GoRoute(
-        path: RouteNames.loginCpf, builder: (_, __) => const LoginCpfPage()),
-    GoRoute(
-      path: RouteNames.loginPassword,
-      builder: (_, state) =>
+    _appRoute(RouteNames.splash, (_, __) => const SplashPage()),
+    _appRoute(RouteNames.loginCpf, (_, __) => const LoginCpfPage()),
+    _appRoute(
+      RouteNames.loginPassword,
+      (_, state) =>
           LoginPasswordPage(cpf: state.uri.queryParameters['cpf'] ?? ''),
     ),
-    GoRoute(
-      path: RouteNames.createPassword,
-      builder: (_, state) =>
+    _appRoute(
+      RouteNames.createPassword,
+      (_, state) =>
           CreatePasswordPage(cpf: state.uri.queryParameters['cpf'] ?? ''),
     ),
-    GoRoute(
-        path: RouteNames.forgotPassword,
-        builder: (_, __) => const ForgotPasswordPage()),
-    GoRoute(
-        path: RouteNames.dashboard, builder: (_, __) => const DashboardPage()),
-    GoRoute(
-        path: RouteNames.documents, builder: (_, __) => const DocumentsPage()),
-    GoRoute(
-        path: RouteNames.documentDetails,
-        builder: (_, __) => const DocumentDetailsPage()),
-    GoRoute(
-        path: RouteNames.documentUpload,
-        builder: (_, __) => const DocumentUploadPage()),
-    GoRoute(
-        path: RouteNames.obligations,
-        builder: (_, __) => const ObligationsPage()),
-    GoRoute(
-        path: RouteNames.obligationDetails,
-        builder: (_, __) => const ObligationDetailsPage()),
-    GoRoute(
-        path: RouteNames.payments, builder: (_, __) => const PaymentsPage()),
-    GoRoute(path: RouteNames.reports, builder: (_, __) => const ReportsPage()),
-    GoRoute(path: RouteNames.chat, builder: (_, __) => const ChatPage()),
-    GoRoute(
-        path: RouteNames.profile,
-        builder: (_, __) => const MedicalProfilePage()),
-    GoRoute(
-        path: RouteNames.notifications,
-        builder: (_, __) => const NotificationsPage()),
-    GoRoute(
-        path: RouteNames.settings, builder: (_, __) => const SettingsPage()),
-    GoRoute(
-        path: RouteNames.cnpjs, builder: (_, __) => const ManageCnpjsPage()),
-    GoRoute(
-        path: RouteNames.invoices,
-        builder: (_, __) => const InvoiceRequestPage()),
-    GoRoute(
-        path: RouteNames.invoiceDescription,
-        builder: (_, __) => const InvoiceDescriptionPage()),
-    GoRoute(path: RouteNames.clients, builder: (_, __) => const ClientsPage()),
-    GoRoute(
-        path: RouteNames.offline,
-        builder: (_, __) =>
-            const ErrorState(message: 'Sem conexão com a internet.')),
+    _appRoute(RouteNames.forgotPassword, (_, __) => const ForgotPasswordPage()),
+    ShellRoute(
+      builder: (context, state, child) {
+        return Scaffold(
+          extendBody: true,
+          body: child,
+          bottomNavigationBar: const AppBottomNav(),
+        );
+      },
+      routes: [
+        _appRoute(RouteNames.dashboard, (_, __) => const DashboardPage()),
+        _appRoute(RouteNames.documents, (_, __) => const DocumentsPage()),
+        _appRoute(
+            RouteNames.documentDetails, (_, __) => const DocumentDetailsPage()),
+        _appRoute(
+            RouteNames.documentUpload, (_, __) => const DocumentUploadPage()),
+        _appRoute(RouteNames.obligations, (_, __) => const ObligationsPage()),
+        _appRoute(RouteNames.obligationDetails,
+            (_, __) => const ObligationDetailsPage()),
+        _appRoute(RouteNames.payments, (_, __) => const PaymentsPage()),
+        _appRoute(RouteNames.reports, (_, __) => const ReportsPage()),
+        _appRoute(RouteNames.chat, (_, __) => const ChatPage()),
+        _appRoute(RouteNames.profile, (_, __) => const MedicalProfilePage()),
+        _appRoute(
+            RouteNames.notifications, (_, __) => const NotificationsPage()),
+        _appRoute(RouteNames.settings, (_, __) => const SettingsPage()),
+        _appRoute(RouteNames.cnpjs, (_, __) => const ManageCnpjsPage()),
+        _appRoute(RouteNames.invoices, (_, __) => const InvoiceRequestPage()),
+        _appRoute(RouteNames.invoiceDescription,
+            (_, __) => const InvoiceDescriptionPage()),
+        _appRoute(RouteNames.clients, (_, __) => const ClientsPage()),
+      ],
+    ),
+    _appRoute(
+      RouteNames.offline,
+      (_, __) => const ErrorState(message: 'Sem conexão com a internet.'),
+    ),
   ],
 );
 
 bool _isPublic(String path) {
   return path == RouteNames.splash || path.startsWith('/login');
+}
+
+GoRoute _appRoute(
+  String path,
+  Widget Function(BuildContext context, GoRouterState state) builder,
+) {
+  return GoRoute(
+    path: path,
+    pageBuilder: (context, state) => _SmoothPage(
+      key: state.pageKey,
+      child: builder(context, state),
+    ),
+  );
+}
+
+class _SmoothPage extends CustomTransitionPage<void> {
+  _SmoothPage({
+    required super.key,
+    required super.child,
+  }) : super(
+          transitionDuration: const Duration(milliseconds: 320),
+          reverseTransitionDuration: const Duration(milliseconds: 240),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            final curvedAnimation = CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOutCubic,
+              reverseCurve: Curves.easeInCubic,
+            );
+            return FadeTransition(
+              opacity: Tween<double>(begin: 0, end: 1).animate(curvedAnimation),
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.018, 0.012),
+                  end: Offset.zero,
+                ).animate(curvedAnimation),
+                child: child,
+              ),
+            );
+          },
+        );
 }

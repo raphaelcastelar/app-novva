@@ -25,7 +25,7 @@ class InvoiceDescriptionPage extends StatelessWidget {
     return AppScaffold(
       title: 'Descrição da NFS-e',
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 122),
         children: [
           AppCard(
             child: Column(
@@ -98,42 +98,135 @@ class InvoiceDescriptionPage extends StatelessWidget {
   }
 
   void _showSuccess(BuildContext context) {
+    final pageContext = context;
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
       showDragHandle: true,
+      useSafeArea: true,
+      backgroundColor: AppColors.surface,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const StatusBadge('Solicitação enviada',
-                  color: AppColors.success),
-              const SizedBox(height: 12),
-              const Text(
-                'Sua NFS-e foi enviada para a contabilidade.',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Você poderá acompanhar o andamento e baixar a nota quando ela estiver disponível.',
-                style: TextStyle(color: AppColors.muted, height: 1.35),
-              ),
-              const SizedBox(height: 18),
-              const TimelineStatus(
-                steps: ['Solicitada', 'Em análise', 'Emitida', 'Enviada'],
-                currentStep: 0,
-              ),
-              const SizedBox(height: 18),
-              AppButton(
-                label: 'Voltar ao início',
-                onPressed: () => context.go(RouteNames.dashboard),
-              ),
-            ],
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              MediaQuery.paddingOf(context).bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const StatusBadge('Solicitação enviada',
+                    color: AppColors.success),
+                const SizedBox(height: 12),
+                const Text(
+                  'Sua NFS-e foi enviada para a contabilidade.',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Você poderá acompanhar o andamento e baixar a nota quando ela estiver disponível.',
+                  style: TextStyle(color: AppColors.muted, height: 1.35),
+                ),
+                const SizedBox(height: 18),
+                const _CompactSuccessTimeline(),
+                const SizedBox(height: 18),
+                AppButton(
+                  label: 'Voltar ao início',
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    pageContext.go(RouteNames.dashboard);
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _CompactSuccessTimeline extends StatelessWidget {
+  const _CompactSuccessTimeline();
+
+  static const _steps = ['Solicitada', 'Em análise', 'Emitida', 'Enviada'];
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 54,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stepWidth = constraints.maxWidth / _steps.length;
+          return Stack(
+            children: [
+              Positioned(
+                top: 12,
+                left: stepWidth / 2,
+                right: stepWidth / 2,
+                child: Container(
+                  height: 2,
+                  color: AppColors.border,
+                ),
+              ),
+              Positioned(
+                top: 12,
+                left: stepWidth / 2,
+                right: constraints.maxWidth - stepWidth / 2,
+                child: Container(
+                  height: 2,
+                  color: AppColors.accent,
+                ),
+              ),
+              Row(
+                children: [
+                  for (var index = 0; index < _steps.length; index++)
+                    SizedBox(
+                      width: stepWidth,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: index == 0
+                                  ? AppColors.accent
+                                  : AppColors.border,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              index == 0 ? Icons.check : Icons.circle,
+                              color: Colors.white,
+                              size: index == 0 ? 14 : 6,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _steps[index],
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              height: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
