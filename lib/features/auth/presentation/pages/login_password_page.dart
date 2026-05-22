@@ -37,37 +37,98 @@ class _LoginPasswordPageState extends ConsumerState<LoginPasswordPage> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-          leading:
-              BackButton(onPressed: () => context.go(RouteNames.loginCpf))),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Image.asset('assets/images/logo.png', height: 112),
-            const SizedBox(height: 24),
-            Text('Informe sua senha',
-                style: Theme.of(context).textTheme.headlineSmall),
-            const SizedBox(height: 16),
-            AppTextField(
-                label: 'Senha',
-                controller: _passwordController,
-                obscureText: true),
-            const SizedBox(height: 16),
-            AppButton(
-              label: 'Entrar',
-              icon: Icons.login,
-              loading: state.isLoading,
-              onPressed: () => ref
-                  .read(authControllerProvider.notifier)
-                  .login(widget.cpf, _passwordController.text),
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/passwordpage.png',
+              fit: BoxFit.cover,
             ),
-            TextButton(
-              onPressed: () => context.push(RouteNames.forgotPassword),
-              child: const Text('Esqueceu a senha?'),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.02),
+                    Colors.black.withValues(alpha: 0.2),
+                    Colors.black.withValues(alpha: 0.58),
+                  ],
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton.filledTonal(
+                      tooltip: 'Voltar',
+                      onPressed: () => context.go(RouteNames.loginCpf),
+                      icon: const Icon(Icons.arrow_back),
+                    ),
+                  ),
+                  const Spacer(),
+                  SingleChildScrollView(
+                    child: Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.72),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Informe sua senha',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Entre para acompanhar suas obrigações contábeis.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 20),
+                          AppTextField(
+                            label: 'Senha',
+                            controller: _passwordController,
+                            obscureText: true,
+                          ),
+                          const SizedBox(height: 16),
+                          AppButton(
+                            label: 'Entrar',
+                            icon: Icons.login,
+                            loading: state.isLoading,
+                            onPressed: () => ref
+                                .read(authControllerProvider.notifier)
+                                .login(widget.cpf, _passwordController.text),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                context.push(RouteNames.forgotPassword),
+                            child: const Text('Esqueceu a senha?'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

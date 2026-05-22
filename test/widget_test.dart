@@ -7,7 +7,7 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: NovvaApp()));
     await tester.pumpAndSettle(const Duration(seconds: 1));
 
-    expect(find.text('Novva'), findsOneWidget);
+    expect(find.text('Acesse sua área contábil'), findsOneWidget);
     expect(find.text('Informe seu CPF'), findsOneWidget);
   });
 }

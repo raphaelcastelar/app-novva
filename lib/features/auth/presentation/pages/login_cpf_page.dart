@@ -53,42 +53,88 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
     });
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Image.asset('assets/images/logo.png', height: 132),
-                  const SizedBox(height: 12),
-                  Text('Novva',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.displaySmall),
-                  const SizedBox(height: 32),
-                  AppTextField(
-                    label: 'Informe seu CPF',
-                    controller: _cpfController,
-                    keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        (value ?? '').replaceAll(RegExp(r'\D'), '').length == 11
-                            ? null
-                            : 'Digite 11 números.',
-                  ),
-                  const SizedBox(height: 20),
-                  AppButton(
-                    label: 'Continuar',
-                    icon: Icons.arrow_forward,
-                    loading: state.isLoading,
-                    onPressed: _continue,
-                  ),
-                ],
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/firstpage.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.04),
+                    Colors.black.withValues(alpha: 0.24),
+                    Colors.black.withValues(alpha: 0.58),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.72),
+                    ),
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Acesse sua área contábil',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Informe seu CPF para continuar.',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 20),
+                        AppTextField(
+                          label: 'Informe seu CPF',
+                          controller: _cpfController,
+                          keyboardType: TextInputType.number,
+                          validator: (value) => (value ?? '')
+                                      .replaceAll(RegExp(r'\D'), '')
+                                      .length ==
+                                  11
+                              ? null
+                              : 'Digite 11 números.',
+                        ),
+                        const SizedBox(height: 20),
+                        AppButton(
+                          label: 'Continuar',
+                          icon: Icons.arrow_forward,
+                          loading: state.isLoading,
+                          onPressed: _continue,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

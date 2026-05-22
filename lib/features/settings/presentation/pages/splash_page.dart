@@ -22,16 +22,10 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Image.asset('assets/images/logo.png', height: 120),
-              const SizedBox(height: 12),
-              Text('Novva', style: Theme.of(context).textTheme.headlineMedium),
-            ],
-          ),
+      body: SizedBox.expand(
+        child: Image.asset(
+          'assets/images/firstpage.png',
+          fit: BoxFit.cover,
         ),
       ),
     );

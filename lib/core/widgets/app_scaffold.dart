@@ -10,6 +10,7 @@ class AppScaffold extends StatelessWidget {
     required this.child,
     this.actions,
     this.showBottomBar = true,
+    this.floatingActionButton,
     super.key,
   });
 
@@ -17,12 +18,15 @@ class AppScaffold extends StatelessWidget {
   final Widget child;
   final List<Widget>? actions;
   final bool showBottomBar;
+  final Widget? floatingActionButton;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: actions),
+      appBar:
+          title.isEmpty ? null : AppBar(title: Text(title), actions: actions),
       body: SafeArea(child: child),
+      floatingActionButton: floatingActionButton,
       bottomNavigationBar: showBottomBar ? const _BottomNav() : null,
     );
   }
@@ -47,6 +51,8 @@ class _BottomNav extends StatelessWidget {
           case 2:
             context.go(RouteNames.obligations);
           case 3:
+            context.go(RouteNames.invoices);
+          case 4:
             context.go(RouteNames.settings);
         }
       },
@@ -64,9 +70,13 @@ class _BottomNav extends StatelessWidget {
             selectedIcon: Icon(Icons.payments),
             label: 'Guias'),
         NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Ajustes'),
+            icon: Icon(Icons.note_add_outlined),
+            selectedIcon: Icon(Icons.note_add),
+            label: 'Notas'),
+        NavigationDestination(
+            icon: Icon(Icons.apps_outlined),
+            selectedIcon: Icon(Icons.apps),
+            label: 'Mais'),
       ],
     );
   }
@@ -74,7 +84,15 @@ class _BottomNav extends StatelessWidget {
   int _indexFor(String location) {
     if (location.startsWith(RouteNames.documents)) return 1;
     if (location.startsWith(RouteNames.obligations)) return 2;
-    if (location.startsWith(RouteNames.settings)) return 3;
+    if (location.startsWith(RouteNames.invoices)) return 3;
+    if (location.startsWith(RouteNames.settings) ||
+        location.startsWith(RouteNames.reports) ||
+        location.startsWith(RouteNames.chat) ||
+        location.startsWith(RouteNames.profile) ||
+        location.startsWith(RouteNames.cnpjs) ||
+        location.startsWith(RouteNames.notifications)) {
+      return 4;
+    }
     return 0;
   }
 }

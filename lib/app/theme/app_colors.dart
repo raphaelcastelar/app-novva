@@ -14,4 +14,15 @@ class AppColors {
   static const success = Color(0xFF198754);
   static const warning = Color(0xFFE8A100);
   static const danger = Color(0xFFD92D20);
+  static const info = Color(0xFF2563EB);
+  static const softAccent = Color(0xFFE8F6F4);
+  static const softPrimary = Color(0xFFE8F1F4);
+  static const elevatedSurface = Color(0xFFFCFDFD);
+  static const shadow = Color(0x1A0C3744);
+
+  static const premiumGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryDark, primary, accent],
+  );
 }
