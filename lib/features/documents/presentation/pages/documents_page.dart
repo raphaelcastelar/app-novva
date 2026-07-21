@@ -17,6 +17,16 @@ class DocumentsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final showRequestFeedback = ref.watch(documentRequestFeedbackProvider);
+    if (showRequestFeedback) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(documentRequestFeedbackProvider.notifier).state = false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Solicitação enviada com sucesso.')),
+        );
+      });
+    }
+
     final documents = ref.watch(documentsProvider);
 
     return DefaultTabController(
@@ -189,7 +199,7 @@ class _DocumentRequestTab extends StatelessWidget {
                   title: item.$1,
                   subtitle: item.$2,
                   icon: item.$3,
-                  onTap: () => context.go(RouteNames.documentDetails),
+                  onTap: () => context.go(_documentDetailsRoute(item.$1)),
                 );
               },
             );
@@ -251,7 +261,7 @@ class _DocumentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _color(doc.status);
     return AppCard(
-      onTap: () => context.go(RouteNames.documentDetails),
+      onTap: () => context.go(_documentDetailsRoute(doc.title)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -348,4 +358,11 @@ class _FilterChip extends StatelessWidget {
       ),
     );
   }
+}
+
+String _documentDetailsRoute(String documentTitle) {
+  return Uri(
+    path: RouteNames.documentDetails,
+    queryParameters: {'document': documentTitle},
+  ).toString();
 }

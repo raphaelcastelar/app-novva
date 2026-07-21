@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element, unused_element_parameter
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,68 +27,436 @@ class DashboardPage extends ConsumerWidget {
 
     return AppScaffold(
       title: '',
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+      child: Stack(
         children: [
-          _DashboardHeader(summary: summary, userName: name),
-          const SizedBox(height: 16),
-          _HealthCard(summary: summary),
-          const SizedBox(height: 16),
-          _SectionTitle(
-            title: 'Faturamento do mês',
-            action: 'Ver relatório',
-            onPressed: () => context.go(RouteNames.reports),
+          const Positioned.fill(child: _DashboardWatermark()),
+          ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            children: [
+              _SimpleHomeHeader(userName: name),
+              const SizedBox(height: 14),
+              _RevenueFocusCard(summary: summary),
+              const SizedBox(height: 12),
+              _NextObligationCard(),
+              const SizedBox(height: 12),
+              _AverageTicketCard(summary: summary),
+              const SizedBox(height: 18),
+              _HomeActions(),
+              const SizedBox(height: 18),
+              const _HomeFeatureCards(),
+            ],
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 164,
-            child: Row(
-              children: [
-                Expanded(
-                  child: MetricCard(
-                    title: 'Faturado',
-                    value: AppFormatters.money(summary.monthRevenue),
-                    subtitle: '${summary.orders} notas emitidas',
-                    variation: '+${summary.revenueGrowth.toStringAsFixed(1)}%',
-                    icon: Icons.trending_up_rounded,
-                    color: AppColors.success,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: MetricCard(
-                    title: 'Ticket médio',
-                    value: AppFormatters.money(summary.averageTicket),
-                    subtitle: 'Por nota fiscal',
-                    icon: Icons.payments_outlined,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          _CurrentDasCard(),
-          const SizedBox(height: 16),
-          _SectionTitle(
-            title: 'Pendências',
-            action: 'Resolver',
-            onPressed: () => context.go(RouteNames.documents),
-          ),
-          const SizedBox(height: 10),
-          _PendingList(),
-          const SizedBox(height: 18),
-          const _SectionTitle(title: 'Atalhos rápidos'),
-          const SizedBox(height: 10),
-          _ShortcutGrid(),
-          const SizedBox(height: 18),
-          const _SectionTitle(title: 'Explicado para você'),
-          const SizedBox(height: 10),
-          const _LearningList(),
         ],
       ),
     );
   }
+}
+
+class _DashboardWatermark extends StatelessWidget {
+  const _DashboardWatermark();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Align(
+        alignment: const Alignment(0.72, 0.22),
+        child: Opacity(
+          opacity: 0.045,
+          child: Transform.rotate(
+            angle: -0.18,
+            child: Image.asset(
+              'assets/images/logo.png',
+              width: MediaQuery.sizeOf(context).width * 1.08,
+              fit: BoxFit.contain,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SimpleHomeHeader extends StatelessWidget {
+  const _SimpleHomeHeader({required this.userName});
+
+  final String userName;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        CircleAvatar(
+          radius: 26,
+          backgroundColor: AppColors.accent,
+          backgroundImage: const NetworkImage(
+            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80',
+          ),
+          onBackgroundImageError: (_, __) {},
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Olá, $userName',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w900,
+                    ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Seu resumo financeiro deste mês.',
+                style: TextStyle(color: AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+        IconButton.filledTonal(
+          tooltip: 'Notificações',
+          onPressed: () => context.go(RouteNames.notifications),
+          icon: const Icon(Icons.notifications_outlined),
+        ),
+      ],
+    );
+  }
+}
+
+class _RevenueFocusCard extends StatelessWidget {
+  const _RevenueFocusCard({required this.summary});
+
+  final DashboardSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: EdgeInsets.zero,
+      radius: 28,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: AppColors.premiumGradient,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.trending_up_rounded,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                StatusBadge(
+                  '+${summary.revenueGrowth.toStringAsFixed(1)}%',
+                  color: AppColors.success,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Faturamento',
+              style: TextStyle(
+                color: Color(0xCCFFFFFF),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              AppFormatters.money(summary.monthRevenue),
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${summary.orders} notas emitidas neste mês',
+              style: const TextStyle(color: Color(0xD9FFFFFF)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NextObligationCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: () => context.go(RouteNames.obligations),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.receipt_long_outlined,
+              color: AppColors.warning,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                Text(
+                  'Próxima obrigação',
+                  style: TextStyle(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'DAS Simples Nacional vence em 20/05/2026',
+                  style: TextStyle(color: AppColors.muted, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          const StatusBadge('A vencer', color: AppColors.warning),
+        ],
+      ),
+    );
+  }
+}
+
+class _AverageTicketCard extends StatelessWidget {
+  const _AverageTicketCard({required this.summary});
+
+  final DashboardSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: () => context.go(RouteNames.reports),
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: AppColors.softPrimary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.payments_outlined,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Ticket médio',
+                  style: TextStyle(
+                    color: AppColors.text,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${AppFormatters.money(summary.averageTicket)} por nota',
+                  style: const TextStyle(color: AppColors.muted, height: 1.3),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeActions extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () => context.go(RouteNames.invoices),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Emitir nota'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => context.go(RouteNames.obligations),
+            icon: const Icon(Icons.check_circle_outline),
+            label: const Text('Ver guias'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeFeatureCards extends StatelessWidget {
+  const _HomeFeatureCards();
+
+  @override
+  Widget build(BuildContext context) {
+    const items = [
+      _HomeFeatureItem(
+        title: 'Documentos',
+        subtitle: 'Solicite ou acompanhe arquivos.',
+        icon: Icons.folder_copy_outlined,
+        color: AppColors.primary,
+        route: RouteNames.documents,
+      ),
+      _HomeFeatureItem(
+        title: 'Contador',
+        subtitle: 'Tire dúvidas sem sair do app.',
+        icon: Icons.support_agent_outlined,
+        color: AppColors.accent,
+        route: RouteNames.chat,
+      ),
+      _HomeFeatureItem(
+        title: 'Relatórios',
+        subtitle: 'Veja faturamento e evolução.',
+        icon: Icons.insert_chart_outlined_rounded,
+        color: AppColors.info,
+        route: RouteNames.reports,
+      ),
+      _HomeFeatureItem(
+        title: 'CNPJs',
+        subtitle: 'Troque ou gerencie empresas.',
+        icon: Icons.business_outlined,
+        color: AppColors.warning,
+        route: RouteNames.cnpjs,
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'O que fazer agora',
+          style: TextStyle(
+            color: AppColors.text,
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 720 ? 4 : 2;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: columns,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: columns == 4 ? 1.25 : 1.02,
+              ),
+              itemBuilder: (_, index) {
+                return _HomeFeatureCard(item: items[index]);
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HomeFeatureCard extends StatelessWidget {
+  const _HomeFeatureCard({required this.item});
+
+  final _HomeFeatureItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      onTap: () => context.go(item.route),
+      padding: const EdgeInsets.all(14),
+      radius: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: item.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Icon(item.icon, color: item.color, size: 22),
+              ),
+              const Spacer(),
+              Icon(Icons.arrow_forward_rounded, color: item.color, size: 18),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.text,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            item.subtitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.muted,
+              fontSize: 12,
+              height: 1.25,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeFeatureItem {
+  const _HomeFeatureItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.route,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final String route;
 }
 
 class _DashboardHeader extends StatelessWidget {

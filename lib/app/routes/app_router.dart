@@ -11,6 +11,7 @@ import '../../features/clients/presentation/pages/clients_page.dart';
 import '../../features/cnpjs/presentation/pages/manage_cnpjs_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/documents/presentation/pages/document_details_page.dart';
+import '../../features/documents/presentation/pages/document_request_page.dart';
 import '../../features/documents/presentation/pages/document_upload_page.dart';
 import '../../features/documents/presentation/pages/documents_page.dart';
 import '../../features/invoices/presentation/pages/invoice_description_page.dart';
@@ -65,9 +66,22 @@ final appRouter = GoRouter(
       },
       routes: [
         _appRoute(RouteNames.dashboard, (_, __) => const DashboardPage()),
-        _appRoute(RouteNames.documents, (_, __) => const DocumentsPage()),
         _appRoute(
-            RouteNames.documentDetails, (_, __) => const DocumentDetailsPage()),
+          RouteNames.documents,
+          (_, __) => const DocumentsPage(),
+        ),
+        _appRoute(
+          RouteNames.documentDetails,
+          (_, state) => DocumentDetailsPage(
+            documentTitle: state.uri.queryParameters['document'] ?? 'Documento',
+          ),
+        ),
+        _appRoute(
+          RouteNames.documentRequest,
+          (_, state) => DocumentRequestPage(
+            documentTitle: state.uri.queryParameters['document'] ?? 'Documento',
+          ),
+        ),
         _appRoute(
             RouteNames.documentUpload, (_, __) => const DocumentUploadPage()),
         _appRoute(RouteNames.obligations, (_, __) => const ObligationsPage()),

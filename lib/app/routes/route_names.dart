@@ -9,6 +9,7 @@ class RouteNames {
   static const dashboard = '/dashboard';
   static const documents = '/documents';
   static const documentDetails = '/documents/details';
+  static const documentRequest = '/documents/request';
   static const documentUpload = '/documents/upload';
   static const obligations = '/obligations';
   static const obligationDetails = '/obligations/details';

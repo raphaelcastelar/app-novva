@@ -113,8 +113,9 @@ class AppBottomNav extends StatelessWidget {
                         item: _items[itemIndex],
                         selected: itemIndex == index,
                         onTap: () {
-                          if (itemIndex != index) {
-                            context.go(_items[itemIndex].route);
+                          final route = _items[itemIndex].route;
+                          if (location != route) {
+                            context.go(route);
                           }
                         },
                       ),

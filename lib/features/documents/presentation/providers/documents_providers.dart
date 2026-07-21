@@ -2,6 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/document_item.dart';
 
+final documentRequestFeedbackProvider = StateProvider<bool>((_) => false);
+
 final documentsProvider = Provider<List<DocumentItem>>(
   (_) => const [
     DocumentItem(
