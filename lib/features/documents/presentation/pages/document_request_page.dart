@@ -8,9 +8,11 @@ import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../service_requests/domain/entities/service_request_drafts.dart';
+import '../../../service_requests/presentation/providers/service_request_providers.dart';
 import '../providers/documents_providers.dart';
 
-class DocumentRequestPage extends StatefulWidget {
+class DocumentRequestPage extends ConsumerStatefulWidget {
   const DocumentRequestPage({
     required this.documentTitle,
     super.key,
@@ -19,10 +21,10 @@ class DocumentRequestPage extends StatefulWidget {
   final String documentTitle;
 
   @override
-  State<DocumentRequestPage> createState() => _DocumentRequestPageState();
+  ConsumerState<DocumentRequestPage> createState() => _DocumentRequestPageState();
 }
 
-class _DocumentRequestPageState extends State<DocumentRequestPage> {
+class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
   final _observationController = TextEditingController();
 
   @override
@@ -33,6 +35,7 @@ class _DocumentRequestPageState extends State<DocumentRequestPage> {
 
   @override
   Widget build(BuildContext context) {
+    final submission = ref.watch(requestSubmissionProvider);
     return AppScaffold(
       title: 'Solicitar documento',
       child: ListView(
@@ -86,21 +89,43 @@ class _DocumentRequestPageState extends State<DocumentRequestPage> {
             maxLines: 5,
           ),
           const SizedBox(height: 18),
-          Consumer(
-            builder: (context, ref, _) {
-              return AppButton(
-                label: 'Enviar solicitação',
-                icon: Icons.send_outlined,
-                onPressed: () {
-                  ref.read(documentRequestFeedbackProvider.notifier).state =
-                      true;
-                  context.go(RouteNames.documents);
-                },
-              );
-            },
+          AppButton(
+            label: 'Enviar solicitação',
+            icon: Icons.send_outlined,
+            loading: submission.isLoading,
+            onPressed: _submit,
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _submit() async {
+    final state = ref.read(requestSubmissionProvider.notifier);
+    state.state = const AsyncLoading();
+    try {
+      final created = await ref.read(submitDocumentRequestProvider)(
+            DocumentRequestDraft(
+              doctor: localDoctor,
+              title: widget.documentTitle,
+              category: 'Documentos solicitados',
+              description: _observationController.text.trim(),
+            ),
+          );
+      state.state = AsyncData(created);
+      ref.read(documentsProvider.notifier).addRequested(
+            id: created.id,
+            title: widget.documentTitle,
+          );
+      ref.read(documentRequestFeedbackProvider.notifier).state = true;
+      if (mounted) context.go(RouteNames.documents);
+    } catch (error, stackTrace) {
+      state.state = AsyncError(error, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível enviar: $error')),
+        );
+      }
+    }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/config/app_constants.dart';
@@ -9,9 +10,34 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/premium_components.dart';
+import '../../../service_requests/domain/entities/service_request_drafts.dart';
+import '../../../service_requests/presentation/providers/service_request_providers.dart';
 
-class InvoiceRequestPage extends StatelessWidget {
+class InvoiceRequestPage extends ConsumerStatefulWidget {
   const InvoiceRequestPage({super.key});
+
+  @override
+  ConsumerState<InvoiceRequestPage> createState() => _InvoiceRequestPageState();
+}
+
+class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _municipality = TextEditingController(text: 'São Paulo');
+  final _takerName = TextEditingController(text: 'Hospital Santa Helena');
+  final _takerCnpj = TextEditingController(text: '45761220000108');
+  final _date = TextEditingController(
+    text: DateTime.now().toIso8601String().split('T').first,
+  );
+  final _amount = TextEditingController(text: '4850,00');
+  final _service = TextEditingController(text: 'Serviços médicos');
+
+  @override
+  void dispose() {
+    for (final controller in [_municipality, _takerName, _takerCnpj, _date, _amount, _service]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,36 +52,41 @@ class InvoiceRequestPage extends StatelessWidget {
               const _StepHeader(current: 1),
               const SizedBox(height: 14),
               AppCard(
-                child: Column(
-                  children: const [
-                    AppTextField(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                    const AppTextField(
                       label: 'Empresa/CNPJ emissor',
                       initialValue: 'Clínica Marina Saúde - 12.345.678/0001-90',
                       readOnly: true,
                       suffixIcon: Icon(Icons.expand_more),
                     ),
-                    SizedBox(height: 12),
-                    AppTextField(label: 'Município'),
-                    SizedBox(height: 12),
-                    AppTextField(label: 'Tomador/CNPJ'),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
+                    AppTextField(label: 'Município', controller: _municipality, validator: _required),
+                    const SizedBox(height: 12),
+                    AppTextField(label: 'Nome do tomador', controller: _takerName, validator: _required),
+                    const SizedBox(height: 12),
+                    AppTextField(label: 'CNPJ do tomador', controller: _takerCnpj, keyboardType: TextInputType.number, validator: _cnpj),
+                    const SizedBox(height: 12),
                     AppTextField(
-                      label: 'Data',
-                      readOnly: true,
-                      suffixIcon: Icon(Icons.calendar_today_outlined),
+                      label: 'Data (AAAA-MM-DD)',
+                      controller: _date,
+                      validator: _required,
+                      suffixIcon: const Icon(Icons.calendar_today_outlined),
                     ),
-                    SizedBox(height: 12),
-                    AppTextField(
-                        label: 'Valor', keyboardType: TextInputType.number),
-                    SizedBox(height: 12),
-                    AppTextField(
+                    const SizedBox(height: 12),
+                    AppTextField(label: 'Valor', controller: _amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: _required),
+                    const SizedBox(height: 12),
+                    const AppTextField(
                       label: 'Código de tributação',
                       initialValue: AppConstants.defaultTaxCode,
                       readOnly: true,
                     ),
-                    SizedBox(height: 12),
-                    AppTextField(label: 'Serviço prestado'),
+                    const SizedBox(height: 12),
+                    AppTextField(label: 'Serviço prestado', controller: _service, validator: _required),
                   ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -69,13 +100,44 @@ class InvoiceRequestPage extends StatelessWidget {
               AppButton(
                 label: 'Continuar para descrição',
                 icon: Icons.arrow_forward,
-                onPressed: () => context.go(RouteNames.invoiceDescription),
+                onPressed: _continue,
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  String? _required(String? value) =>
+      value == null || value.trim().isEmpty ? 'Campo obrigatório' : null;
+
+  String? _cnpj(String? value) {
+    final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
+    return digits.length == 14 ? null : 'Informe os 14 dígitos do CNPJ';
+  }
+
+  void _continue() {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final amount = double.tryParse(_amount.text.replaceAll('.', '').replaceAll(',', '.'));
+    final date = DateTime.tryParse(_date.text);
+    if (amount == null || amount <= 0 || date == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Confira a data e o valor informados.')),
+      );
+      return;
+    }
+    ref.read(pendingInvoiceDraftProvider.notifier).state = InvoiceRequestDraft(
+      doctor: localDoctor,
+      takerCnpj: _takerCnpj.text,
+      takerName: _takerName.text.trim(),
+      municipality: _municipality.text.trim(),
+      serviceDate: date,
+      amount: amount,
+      taxationCode: AppConstants.defaultTaxCode,
+      description: _service.text.trim(),
+    );
+    context.go(RouteNames.invoiceDescription);
   }
 }
 

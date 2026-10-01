@@ -4,8 +4,13 @@ import '../../domain/entities/document_item.dart';
 
 final documentRequestFeedbackProvider = StateProvider<bool>((_) => false);
 
-final documentsProvider = Provider<List<DocumentItem>>(
-  (_) => const [
+final documentsProvider =
+    StateNotifierProvider<DocumentsController, List<DocumentItem>>(
+  (_) => DocumentsController(),
+);
+
+class DocumentsController extends StateNotifier<List<DocumentItem>> {
+  DocumentsController() : super(const [
     DocumentItem(
         id: '1',
         title: 'Extrato bancário',
@@ -36,5 +41,20 @@ final documentsProvider = Provider<List<DocumentItem>>(
         status: DocumentStatus.review,
         month: 5,
         year: 2026),
-  ],
-);
+  ]);
+
+  void addRequested({required String id, required String title}) {
+    final now = DateTime.now();
+    state = [
+      DocumentItem(
+        id: id,
+        title: title,
+        category: 'Documentos solicitados',
+        status: DocumentStatus.pending,
+        month: now.month,
+        year: now.year,
+      ),
+      ...state,
+    ];
+  }
+}

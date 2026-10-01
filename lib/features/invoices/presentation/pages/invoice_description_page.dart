@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes/route_names.dart';
@@ -9,12 +10,38 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/premium_components.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../../service_requests/domain/entities/service_request_drafts.dart';
+import '../../../service_requests/presentation/providers/service_request_providers.dart';
 
-class InvoiceDescriptionPage extends StatelessWidget {
+class InvoiceDescriptionPage extends ConsumerStatefulWidget {
   const InvoiceDescriptionPage({super.key});
 
   @override
+  ConsumerState<InvoiceDescriptionPage> createState() =>
+      _InvoiceDescriptionPageState();
+}
+
+class _InvoiceDescriptionPageState extends ConsumerState<InvoiceDescriptionPage> {
+  late final TextEditingController _description;
+
+  @override
+  void initState() {
+    super.initState();
+    _description = TextEditingController(
+      text: ref.read(pendingInvoiceDraftProvider)?.description ?? '',
+    );
+  }
+
+  @override
+  void dispose() {
+    _description.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final draft = ref.watch(pendingInvoiceDraftProvider);
+    final submission = ref.watch(requestSubmissionProvider);
     const suggestions = [
       'Serviços médicos prestados conforme contrato.',
       'Atendimento médico especializado.',
@@ -52,7 +79,11 @@ class InvoiceDescriptionPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          const AppTextField(label: 'Descrição manual', maxLines: 6),
+          AppTextField(
+            label: 'Descrição manual',
+            controller: _description,
+            maxLines: 6,
+          ),
           const SizedBox(height: 16),
           const Text(
             'Sugestões inteligentes',
@@ -79,12 +110,13 @@ class InvoiceDescriptionPage extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           const SizedBox(height: 4),
-          const _ReviewCard(),
+          _ReviewCard(draft: draft),
           const SizedBox(height: 18),
           AppButton(
             label: 'Confirmar solicitação',
             icon: Icons.send_outlined,
-            onPressed: () => _showSuccess(context),
+            loading: submission.isLoading,
+            onPressed: draft == null ? null : _submit,
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
@@ -97,7 +129,28 @@ class InvoiceDescriptionPage extends StatelessWidget {
     );
   }
 
-  void _showSuccess(BuildContext context) {
+  Future<void> _submit() async {
+    final draft = ref.read(pendingInvoiceDraftProvider);
+    if (draft == null) return;
+    final state = ref.read(requestSubmissionProvider.notifier);
+    state.state = const AsyncLoading();
+    try {
+      final created = await ref.read(submitInvoiceRequestProvider)(
+            draft.copyWith(description: _description.text.trim()),
+          );
+      state.state = AsyncData(created);
+      if (mounted) _showSuccess(context, created.id);
+    } catch (error, stackTrace) {
+      state.state = AsyncError(error, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Não foi possível enviar: $error')),
+        );
+      }
+    }
+  }
+
+  void _showSuccess(BuildContext context, String protocol) {
     final pageContext = context;
     showModalBottomSheet<void>(
       context: context,
@@ -126,6 +179,14 @@ class InvoiceDescriptionPage extends StatelessWidget {
                   'Sua NFS-e foi enviada para a contabilidade.',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
+                const SizedBox(height: 6),
+                Text(
+                  'Protocolo: $protocol',
+                  style: const TextStyle(
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 const Text(
                   'Você poderá acompanhar o andamento e baixar a nota quando ela estiver disponível.',
@@ -138,6 +199,7 @@ class InvoiceDescriptionPage extends StatelessWidget {
                   label: 'Voltar ao início',
                   onPressed: () {
                     Navigator.of(context).pop();
+                    ref.read(pendingInvoiceDraftProvider.notifier).state = null;
                     pageContext.go(RouteNames.dashboard);
                   },
                 ),
@@ -232,16 +294,18 @@ class _CompactSuccessTimeline extends StatelessWidget {
 }
 
 class _ReviewCard extends StatelessWidget {
-  const _ReviewCard();
+  const _ReviewCard({required this.draft});
+
+  final InvoiceRequestDraft? draft;
 
   @override
   Widget build(BuildContext context) {
-    const rows = [
-      ('CNPJ emissor', 'Clínica Marina Saúde'),
-      ('Município', 'São Paulo'),
-      ('Tomador', 'Hospital Exemplo'),
-      ('Valor', 'R\$ 8.500,00'),
-      ('Tributação', '04.01.01 Medicina'),
+    final rows = [
+      ('CNPJ emissor', draft?.doctor.company ?? 'Clínica Marina Saúde'),
+      ('Município', draft?.municipality ?? '-'),
+      ('Tomador', draft?.takerName ?? '-'),
+      ('Valor', 'R\$ ${draft?.amount.toStringAsFixed(2).replaceAll('.', ',') ?? '-'}'),
+      ('Tributação', draft?.taxationCode ?? '-'),
     ];
     return AppCard(
       child: Column(
