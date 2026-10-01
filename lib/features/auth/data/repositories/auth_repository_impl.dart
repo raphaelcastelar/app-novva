@@ -12,20 +12,24 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Session> login({required String cpf, required String password}) async {
-    final user = await _remote.login(cpf, password);
-    final session = Session(accessToken: 'mock-access-token', user: user);
+    final session = await _remote.login(cpf, password);
     await _tokenManager.saveSession(
-        accessToken: session.accessToken, cpf: cpf, userName: user.name);
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        cpf: cpf,
+        userName: session.user.name);
     return session;
   }
 
   @override
   Future<Session> createPassword(
       {required String cpf, required String password}) async {
-    final user = await _remote.createPassword(cpf, password);
-    final session = Session(accessToken: 'mock-access-token', user: user);
+    final session = await _remote.createPassword(cpf, password);
     await _tokenManager.saveSession(
-        accessToken: session.accessToken, cpf: cpf, userName: user.name);
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken,
+        cpf: cpf,
+        userName: session.user.name);
     return session;
   }
 

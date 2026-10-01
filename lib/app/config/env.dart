@@ -3,7 +3,7 @@ class Env {
 
   static const apiBaseUrl = String.fromEnvironment(
     'NOVVA_API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:8000/api/',
+    defaultValue: 'http://127.0.0.1:8080/api/v1/',
   );
 
   static const useMockApi = bool.fromEnvironment(

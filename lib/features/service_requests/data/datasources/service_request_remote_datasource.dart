@@ -16,9 +16,8 @@ class DioServiceRequestRemoteDataSource
   Future<Map<String, dynamic>> createDocument(DocumentRequestDraft draft) async {
     final now = DateTime.now();
     final response = await _dio.post<Map<String, dynamic>>(
-      'mobile/documents/',
+      'documents',
       data: {
-        'doctor': draft.doctor.toJson(),
         'title': draft.title,
         'category': draft.category,
         'description': draft.description,
@@ -32,11 +31,9 @@ class DioServiceRequestRemoteDataSource
   @override
   Future<Map<String, dynamic>> createInvoice(InvoiceRequestDraft draft) async {
     final response = await _dio.post<Map<String, dynamic>>(
-      'mobile/invoices/',
+      'invoices',
       data: {
-        'doctor': draft.doctor.toJson(),
         'takerCnpj': draft.takerCnpj.replaceAll(RegExp(r'\D'), ''),
-        'takerName': draft.takerName,
         'municipality': draft.municipality,
         'serviceDate': draft.serviceDate.toIso8601String().split('T').first,
         'amount': draft.amount,

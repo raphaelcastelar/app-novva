@@ -49,6 +49,11 @@ enum MessageSender {
   SYSTEM
 }
 
+enum RequestKind {
+  DOCUMENT
+  INVOICE
+}
+
 model User {
   id                  String               @id @default(uuid()) @db.Uuid
   cpf                 String               @unique @db.VarChar(11)
@@ -258,4 +263,17 @@ model AuditLog {
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("audit_logs")
+}
+
+model RequestEvent {
+  id          String      @id @default(uuid()) @db.Uuid
+  requestKind RequestKind @map("request_kind")
+  requestId   String      @map("request_id") @db.Uuid
+  status      String      @db.VarChar(30)
+  note        String?
+  actor       String?     @db.VarChar(160)
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  @@index([requestKind, requestId, createdAt])
+  @@map("request_events")
 }

@@ -4,6 +4,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/security/token_manager.dart';
+import '../../../../core/network/dio_client.dart';
+import '../../../../app/config/env.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/auth_user.dart';
@@ -28,8 +30,14 @@ final secureStorageProvider = Provider(
 
 final tokenManagerProvider =
     Provider((ref) => TokenManager(ref.watch(secureStorageProvider)));
-final authRemoteDataSourceProvider =
-    Provider<AuthRemoteDataSource>((_) => MockAuthRemoteDataSource());
+final authDioProvider = Provider(
+  (ref) => DioClient(ref.watch(tokenManagerProvider)).dio,
+);
+final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>(
+  (ref) => Env.useMockApi
+      ? MockAuthRemoteDataSource()
+      : DioAuthRemoteDataSource(ref.watch(authDioProvider)),
+);
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepositoryImpl(
       ref.watch(authRemoteDataSourceProvider), ref.watch(tokenManagerProvider)),
