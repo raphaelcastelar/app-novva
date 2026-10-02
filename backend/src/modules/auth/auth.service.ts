@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { createHash, randomBytes } from 'crypto';
@@ -51,8 +51,13 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { cpf } });
     if (user) {
       const raw = randomBytes(32).toString('base64url');
-      await this.prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash: this.hashToken(raw), expiresAt: new Date(Date.now() + 30 * 60000) } });
-      await this.mail.sendPasswordReset(user.email, user.name, raw);
+      const resetToken = await this.prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash: this.hashToken(raw), expiresAt: new Date(Date.now() + 30 * 60000) } });
+      try {
+        await this.mail.sendPasswordReset(user.email, user.name, raw);
+      } catch {
+        await this.prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
+        throw new ServiceUnavailableException('Não foi possível enviar as instruções agora.');
+      }
       if (process.env.NODE_ENV !== 'production') return { message: 'Se o CPF existir, as instruções serão enviadas.', developmentToken: raw };
     }
     return { message: 'Se o CPF existir, as instruções serão enviadas.' };

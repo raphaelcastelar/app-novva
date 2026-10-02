@@ -42,11 +42,21 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
               label: 'Enviar instruções',
               loading: state.isLoading,
               onPressed: () async {
-                await ref.read(authRepositoryProvider).requestPasswordReset(
-                    _cpf.text.replaceAll(RegExp(r'\D'), ''));
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                      content: Text('Instruções enviadas, se o CPF existir.')));
+                try {
+                  await ref.read(authRepositoryProvider).requestPasswordReset(
+                      _cpf.text.replaceAll(RegExp(r'\D'), ''));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content:
+                            Text('Instruções enviadas, se o CPF existir.')));
+                  }
+                } catch (_) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text(
+                          'Não foi possível enviar as instruções agora. Tente novamente em instantes.'),
+                    ));
+                  }
                 }
               },
             ),
