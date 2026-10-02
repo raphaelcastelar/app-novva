@@ -125,8 +125,9 @@ class _LoginPasswordPageState extends ConsumerState<LoginPasswordPage> {
                                       ),
                                 ),
                                 TextButton(
-                                  onPressed: () =>
-                                      context.push(RouteNames.forgotPassword),
+                                  onPressed: () => context.push(
+                                    '${RouteNames.forgotPassword}?cpf=${widget.cpf}',
+                                  ),
                                   child: const Text('Esqueceu a senha?'),
                                 ),
                               ],

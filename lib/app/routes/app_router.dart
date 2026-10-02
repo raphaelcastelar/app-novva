@@ -55,7 +55,12 @@ final appRouter = GoRouter(
       (_, state) =>
           CreatePasswordPage(cpf: state.uri.queryParameters['cpf'] ?? ''),
     ),
-    _appRoute(RouteNames.forgotPassword, (_, __) => const ForgotPasswordPage()),
+    _appRoute(
+      RouteNames.forgotPassword,
+      (_, state) => ForgotPasswordPage(
+        initialCpf: state.uri.queryParameters['cpf'] ?? '',
+      ),
+    ),
     ShellRoute(
       builder: (context, state, child) {
         return Scaffold(
