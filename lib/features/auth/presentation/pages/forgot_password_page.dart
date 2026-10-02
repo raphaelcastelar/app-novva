@@ -31,7 +31,7 @@ class _ForgotPasswordPageState extends ConsumerState<ForgotPasswordPage> {
           padding: const EdgeInsets.all(24),
           children: [
             const Text(
-                'Informe seu CPF. A recuperação real deve ser conectada ao backend seguro, sem enviar senhas por e-mail.'),
+                'Informe seu CPF. Se houver uma conta ativa, enviaremos um link seguro para o e-mail cadastrado.'),
             const SizedBox(height: 16),
             AppTextField(
                 label: 'CPF',
