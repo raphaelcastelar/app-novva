@@ -50,4 +50,28 @@ describe('MailService', () => {
     await expect(new MailService().sendPasswordReset('doctor@example.com', 'Doctor', 'token'))
       .rejects.toThrow('SMTP não configurado.');
   });
+
+  it('sends through Google Apps Script over HTTPS when selected', async () => {
+    process.env.MAIL_DRIVER = 'google_apps_script';
+    process.env.GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/deployment/exec';
+    process.env.GOOGLE_APPS_SCRIPT_SECRET = 'a-secure-shared-secret';
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 }),
+    );
+
+    await new MailService().sendPasswordReset('doctor@example.com', 'Doctor', 'safe-token');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      process.env.GOOGLE_APPS_SCRIPT_URL,
+      expect.objectContaining({ method: 'POST', redirect: 'follow' }),
+    );
+    const request = fetchMock.mock.calls[0][1];
+    const body = JSON.parse(String(request?.body));
+    expect(body).toEqual(expect.objectContaining({
+      secret: 'a-secure-shared-secret',
+      to: 'doctor@example.com',
+      name: 'Doctor',
+    }));
+    expect(body.resetUrl).toContain('token=safe-token');
+  });
 });
