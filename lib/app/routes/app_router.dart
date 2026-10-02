@@ -74,6 +74,8 @@ final appRouter = GoRouter(
           RouteNames.documentDetails,
           (_, state) => DocumentDetailsPage(
             documentTitle: state.uri.queryParameters['document'] ?? 'Documento',
+            documentId: state.uri.queryParameters['id'],
+            originalName: state.uri.queryParameters['name'],
           ),
         ),
         _appRoute(

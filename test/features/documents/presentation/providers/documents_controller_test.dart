@@ -10,6 +10,9 @@ class FakeDocumentsRepository implements DocumentsRepository {
 
   @override
   Future<List<DocumentItem>> fetchDocuments() async => items;
+
+  @override
+  Future<List<int>> downloadDocument(String id) async => const [];
 }
 
 void main() {

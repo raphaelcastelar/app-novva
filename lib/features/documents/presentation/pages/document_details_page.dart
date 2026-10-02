@@ -1,17 +1,64 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../../app/routes/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/app_scaffold.dart';
+import '../providers/documents_providers.dart';
 
-class DocumentDetailsPage extends StatelessWidget {
+class DocumentDetailsPage extends ConsumerStatefulWidget {
   const DocumentDetailsPage({
     required this.documentTitle,
+    this.documentId,
+    this.originalName,
     super.key,
   });
 
   final String documentTitle;
+  final String? documentId;
+  final String? originalName;
+
+  @override
+  ConsumerState<DocumentDetailsPage> createState() =>
+      _DocumentDetailsPageState();
+}
+
+class _DocumentDetailsPageState extends ConsumerState<DocumentDetailsPage> {
+  bool _downloading = false;
+
+  Future<void> _download() async {
+    final id = widget.documentId;
+    if (id == null || _downloading) return;
+    setState(() => _downloading = true);
+    try {
+      final bytes =
+          await ref.read(documentsRepositoryProvider).downloadDocument(id);
+      final directory = await getTemporaryDirectory();
+      final safeName = (widget.originalName ?? '${widget.documentTitle}.pdf')
+          .replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final file = File('${directory.path}/$safeName');
+      await file.writeAsBytes(bytes, flush: true);
+      final result = await OpenFilex.open(file.path);
+      if (result.type != ResultType.done && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(result.message)),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível baixar o documento.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _downloading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +67,18 @@ class DocumentDetailsPage extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 132),
         children: [
-          _DocumentActionHeader(documentTitle: documentTitle),
+          _DocumentActionHeader(documentTitle: widget.documentTitle),
           const SizedBox(height: 22),
           _DocumentActionTile(
-            title: 'Baixar documento',
-            subtitle: 'Receba o arquivo disponível no seu dispositivo.',
-            icon: Icons.download_rounded,
+            title: _downloading ? 'Baixando...' : 'Baixar documento',
+            subtitle: widget.documentId == null
+                ? 'O arquivo ainda não está disponível.'
+                : 'Abra o arquivo protegido no seu dispositivo.',
+            icon: _downloading
+                ? Icons.hourglass_top_rounded
+                : Icons.download_rounded,
             color: AppColors.primary,
+            onTap: widget.documentId == null ? null : _download,
           ),
           const SizedBox(height: 12),
           _DocumentActionTile(
@@ -34,7 +86,7 @@ class DocumentDetailsPage extends StatelessWidget {
             subtitle: 'Abra a solicitação com observação para o contador.',
             icon: Icons.post_add_rounded,
             color: AppColors.accent,
-            route: _documentRequestRoute(documentTitle),
+            route: _documentRequestRoute(widget.documentTitle),
           ),
         ],
       ),
@@ -171,6 +223,7 @@ class _DocumentActionTile extends StatelessWidget {
     required this.icon,
     required this.color,
     this.route,
+    this.onTap,
   });
 
   final String title;
@@ -178,6 +231,7 @@ class _DocumentActionTile extends StatelessWidget {
   final IconData icon;
   final Color color;
   final String? route;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -186,17 +240,17 @@ class _DocumentActionTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(24),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: () {
-          final targetRoute = route;
-          if (targetRoute != null) {
-            context.go(targetRoute);
-            return;
-          }
+        onTap: route == null && onTap == null
+            ? null
+            : () {
+                final targetRoute = route;
+                if (targetRoute != null) {
+                  context.go(targetRoute);
+                  return;
+                }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Download do documento iniciado.')),
-          );
-        },
+                onTap?.call();
+              },
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),

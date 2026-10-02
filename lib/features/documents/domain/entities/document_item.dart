@@ -9,6 +9,9 @@ class DocumentItem {
     required this.month,
     required this.year,
     this.rejectionReason,
+    this.hasFile = false,
+    this.originalName,
+    this.mimeType,
   });
 
   final String id;
@@ -18,4 +21,7 @@ class DocumentItem {
   final int month;
   final int year;
   final String? rejectionReason;
+  final bool hasFile;
+  final String? originalName;
+  final String? mimeType;
 }

@@ -9,6 +9,9 @@ class DocumentItemModel extends DocumentItem {
     required super.month,
     required super.year,
     super.rejectionReason,
+    super.hasFile,
+    super.originalName,
+    super.mimeType,
   });
 
   factory DocumentItemModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +26,9 @@ class DocumentItemModel extends DocumentItem {
       month: (json['month'] as num?)?.toInt() ?? createdAt?.month ?? now.month,
       year: (json['year'] as num?)?.toInt() ?? createdAt?.year ?? now.year,
       rejectionReason: json['rejectionReason'] as String?,
+      hasFile: json['hasFile'] as bool? ?? false,
+      originalName: json['originalName'] as String?,
+      mimeType: json['mimeType'] as String?,
     );
   }
 

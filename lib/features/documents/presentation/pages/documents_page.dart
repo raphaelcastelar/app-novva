@@ -325,7 +325,11 @@ class _DocumentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _color(doc.status);
     return AppCard(
-      onTap: () => context.go(_documentDetailsRoute(doc.title)),
+      onTap: () => context.go(_documentDetailsRoute(
+        doc.title,
+        id: doc.hasFile ? doc.id : null,
+        originalName: doc.originalName,
+      )),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -424,9 +428,17 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-String _documentDetailsRoute(String documentTitle) {
+String _documentDetailsRoute(
+  String documentTitle, {
+  String? id,
+  String? originalName,
+}) {
   return Uri(
     path: RouteNames.documentDetails,
-    queryParameters: {'document': documentTitle},
+    queryParameters: {
+      'document': documentTitle,
+      if (id != null) 'id': id,
+      if (originalName != null) 'name': originalName,
+    },
   ).toString();
 }

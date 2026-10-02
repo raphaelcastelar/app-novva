@@ -13,4 +13,7 @@ class DocumentsRepositoryImpl implements DocumentsRepository {
     final items = await _remote.fetchDocuments();
     return items.map(DocumentItemModel.fromJson).toList(growable: false);
   }
+
+  @override
+  Future<List<int>> downloadDocument(String id) => _remote.downloadDocument(id);
 }

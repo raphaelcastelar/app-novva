@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 abstract interface class DocumentsRemoteDataSource {
   Future<List<Map<String, dynamic>>> fetchDocuments();
+  Future<List<int>> downloadDocument(String id);
 }
 
 class DioDocumentsRemoteDataSource implements DocumentsRemoteDataSource {
@@ -23,5 +24,14 @@ class DioDocumentsRemoteDataSource implements DocumentsRemoteDataSource {
     return items
         .map((item) => Map<String, dynamic>.from(item as Map))
         .toList(growable: false);
+  }
+
+  @override
+  Future<List<int>> downloadDocument(String id) async {
+    final response = await _dio.get<List<int>>(
+      'documents/$id/file',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return response.data ?? const [];
   }
 }

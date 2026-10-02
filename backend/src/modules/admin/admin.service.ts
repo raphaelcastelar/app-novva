@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { RequestKind } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
+import { StorageService } from '../../common/storage.service';
 import { AdminRequestQueryDto, AdminUpdateStatusDto } from './admin.dto';
 
 const CLOSED_STATUSES = new Set(['APPROVED', 'ISSUED', 'REJECTED', 'CANCELED']);
@@ -17,7 +18,7 @@ const TRANSITIONS: Record<RequestKind, Record<string, string[]>> = {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly storage: StorageService) {}
 
   async listRequests(query: AdminRequestQueryDto) {
     const [documents, invoices] = await Promise.all([
@@ -72,6 +73,31 @@ export class AdminService {
       await transaction.auditLog.create({ data: { action: 'REQUEST_STATUS_UPDATED', entity: kind, entityId: id, metadata: { previousStatus: current, status: dto.status, note: dto.note ?? '', actor } } });
     });
     return this.requestDetail(id);
+  }
+
+  async storeDocumentFile(id: string, file: Express.Multer.File, actor = 'Equipe Novva') {
+    const item = await this.prisma.document.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Solicitação de documento não encontrada.');
+    const key = await this.storage.storeDocument(item.userId, id, file);
+    try {
+      await this.prisma.$transaction(async (transaction) => {
+        await transaction.document.update({ where: { id }, data: { fileKey: key, mimeType: file.mimetype, originalName: file.originalname } });
+        await transaction.requestEvent.create({ data: { requestKind: 'DOCUMENT', requestId: id, status: item.status, note: `Arquivo ${file.originalname} anexado`, actor } });
+        await transaction.auditLog.create({ data: { action: 'DOCUMENT_FILE_ATTACHED', entity: 'DOCUMENT', entityId: id, metadata: { originalName: file.originalname, mimeType: file.mimetype, actor } } });
+      });
+      await this.storage.deleteDocument(item.fileKey);
+      return this.requestDetail(id);
+    } catch (error) {
+      await this.storage.deleteDocument(key);
+      throw error;
+    }
+  }
+
+  async documentFile(id: string) {
+    const item = await this.prisma.document.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Solicitação de documento não encontrada.');
+    if (!item.fileKey || !item.mimeType || !item.originalName) throw new NotFoundException('Arquivo não enviado.');
+    return { ...await this.storage.readDocument(item.fileKey), mimeType: item.mimeType, originalName: item.originalName };
   }
 
   async doctors(search?: string) {
@@ -142,6 +168,7 @@ export class AdminService {
       status: item.status, priority: 'NORMAL', createdAt: item.createdAt, updatedAt: item.updatedAt,
       dueAt: new Date(item.createdAt.getTime() + 24 * 60 * 60 * 1000), category: item.category,
       description: item.description ?? '', details: { Categoria: item.category, Competência: item.month && item.year ? `${String(item.month).padStart(2, '0')}/${item.year}` : 'Não informada' },
+      attachment: item.fileKey ? { originalName: item.originalName, mimeType: item.mimeType } : null,
       timeline: this.timeline(item.createdAt, events),
     };
   }
