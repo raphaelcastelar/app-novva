@@ -21,7 +21,8 @@ class DocumentRequestPage extends ConsumerStatefulWidget {
   final String documentTitle;
 
   @override
-  ConsumerState<DocumentRequestPage> createState() => _DocumentRequestPageState();
+  ConsumerState<DocumentRequestPage> createState() =>
+      _DocumentRequestPageState();
 }
 
 class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
@@ -105,18 +106,14 @@ class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
     state.state = const AsyncLoading();
     try {
       final created = await ref.read(submitDocumentRequestProvider)(
-            DocumentRequestDraft(
-              doctor: localDoctor,
-              title: widget.documentTitle,
-              category: 'Documentos solicitados',
-              description: _observationController.text.trim(),
-            ),
-          );
+        DocumentRequestDraft(
+          doctor: localDoctor,
+          title: widget.documentTitle,
+          category: 'Documentos solicitados',
+          description: _observationController.text.trim(),
+        ),
+      );
       state.state = AsyncData(created);
-      ref.read(documentsProvider.notifier).addRequested(
-            id: created.id,
-            title: widget.documentTitle,
-          );
       ref.read(documentRequestFeedbackProvider.notifier).state = true;
       if (mounted) context.go(RouteNames.documents);
     } catch (error, stackTrace) {

@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 
 class EmptyState extends StatelessWidget {
-  const EmptyState({required this.title, this.message, this.icon, super.key});
+  const EmptyState({
+    required this.title,
+    this.message,
+    this.icon,
+    this.actionLabel,
+    this.onAction,
+    super.key,
+  });
 
   final String title;
   final String? message;
   final IconData? icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -23,6 +32,13 @@ class EmptyState extends StatelessWidget {
             if (message != null) ...[
               const SizedBox(height: 8),
               Text(message!, textAlign: TextAlign.center),
+            ],
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 16),
+              FilledButton.tonal(
+                onPressed: onAction,
+                child: Text(actionLabel!),
+              ),
             ],
           ],
         ),

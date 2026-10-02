@@ -1,60 +1,81 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/network/dio_client.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../data/datasources/documents_remote_datasource.dart';
+import '../../data/repositories/documents_repository_impl.dart';
 import '../../domain/entities/document_item.dart';
+import '../../domain/repositories/documents_repository.dart';
+import '../../domain/usecases/fetch_documents.dart';
 
 final documentRequestFeedbackProvider = StateProvider<bool>((_) => false);
 
-final documentsProvider =
-    StateNotifierProvider<DocumentsController, List<DocumentItem>>(
-  (_) => DocumentsController(),
+final documentsDioProvider = Provider(
+  (ref) => DioClient(ref.watch(tokenManagerProvider)).dio,
 );
 
-class DocumentsController extends StateNotifier<List<DocumentItem>> {
-  DocumentsController() : super(const [
-    DocumentItem(
-        id: '1',
-        title: 'Extrato bancário',
-        category: 'Extratos bancários',
-        status: DocumentStatus.pending,
-        month: 5,
-        year: 2026),
-    DocumentItem(
-        id: '2',
-        title: 'Contrato social',
-        category: 'Contratos',
-        status: DocumentStatus.approved,
-        month: 4,
-        year: 2026),
-    DocumentItem(
-        id: '3',
-        title: 'Comprovante hospital',
-        category: 'Comprovantes',
-        status: DocumentStatus.rejected,
-        month: 5,
-        year: 2026,
-        rejectionReason:
-            'Arquivo ilegível. Envie uma foto com melhor iluminação.'),
-    DocumentItem(
-        id: '4',
-        title: 'Notas fiscais',
-        category: 'Notas fiscais',
-        status: DocumentStatus.review,
-        month: 5,
-        year: 2026),
-  ]);
+final documentsRemoteDataSourceProvider = Provider<DocumentsRemoteDataSource>(
+  (ref) => DioDocumentsRemoteDataSource(ref.watch(documentsDioProvider)),
+);
 
-  void addRequested({required String id, required String title}) {
-    final now = DateTime.now();
-    state = [
-      DocumentItem(
-        id: id,
-        title: title,
-        category: 'Documentos solicitados',
-        status: DocumentStatus.pending,
-        month: now.month,
-        year: now.year,
-      ),
-      ...state,
-    ];
+final documentsRepositoryProvider = Provider<DocumentsRepository>(
+  (ref) => DocumentsRepositoryImpl(
+    ref.watch(documentsRemoteDataSourceProvider),
+  ),
+);
+
+final fetchDocumentsProvider = Provider(
+  (ref) => FetchDocuments(ref.watch(documentsRepositoryProvider)),
+);
+
+final documentsProvider = StateNotifierProvider.autoDispose<DocumentsController,
+    AsyncValue<List<DocumentItem>>>(
+  (ref) => DocumentsController(ref.watch(fetchDocumentsProvider)),
+);
+
+class DocumentsController
+    extends StateNotifier<AsyncValue<List<DocumentItem>>> {
+  DocumentsController(
+    this._fetchDocuments, {
+    Duration? refreshInterval = const Duration(seconds: 10),
+  }) : super(const AsyncLoading()) {
+    unawaited(refresh(showLoading: true));
+    if (refreshInterval != null) {
+      _timer = Timer.periodic(
+        refreshInterval,
+        (_) => unawaited(refresh()),
+      );
+    }
+  }
+
+  final FetchDocuments _fetchDocuments;
+  Timer? _timer;
+  bool _isRefreshing = false;
+
+  Future<void> refresh({bool showLoading = false}) async {
+    if (_isRefreshing) return;
+    _isRefreshing = true;
+    final previous = state.valueOrNull;
+    if (showLoading && previous == null) {
+      state = const AsyncLoading();
+    }
+
+    try {
+      state = AsyncData(await _fetchDocuments());
+    } catch (error, stackTrace) {
+      if (previous == null) {
+        state = AsyncError(error, stackTrace);
+      }
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 }

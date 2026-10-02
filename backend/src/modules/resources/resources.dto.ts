@@ -1,5 +1,9 @@
+import { Type } from 'class-transformer';
 import { IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Max, MaxLength, Min } from 'class-validator';
-export class PageDto { @IsOptional() @IsInt() @Min(1) page = 1; @IsOptional() @IsInt() @Min(1) @Max(100) limit = 30; }
+export class PageDto {
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 30;
+}
 export class CreateDocumentDto {
   @IsString() @MaxLength(160) title!: string; @IsString() @MaxLength(100) category!: string;
   @IsOptional() @IsString() description?: string; @IsOptional() @IsInt() @Min(1) @Max(12) month?: number;

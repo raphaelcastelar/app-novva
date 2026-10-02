@@ -28,12 +28,18 @@ class DocumentsPage extends ConsumerWidget {
     }
 
     final documents = ref.watch(documentsProvider);
+    final refresh = ref.read(documentsProvider.notifier).refresh;
 
     return DefaultTabController(
       length: 4,
       child: AppScaffold(
         title: 'Documentos',
         actions: [
+          IconButton(
+            tooltip: 'Atualizar documentos',
+            onPressed: refresh,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
           IconButton(
             tooltip: 'Enviar documento',
             onPressed: () => context.go(RouteNames.documentUpload),
@@ -45,51 +51,100 @@ class DocumentsPage extends ConsumerWidget {
           icon: const Icon(Icons.add),
           label: const Text('Nova solicitação'),
         ),
-        child: Stack(
-          children: [
-            const Positioned.fill(child: _DocumentsWatermark()),
-            Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _DocumentSummary(),
-                ),
-                const TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  tabs: [
-                    Tab(text: 'Solicitar'),
-                    Tab(text: 'Enviados'),
-                    Tab(text: 'Recebidos'),
-                    Tab(text: 'Pendentes'),
-                  ],
-                ),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _DocumentRequestTab(documents: documents),
-                      _DocumentList(documents: documents),
-                      _DocumentList(
-                        documents: documents
-                            .where(
-                                (doc) => doc.status == DocumentStatus.approved)
-                            .toList(),
-                        emptyMessage: 'Nenhum documento recebido ainda.',
-                      ),
-                      _DocumentList(
-                        documents: documents
-                            .where((doc) =>
-                                doc.status == DocumentStatus.pending ||
-                                doc.status == DocumentStatus.rejected)
-                            .toList(),
-                        emptyMessage: 'Tudo certo por aqui. Sem pendências.',
-                      ),
+        child: documents.when(
+          loading: () => const Stack(
+            children: [
+              Positioned.fill(child: _DocumentsWatermark()),
+              Center(child: CircularProgressIndicator()),
+            ],
+          ),
+          error: (error, _) => Stack(
+            children: [
+              const Positioned.fill(child: _DocumentsWatermark()),
+              _DocumentsLoadError(onRetry: () => refresh(showLoading: true)),
+            ],
+          ),
+          data: (items) => Stack(
+            children: [
+              const Positioned.fill(child: _DocumentsWatermark()),
+              Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: _DocumentSummary(),
+                  ),
+                  const TabBar(
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: [
+                      Tab(text: 'Solicitar'),
+                      Tab(text: 'Enviados'),
+                      Tab(text: 'Recebidos'),
+                      Tab(text: 'Pendentes'),
                     ],
                   ),
-                ),
-              ],
-            ),
-          ],
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        RefreshIndicator(
+                          onRefresh: refresh,
+                          child: _DocumentRequestTab(documents: items),
+                        ),
+                        RefreshIndicator(
+                          onRefresh: refresh,
+                          child: _DocumentList(documents: items),
+                        ),
+                        RefreshIndicator(
+                          onRefresh: refresh,
+                          child: _DocumentList(
+                            documents: items
+                                .where((doc) =>
+                                    doc.status == DocumentStatus.approved)
+                                .toList(),
+                            emptyMessage: 'Nenhum documento recebido ainda.',
+                          ),
+                        ),
+                        RefreshIndicator(
+                          onRefresh: refresh,
+                          child: _DocumentList(
+                            documents: items
+                                .where((doc) =>
+                                    doc.status == DocumentStatus.pending ||
+                                    doc.status == DocumentStatus.rejected)
+                                .toList(),
+                            emptyMessage:
+                                'Tudo certo por aqui. Sem pendências.',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DocumentsLoadError extends StatelessWidget {
+  const _DocumentsLoadError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: EmptyState(
+          title: 'Não foi possível carregar os documentos',
+          message: 'Verifique sua conexão e tente novamente.',
+          icon: Icons.cloud_off_outlined,
+          actionLabel: 'Tentar novamente',
+          onAction: onRetry,
         ),
       ),
     );
@@ -178,6 +233,7 @@ class _DocumentRequestTab extends StatelessWidget {
     ];
 
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       children: [
         LayoutBuilder(
@@ -231,16 +287,24 @@ class _DocumentList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (documents.isEmpty) {
-      return EmptyState(
-        title: 'Tudo limpo',
-        message: emptyMessage,
-        icon: Icons.folder_open_outlined,
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        children: [
+          EmptyState(
+            title: 'Tudo limpo',
+            message: emptyMessage,
+            icon: Icons.folder_open_outlined,
+          ),
+        ],
       );
     }
 
     return ListView.separated(
       shrinkWrap: shrink,
-      physics: shrink ? const NeverScrollableScrollPhysics() : null,
+      physics: shrink
+          ? const NeverScrollableScrollPhysics()
+          : const AlwaysScrollableScrollPhysics(),
       padding: shrink ? EdgeInsets.zero : const EdgeInsets.all(16),
       itemCount: documents.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
