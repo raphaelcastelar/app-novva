@@ -77,8 +77,14 @@ Configure a API real por `--dart-define`:
 
 ```bash
 flutter run \
-  --dart-define=NOVVA_API_BASE_URL=https://sua-api.example.com \
+  --dart-define=NOVVA_API_BASE_URL=https://api-novva.inovarcontabilidadex.com.br/api/v1/ \
   --dart-define=NOVVA_USE_MOCK_API=false
+```
+
+Para executar o app localmente usando a API da DigitalOcean:
+
+```bash
+./scripts/run_digitalocean.sh
 ```
 
 Não coloque secrets, tokens, SendGrid keys ou chaves privadas no app cliente.
@@ -98,8 +104,14 @@ Build release:
 
 ```bash
 flutter build ios --release \
-  --dart-define=NOVVA_API_BASE_URL=https://sua-api.example.com \
+  --dart-define=NOVVA_API_BASE_URL=https://api-novva.inovarcontabilidadex.com.br/api/v1/ \
   --dart-define=NOVVA_USE_MOCK_API=false
+```
+
+O mesmo build pode ser gerado com:
+
+```bash
+./scripts/build_ios_digitalocean.sh
 ```
 
 ## Testes
