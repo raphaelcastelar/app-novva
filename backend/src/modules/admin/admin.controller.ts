@@ -3,7 +3,7 @@ import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { DOCUMENT_MAX_BYTES } from '../../common/storage.service';
-import { AdminRequestQueryDto, AdminUpdateStatusDto } from './admin.dto';
+import { AdminCreateDoctorDto, AdminRequestQueryDto, AdminUpdateStatusDto } from './admin.dto';
 import { AdminService } from './admin.service';
 import { InternalTokenGuard } from './internal-token.guard';
 
@@ -37,6 +37,9 @@ export class AdminController {
     return new StreamableFile(result.stream);
   }
   @Get('doctors') doctors(@Query('search') search?: string) { return this.service.doctors(search); }
+  @Post('doctors') createDoctor(@Body() dto: AdminCreateDoctorDto, @Headers('x-admin-actor') actor?: string) {
+    return this.service.createDoctor(dto, actor);
+  }
   @Get('dashboard') dashboard() { return this.service.dashboard(); }
 }
 

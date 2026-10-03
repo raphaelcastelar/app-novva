@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { RequestKind } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage.service';
-import { AdminRequestQueryDto, AdminUpdateStatusDto } from './admin.dto';
+import { isValidCpf } from '../../common/validation';
+import { AdminCreateDoctorDto, AdminRequestQueryDto, AdminUpdateStatusDto } from './admin.dto';
 
 const CLOSED_STATUSES = new Set(['APPROVED', 'ISSUED', 'REJECTED', 'CANCELED']);
 const TRANSITIONS: Record<RequestKind, Record<string, string[]>> = {
@@ -113,6 +114,51 @@ export class AdminService {
       open: [...user.documents, ...user.invoices].filter((request) => !CLOSED_STATUSES.has(request.status)).length,
       status: user.status,
     }));
+  }
+
+  async createDoctor(dto: AdminCreateDoctorDto, actor = 'Equipe Novva') {
+    if (!isValidCpf(dto.cpf)) throw new BadRequestException('CPF inválido.');
+    const email = dto.email.trim().toLowerCase();
+    const existing = await this.prisma.user.findFirst({
+      where: { OR: [{ cpf: dto.cpf }, { email: { equals: email, mode: 'insensitive' } }] },
+      select: { cpf: true, email: true },
+    });
+    if (existing?.cpf === dto.cpf) throw new ConflictException('Já existe um médico com este CPF.');
+    if (existing) throw new ConflictException('Já existe um médico com este e-mail.');
+
+    const user = await this.prisma.$transaction(async (transaction) => {
+      const created = await transaction.user.create({
+        data: {
+          cpf: dto.cpf,
+          name: dto.name.trim(),
+          email,
+          phone: dto.phone?.trim() || null,
+          profile: {
+            create: {
+              crm: dto.crm?.trim() || null,
+              specialty: dto.specialty?.trim() || null,
+              companyName: dto.companyName.trim(),
+            },
+          },
+        },
+        include: { profile: true },
+      });
+      await transaction.auditLog.create({
+        data: {
+          userId: created.id,
+          action: 'DOCTOR_CREATED_BY_ADMIN',
+          entity: 'User',
+          entityId: created.id,
+          metadata: { actor },
+        },
+      });
+      return created;
+    });
+    return {
+      id: user.id, name: user.name, initials: this.initials(user.name), crm: user.profile?.crm ?? '',
+      specialty: user.profile?.specialty ?? '', email: user.email, company: user.profile?.companyName ?? '',
+      requests: 0, open: 0, status: user.status, needsPasswordCreation: true,
+    };
   }
 
   async dashboard() {
