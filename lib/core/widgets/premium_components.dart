@@ -5,6 +5,7 @@ import '../../app/routes/route_names.dart';
 import '../../app/theme/app_colors.dart';
 import 'app_card.dart';
 import 'status_badge.dart';
+import 'profile_avatar.dart';
 
 class PremiumHeader extends StatelessWidget {
   const PremiumHeader({
@@ -44,16 +45,10 @@ class PremiumHeader extends StatelessWidget {
         children: [
           Row(
             children: [
-              CircleAvatar(
+              ProfileAvatar(
                 radius: 24,
                 backgroundColor: Colors.white.withValues(alpha: 0.18),
-                child: Text(
-                  _initials(userName),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
+                foregroundColor: Colors.white,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -126,12 +121,6 @@ class PremiumHeader extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _initials(String value) {
-    final parts = value.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty) return 'N';
-    return parts.take(2).map((part) => part.characters.first).join();
   }
 }
 

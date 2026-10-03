@@ -11,6 +11,7 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/premium_components.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../providers/dashboard_providers.dart';
 
@@ -85,13 +86,10 @@ class _SimpleHomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        CircleAvatar(
+        const ProfileAvatar(
           radius: 26,
           backgroundColor: AppColors.accent,
-          backgroundImage: const NetworkImage(
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80',
-          ),
-          onBackgroundImageError: (_, __) {},
+          foregroundColor: AppColors.primary,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -484,13 +482,10 @@ class _DashboardHeader extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
+                  ProfileAvatar(
                     radius: 24,
-                    backgroundColor: AppColors.accent,
-                    backgroundImage: const NetworkImage(
-                      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80',
-                    ),
-                    onBackgroundImageError: (_, __) {},
+                    backgroundColor: Colors.white.withValues(alpha: 0.18),
+                    foregroundColor: Colors.white,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

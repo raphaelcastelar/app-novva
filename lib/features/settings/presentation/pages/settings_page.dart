@@ -7,6 +7,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/status_badge.dart';
+import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -79,16 +80,10 @@ class SettingsPage extends ConsumerWidget {
           const AppCard(
             child: Row(
               children: [
-                CircleAvatar(
+                ProfileAvatar(
                   radius: 26,
                   backgroundColor: AppColors.softAccent,
-                  child: Text(
-                    'DM',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                  foregroundColor: AppColors.primary,
                 ),
                 SizedBox(width: 12),
                 Expanded(
