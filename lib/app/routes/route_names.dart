@@ -19,6 +19,8 @@ class RouteNames {
   static const profile = '/profile';
   static const notifications = '/notifications';
   static const settings = '/settings';
+  static const privacy = '/settings/privacy';
+  static const support = '/settings/support';
   static const cnpjs = '/settings/cnpjs';
   static const invoices = '/invoices/new';
   static const invoiceDescription = '/invoices/description';

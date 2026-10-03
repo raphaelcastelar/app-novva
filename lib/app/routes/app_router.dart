@@ -23,6 +23,8 @@ import '../../features/obligations/presentation/pages/obligations_page.dart';
 import '../../features/payments/presentation/pages/payments_page.dart';
 import '../../features/reports/presentation/pages/reports_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
+import '../../features/settings/presentation/pages/privacy_page.dart';
+import '../../features/settings/presentation/pages/support_page.dart';
 import '../../features/settings/presentation/pages/splash_page.dart';
 import '../../core/widgets/app_scaffold.dart';
 import '../../core/widgets/error_state.dart';
@@ -101,6 +103,8 @@ final appRouter = GoRouter(
         _appRoute(
             RouteNames.notifications, (_, __) => const NotificationsPage()),
         _appRoute(RouteNames.settings, (_, __) => const SettingsPage()),
+        _appRoute(RouteNames.privacy, (_, __) => const PrivacyPage()),
+        _appRoute(RouteNames.support, (_, __) => const SupportPage()),
         _appRoute(RouteNames.cnpjs, (_, __) => const ManageCnpjsPage()),
         _appRoute(RouteNames.invoices, (_, __) => const InvoiceRequestPage()),
         _appRoute(RouteNames.invoiceDescription,

@@ -45,5 +45,11 @@ class AuthRepositoryImpl implements AuthRepository {
       {required String currentPassword, required String newPassword}) async {}
 
   @override
+  Future<void> deleteAccount(String password) async {
+    await _remote.deleteAccount(password);
+    await _tokenManager.clear();
+  }
+
+  @override
   Future<void> logout() => _tokenManager.clear();
 }

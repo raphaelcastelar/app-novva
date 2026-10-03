@@ -9,6 +9,7 @@ abstract interface class AuthRemoteDataSource {
   Future<Session> login(String cpf, String password);
   Future<Session> createPassword(String cpf, String password);
   Future<void> requestPasswordReset(String cpf);
+  Future<void> deleteAccount(String password);
 }
 
 class DioAuthRemoteDataSource implements AuthRemoteDataSource {
@@ -49,6 +50,11 @@ class DioAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<void> requestPasswordReset(String cpf) async {
     await _dio.post<void>('auth/forgot-password', data: {'cpf': cpf});
+  }
+
+  @override
+  Future<void> deleteAccount(String password) async {
+    await _dio.delete<void>('me', data: {'password': password});
   }
 }
 
@@ -103,6 +109,11 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<void> requestPasswordReset(String cpf) async {
+    await Future<void>.delayed(const Duration(milliseconds: 450));
+  }
+
+  @override
+  Future<void> deleteAccount(String password) async {
     await Future<void>.delayed(const Duration(milliseconds: 450));
   }
 }

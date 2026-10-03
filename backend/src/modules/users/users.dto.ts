@@ -1,4 +1,16 @@
-import { IsEmail, IsOptional, IsString, Length, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsOptional,
+  IsString,
+  Length,
+  MaxLength,
+  MinLength,
+} from "class-validator";
+
+export class DeleteAccountDto {
+  @IsString() @MinLength(8) @MaxLength(128) password!: string;
+}
+
 export class UpdateUserDto {
   @IsOptional() @IsString() @MinLength(2) @MaxLength(160) name?: string;
   @IsOptional() @IsEmail() email?: string;

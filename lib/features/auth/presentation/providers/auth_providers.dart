@@ -104,4 +104,16 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
     authListenable.setAuthenticated(false);
     state = const AsyncData(null);
   }
+
+  Future<void> deleteAccount(String password) async {
+    state = const AsyncLoading();
+    try {
+      await _repository.deleteAccount(password);
+      authListenable.setAuthenticated(false);
+      state = const AsyncData(null);
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      rethrow;
+    }
+  }
 }

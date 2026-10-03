@@ -9,5 +9,6 @@ abstract interface class AuthRepository {
   Future<void> requestPasswordReset(String cpf);
   Future<void> changePassword(
       {required String currentPassword, required String newPassword});
+  Future<void> deleteAccount(String password);
   Future<void> logout();
 }

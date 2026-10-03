@@ -53,16 +53,16 @@ class SettingsPage extends ConsumerWidget {
         RouteNames.notifications
       ),
       (
-        'Ajuda',
-        'Central de aprendizado e suporte',
+        'Ajuda e suporte',
+        'Canais de atendimento da Novva',
         Icons.help_outline,
-        RouteNames.chat
+        RouteNames.support
       ),
       (
-        'Segurança',
-        'Senha, acesso e biometria',
-        Icons.lock_outline,
-        RouteNames.profile
+        'Privacidade e conta',
+        'Seus dados e exclusão da conta',
+        Icons.privacy_tip_outlined,
+        RouteNames.privacy
       ),
       (
         'Área administrativa',
