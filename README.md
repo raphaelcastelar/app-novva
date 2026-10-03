@@ -51,7 +51,7 @@ lib/
   features/     auth, dashboard, documents, obligations, payments, reports...
 ```
 
-Cada feature crítica possui `data`, `domain` e `presentation`. Os dados estão mockados em providers/datasources e podem ser trocados por API/Firebase sem alterar widgets.
+Cada feature crítica possui `data`, `domain` e `presentation`. Login, início, documentos, guias e solicitações de notas usam a API da Novva. Recursos ainda não integrados permanecem fora da navegação do build de homologação.
 
 ## Como instalar
 
@@ -91,14 +91,11 @@ Não coloque secrets, tokens, SendGrid keys ou chaves privadas no app cliente.
 
 ## iOS
 
-Bundle identifier sugerido: `br.com.novva.app`.
+Bundle identifier: `br.com.novva.app`.
 
-Permissões preparadas no `ios/Runner/Info.plist`:
+O build atual não solicita câmera, fotos, rede local, Face ID, localização ou notificações. Novas permissões só devem ser adicionadas quando a funcionalidade correspondente estiver implementada e visível.
 
-- Câmera.
-- Fotos.
-- Face ID.
-- Notificações.
+O manifesto `ios/Runner/PrivacyInfo.xcprivacy` declara os dados vinculados à conta usados para a funcionalidade do aplicativo e informa que a Novva não realiza rastreamento.
 
 Build release:
 
@@ -124,8 +121,8 @@ Há testes iniciais para validators e usecase de login. Próximos testes recomen
 
 ## Próximos passos
 
-- Implementar `AuthRemoteDataSource` real com API segura ou Firebase Admin mediado por backend.
-- Remover qualquer senha em texto puro do backend atual e migrar para hash/Identity Provider.
-- Conectar documentos e uploads a storage seguro com validação de MIME/tamanho.
-- Implementar refresh token real, push notifications e cache Hive por feature.
-- Gerar ícones finais com `flutter_launcher_icons` e splash nativa com `flutter_native_splash`.
+- configurar o time de assinatura Apple no Xcode;
+- criar o app `Novva` no App Store Connect com o Bundle ID `br.com.novva.app`;
+- preencher os dados de privacidade conforme `docs/testflight.md`;
+- criar o Archive assinado e enviar ao TestFlight;
+- reintroduzir chat, relatórios, perfil e notificações somente depois da integração real com a API.

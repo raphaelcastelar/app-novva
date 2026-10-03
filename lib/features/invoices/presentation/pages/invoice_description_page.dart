@@ -21,7 +21,8 @@ class InvoiceDescriptionPage extends ConsumerStatefulWidget {
       _InvoiceDescriptionPageState();
 }
 
-class _InvoiceDescriptionPageState extends ConsumerState<InvoiceDescriptionPage> {
+class _InvoiceDescriptionPageState
+    extends ConsumerState<InvoiceDescriptionPage> {
   late final TextEditingController _description;
 
   @override
@@ -136,8 +137,8 @@ class _InvoiceDescriptionPageState extends ConsumerState<InvoiceDescriptionPage>
     state.state = const AsyncLoading();
     try {
       final created = await ref.read(submitInvoiceRequestProvider)(
-            draft.copyWith(description: _description.text.trim()),
-          );
+        draft.copyWith(description: _description.text.trim()),
+      );
       state.state = AsyncData(created);
       if (mounted) _showSuccess(context, created.id);
     } catch (error, stackTrace) {
@@ -301,10 +302,13 @@ class _ReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rows = [
-      ('CNPJ emissor', draft?.doctor.company ?? 'Clínica Marina Saúde'),
+      ('Emissor', 'Conta autenticada'),
       ('Município', draft?.municipality ?? '-'),
       ('Tomador', draft?.takerName ?? '-'),
-      ('Valor', 'R\$ ${draft?.amount.toStringAsFixed(2).replaceAll('.', ',') ?? '-'}'),
+      (
+        'Valor',
+        'R\$ ${draft?.amount.toStringAsFixed(2).replaceAll('.', ',') ?? '-'}'
+      ),
       ('Tributação', draft?.taxationCode ?? '-'),
     ];
     return AppCard(

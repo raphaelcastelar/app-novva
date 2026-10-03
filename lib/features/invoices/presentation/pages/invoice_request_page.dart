@@ -22,18 +22,25 @@ class InvoiceRequestPage extends ConsumerStatefulWidget {
 
 class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
   final _formKey = GlobalKey<FormState>();
-  final _municipality = TextEditingController(text: 'São Paulo');
-  final _takerName = TextEditingController(text: 'Hospital Santa Helena');
-  final _takerCnpj = TextEditingController(text: '45761220000108');
+  final _municipality = TextEditingController();
+  final _takerName = TextEditingController();
+  final _takerCnpj = TextEditingController();
   final _date = TextEditingController(
     text: DateTime.now().toIso8601String().split('T').first,
   );
-  final _amount = TextEditingController(text: '4850,00');
+  final _amount = TextEditingController();
   final _service = TextEditingController(text: 'Serviços médicos');
 
   @override
   void dispose() {
-    for (final controller in [_municipality, _takerName, _takerCnpj, _date, _amount, _service]) {
+    for (final controller in [
+      _municipality,
+      _takerName,
+      _takerCnpj,
+      _date,
+      _amount,
+      _service
+    ]) {
       controller.dispose();
     }
     super.dispose();
@@ -56,36 +63,47 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
                   key: _formKey,
                   child: Column(
                     children: [
-                    const AppTextField(
-                      label: 'Empresa/CNPJ emissor',
-                      initialValue: 'Clínica Marina Saúde - 12.345.678/0001-90',
-                      readOnly: true,
-                      suffixIcon: Icon(Icons.expand_more),
-                    ),
-                    const SizedBox(height: 12),
-                    AppTextField(label: 'Município', controller: _municipality, validator: _required),
-                    const SizedBox(height: 12),
-                    AppTextField(label: 'Nome do tomador', controller: _takerName, validator: _required),
-                    const SizedBox(height: 12),
-                    AppTextField(label: 'CNPJ do tomador', controller: _takerCnpj, keyboardType: TextInputType.number, validator: _cnpj),
-                    const SizedBox(height: 12),
-                    AppTextField(
-                      label: 'Data (AAAA-MM-DD)',
-                      controller: _date,
-                      validator: _required,
-                      suffixIcon: const Icon(Icons.calendar_today_outlined),
-                    ),
-                    const SizedBox(height: 12),
-                    AppTextField(label: 'Valor', controller: _amount, keyboardType: const TextInputType.numberWithOptions(decimal: true), validator: _required),
-                    const SizedBox(height: 12),
-                    const AppTextField(
-                      label: 'Código de tributação',
-                      initialValue: AppConstants.defaultTaxCode,
-                      readOnly: true,
-                    ),
-                    const SizedBox(height: 12),
-                    AppTextField(label: 'Serviço prestado', controller: _service, validator: _required),
-                  ],
+                      AppTextField(
+                          label: 'Município',
+                          controller: _municipality,
+                          validator: _required),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                          label: 'Nome do tomador',
+                          controller: _takerName,
+                          validator: _required),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                          label: 'CNPJ do tomador',
+                          controller: _takerCnpj,
+                          keyboardType: TextInputType.number,
+                          validator: _cnpj),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                        label: 'Data (AAAA-MM-DD)',
+                        controller: _date,
+                        validator: _required,
+                        suffixIcon: const Icon(Icons.calendar_today_outlined),
+                      ),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                          label: 'Valor',
+                          controller: _amount,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          validator: _required),
+                      const SizedBox(height: 12),
+                      const AppTextField(
+                        label: 'Código de tributação',
+                        initialValue: AppConstants.defaultTaxCode,
+                        readOnly: true,
+                      ),
+                      const SizedBox(height: 12),
+                      AppTextField(
+                          label: 'Serviço prestado',
+                          controller: _service,
+                          validator: _required),
+                    ],
                   ),
                 ),
               ),
@@ -119,7 +137,8 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
 
   void _continue() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final amount = double.tryParse(_amount.text.replaceAll('.', '').replaceAll(',', '.'));
+    final amount =
+        double.tryParse(_amount.text.replaceAll('.', '').replaceAll(',', '.'));
     final date = DateTime.tryParse(_date.text);
     if (amount == null || amount <= 0 || date == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -128,7 +147,6 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
       return;
     }
     ref.read(pendingInvoiceDraftProvider.notifier).state = InvoiceRequestDraft(
-      doctor: localDoctor,
       takerCnpj: _takerCnpj.text,
       takerName: _takerName.text.trim(),
       municipality: _municipality.text.trim(),

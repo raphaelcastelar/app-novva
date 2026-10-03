@@ -7,7 +7,8 @@ class ServiceRequestRepositoryImpl implements ServiceRequestRepository {
   final ServiceRequestRemoteDataSource _remote;
 
   @override
-  Future<CreatedServiceRequest> submitDocument(DocumentRequestDraft draft) async {
+  Future<CreatedServiceRequest> submitDocument(
+      DocumentRequestDraft draft) async {
     final json = await _remote.createDocument(draft);
     return CreatedServiceRequest(
       id: json['id'] as String,

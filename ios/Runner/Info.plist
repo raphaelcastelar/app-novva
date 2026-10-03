@@ -45,22 +45,5 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Usamos a câmera para digitalizar e enviar documentos contábeis.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Usamos sua galeria para anexar documentos e comprovantes.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Podemos salvar guias e recibos solicitados por você.</string>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Use Face ID para desbloquear o app Novva com segurança.</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>Usamos a rede local durante o desenvolvimento para conectar o app ao painel Novva.</string>
-	<key>NSUserNotificationsUsageDescription</key>
-	<string>Enviamos alertas de vencimentos, pendências e respostas da contabilidade.</string>
 </dict>
 </plist>

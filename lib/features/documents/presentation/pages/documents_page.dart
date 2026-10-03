@@ -40,14 +40,14 @@ class DocumentsPage extends ConsumerWidget {
             onPressed: refresh,
             icon: const Icon(Icons.refresh_rounded),
           ),
-          IconButton(
-            tooltip: 'Enviar documento',
-            onPressed: () => context.go(RouteNames.documentUpload),
-            icon: const Icon(Icons.upload_file_outlined),
-          ),
         ],
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => context.go(RouteNames.documentUpload),
+          onPressed: () => context.go(
+            Uri(
+              path: RouteNames.documentRequest,
+              queryParameters: {'document': 'Outro documento'},
+            ).toString(),
+          ),
           icon: const Icon(Icons.add),
           label: const Text('Nova solicitação'),
         ),
@@ -190,7 +190,7 @@ class _DocumentSummary extends StatelessWidget {
           ),
           SizedBox(height: 4),
           Text(
-            'Solicite, envie e acompanhe documentos sem perder o histórico.',
+            'Solicite e acompanhe documentos sem perder o histórico.',
             style: TextStyle(color: AppColors.muted, height: 1.35),
           ),
           SizedBox(height: 14),

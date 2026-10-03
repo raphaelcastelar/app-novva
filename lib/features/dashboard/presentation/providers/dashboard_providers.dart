@@ -1,60 +1,67 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/network/dio_client.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 
 class DashboardSummary {
   const DashboardSummary({
     required this.pendingDocuments,
-    required this.openIssues,
     required this.dueObligations,
-    required this.pendingPayments,
     required this.monthRevenue,
     required this.orders,
-    required this.averageTicket,
-    required this.activeClients,
-    required this.revenueGrowth,
-    required this.revenueSeries,
+    this.nextObligation,
   });
 
   final int pendingDocuments;
-  final int openIssues;
   final int dueObligations;
-  final int pendingPayments;
   final double monthRevenue;
   final int orders;
-  final double averageTicket;
-  final int activeClients;
-  final double revenueGrowth;
-  final List<RevenuePoint> revenueSeries;
+  final DashboardObligation? nextObligation;
+
+  factory DashboardSummary.fromJson(Map<String, dynamic> json) {
+    final next = json['nextObligation'];
+    return DashboardSummary(
+      pendingDocuments: (json['pendingDocuments'] as num?)?.toInt() ?? 0,
+      dueObligations: (json['dueObligations'] as num?)?.toInt() ?? 0,
+      monthRevenue: (json['monthRevenue'] as num?)?.toDouble() ?? 0,
+      orders: (json['orders'] as num?)?.toInt() ?? 0,
+      nextObligation: next is Map<String, dynamic>
+          ? DashboardObligation.fromJson(next)
+          : null,
+    );
+  }
 }
 
-class RevenuePoint {
-  const RevenuePoint({
-    required this.label,
-    required this.value,
+class DashboardObligation {
+  const DashboardObligation({
+    required this.name,
+    required this.dueDate,
+    required this.amount,
   });
 
-  final String label;
-  final double value;
+  final String name;
+  final DateTime dueDate;
+  final double amount;
+
+  factory DashboardObligation.fromJson(Map<String, dynamic> json) {
+    return DashboardObligation(
+      name: json['name'] as String? ?? 'Obrigação',
+      dueDate: DateTime.parse(json['dueDate'] as String),
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+    );
+  }
 }
 
-final dashboardSummaryProvider = Provider(
-  (_) => const DashboardSummary(
-    pendingDocuments: 3,
-    openIssues: 2,
-    dueObligations: 4,
-    pendingPayments: 1,
-    monthRevenue: 48920,
-    orders: 186,
-    averageTicket: 263,
-    activeClients: 74,
-    revenueGrowth: 12.4,
-    revenueSeries: [
-      RevenuePoint(label: 'Seg', value: 5200),
-      RevenuePoint(label: 'Ter', value: 6100),
-      RevenuePoint(label: 'Qua', value: 5750),
-      RevenuePoint(label: 'Qui', value: 7350),
-      RevenuePoint(label: 'Sex', value: 6900),
-      RevenuePoint(label: 'Sáb', value: 9050),
-      RevenuePoint(label: 'Dom', value: 8570),
-    ],
-  ),
+final dashboardDioProvider = Provider<Dio>(
+  (ref) => DioClient(ref.watch(tokenManagerProvider)).dio,
+);
+
+final dashboardSummaryProvider = FutureProvider.autoDispose<DashboardSummary>(
+  (ref) async {
+    final response = await ref
+        .watch(dashboardDioProvider)
+        .get<Map<String, dynamic>>('dashboard/summary');
+    return DashboardSummary.fromJson(response.data!);
+  },
 );

@@ -107,7 +107,6 @@ class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
     try {
       final created = await ref.read(submitDocumentRequestProvider)(
         DocumentRequestDraft(
-          doctor: localDoctor,
           title: widget.documentTitle,
           category: 'Documentos solicitados',
           description: _observationController.text.trim(),

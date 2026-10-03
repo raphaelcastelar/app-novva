@@ -6,22 +6,13 @@ import '../../features/auth/presentation/pages/forgot_password_page.dart';
 import '../../features/auth/presentation/pages/login_cpf_page.dart';
 import '../../features/auth/presentation/pages/login_password_page.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
-import '../../features/chat/presentation/pages/chat_page.dart';
-import '../../features/clients/presentation/pages/clients_page.dart';
-import '../../features/cnpjs/presentation/pages/manage_cnpjs_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/documents/presentation/pages/document_details_page.dart';
 import '../../features/documents/presentation/pages/document_request_page.dart';
-import '../../features/documents/presentation/pages/document_upload_page.dart';
 import '../../features/documents/presentation/pages/documents_page.dart';
 import '../../features/invoices/presentation/pages/invoice_description_page.dart';
 import '../../features/invoices/presentation/pages/invoice_request_page.dart';
-import '../../features/medical_profile/presentation/pages/medical_profile_page.dart';
-import '../../features/notifications/presentation/pages/notifications_page.dart';
-import '../../features/obligations/presentation/pages/obligation_details_page.dart';
 import '../../features/obligations/presentation/pages/obligations_page.dart';
-import '../../features/payments/presentation/pages/payments_page.dart';
-import '../../features/reports/presentation/pages/reports_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
 import '../../features/settings/presentation/pages/support_page.dart';
@@ -91,25 +82,13 @@ final appRouter = GoRouter(
             documentTitle: state.uri.queryParameters['document'] ?? 'Documento',
           ),
         ),
-        _appRoute(
-            RouteNames.documentUpload, (_, __) => const DocumentUploadPage()),
         _appRoute(RouteNames.obligations, (_, __) => const ObligationsPage()),
-        _appRoute(RouteNames.obligationDetails,
-            (_, __) => const ObligationDetailsPage()),
-        _appRoute(RouteNames.payments, (_, __) => const PaymentsPage()),
-        _appRoute(RouteNames.reports, (_, __) => const ReportsPage()),
-        _appRoute(RouteNames.chat, (_, __) => const ChatPage()),
-        _appRoute(RouteNames.profile, (_, __) => const MedicalProfilePage()),
-        _appRoute(
-            RouteNames.notifications, (_, __) => const NotificationsPage()),
         _appRoute(RouteNames.settings, (_, __) => const SettingsPage()),
         _appRoute(RouteNames.privacy, (_, __) => const PrivacyPage()),
         _appRoute(RouteNames.support, (_, __) => const SupportPage()),
-        _appRoute(RouteNames.cnpjs, (_, __) => const ManageCnpjsPage()),
         _appRoute(RouteNames.invoices, (_, __) => const InvoiceRequestPage()),
         _appRoute(RouteNames.invoiceDescription,
             (_, __) => const InvoiceDescriptionPage()),
-        _appRoute(RouteNames.clients, (_, __) => const ClientsPage()),
       ],
     ),
     _appRoute(

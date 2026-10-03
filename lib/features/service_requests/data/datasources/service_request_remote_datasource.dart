@@ -13,7 +13,8 @@ class DioServiceRequestRemoteDataSource
   final Dio _dio;
 
   @override
-  Future<Map<String, dynamic>> createDocument(DocumentRequestDraft draft) async {
+  Future<Map<String, dynamic>> createDocument(
+      DocumentRequestDraft draft) async {
     final now = DateTime.now();
     final response = await _dio.post<Map<String, dynamic>>(
       'documents',
