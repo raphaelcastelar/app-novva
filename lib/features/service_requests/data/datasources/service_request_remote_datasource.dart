@@ -22,6 +22,8 @@ class DioServiceRequestRemoteDataSource
         'title': draft.title,
         'category': draft.category,
         'description': draft.description,
+        if (draft.documentTypeId != null)
+          'documentTypeId': draft.documentTypeId,
         'month': now.month,
         'year': now.year,
       },

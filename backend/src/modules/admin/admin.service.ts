@@ -3,7 +3,7 @@ import { RequestKind } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage.service';
 import { isValidCpf } from '../../common/validation';
-import { AdminCreateDoctorDto, AdminRequestQueryDto, AdminUpdateStatusDto } from './admin.dto';
+import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
 
 const CLOSED_STATUSES = new Set(['APPROVED', 'ISSUED', 'REJECTED', 'CANCELED']);
 const TRANSITIONS: Record<RequestKind, Record<string, string[]>> = {
@@ -23,7 +23,7 @@ export class AdminService {
 
   async listRequests(query: AdminRequestQueryDto) {
     const [documents, invoices] = await Promise.all([
-      query.kind === 'INVOICE' ? [] : this.prisma.document.findMany({ include: { user: { include: { profile: true } } }, orderBy: { createdAt: 'desc' }, take: 500 }),
+      query.kind === 'INVOICE' ? [] : this.prisma.document.findMany({ include: { user: { include: { profile: true } }, documentType: true }, orderBy: { createdAt: 'desc' }, take: 500 }),
       query.kind === 'DOCUMENT' ? [] : this.prisma.invoice.findMany({ include: { user: { include: { profile: true } } }, orderBy: { createdAt: 'desc' }, take: 500 }),
     ]);
     const documentEvents = await this.events('DOCUMENT', documents.map((item) => item.id));
@@ -45,7 +45,7 @@ export class AdminService {
 
   async requestDetail(id: string) {
     const [document, invoice] = await Promise.all([
-      this.prisma.document.findUnique({ where: { id }, include: { user: { include: { profile: true } } } }),
+      this.prisma.document.findUnique({ where: { id }, include: { user: { include: { profile: true } }, documentType: true } }),
       this.prisma.invoice.findUnique({ where: { id }, include: { user: { include: { profile: true } } } }),
     ]);
     if (document) return this.documentView(document, await this.eventList('DOCUMENT', id));
@@ -82,7 +82,7 @@ export class AdminService {
     const key = await this.storage.storeDocument(item.userId, id, file);
     try {
       await this.prisma.$transaction(async (transaction) => {
-        await transaction.document.update({ where: { id }, data: { fileKey: key, mimeType: file.mimetype, originalName: file.originalname } });
+        await transaction.document.update({ where: { id }, data: { fileKey: key, mimeType: file.mimetype, originalName: file.originalname, fileUploadedAt: new Date() } });
         await transaction.requestEvent.create({ data: { requestKind: 'DOCUMENT', requestId: id, status: item.status, note: `Arquivo ${file.originalname} anexado`, actor } });
         await transaction.auditLog.create({ data: { action: 'DOCUMENT_FILE_ATTACHED', entity: 'DOCUMENT', entityId: id, metadata: { originalName: file.originalname, mimeType: file.mimetype, actor } } });
       });
@@ -161,6 +161,51 @@ export class AdminService {
     };
   }
 
+  async documentTypes() {
+    return this.prisma.documentType.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
+  }
+
+  async createDocumentType(dto: AdminCreateDocumentTypeDto, actor = 'Equipe Novva') {
+    const name = dto.name.trim();
+    const category = dto.category.trim();
+    if (!name || !category) throw new BadRequestException('Nome e categoria são obrigatórios.');
+    const duplicate = await this.prisma.documentType.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } });
+    if (duplicate) throw new ConflictException('Já existe um tipo de documento com esse nome.');
+    const baseKey = this.slug(name) || 'documento';
+    let key = baseKey;
+    let suffix = 2;
+    while (await this.prisma.documentType.findUnique({ where: { key } })) key = `${baseKey}-${suffix++}`;
+    const item = await this.prisma.documentType.create({
+      data: { key, name, category, validityMonths: dto.validityMonths ?? null, active: dto.active ?? true, sortOrder: dto.sortOrder ?? 0 },
+    });
+    await this.prisma.auditLog.create({ data: { action: 'DOCUMENT_TYPE_CREATED', entity: 'DocumentType', entityId: item.id, metadata: { actor } } });
+    return item;
+  }
+
+  async updateDocumentType(id: string, dto: AdminUpdateDocumentTypeDto, actor = 'Equipe Novva') {
+    const current = await this.prisma.documentType.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Tipo de documento não encontrado.');
+    const name = dto.name?.trim();
+    const category = dto.category?.trim();
+    if (name === '' || category === '') throw new BadRequestException('Nome e categoria não podem ficar vazios.');
+    if (name && name.toLocaleLowerCase('pt-BR') !== current.name.toLocaleLowerCase('pt-BR')) {
+      const duplicate = await this.prisma.documentType.findFirst({ where: { id: { not: id }, name: { equals: name, mode: 'insensitive' } } });
+      if (duplicate) throw new ConflictException('Já existe um tipo de documento com esse nome.');
+    }
+    const item = await this.prisma.documentType.update({
+      where: { id },
+      data: {
+        ...(name !== undefined ? { name } : {}),
+        ...(category !== undefined ? { category } : {}),
+        ...('validityMonths' in dto ? { validityMonths: dto.validityMonths ?? null } : {}),
+        ...(dto.active !== undefined ? { active: dto.active } : {}),
+        ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
+      },
+    });
+    await this.prisma.auditLog.create({ data: { action: 'DOCUMENT_TYPE_UPDATED', entity: 'DocumentType', entityId: id, metadata: { actor, changes: dto as any } } });
+    return item;
+  }
+
   async dashboard() {
     const { results } = await this.listRequests({});
     const now = new Date();
@@ -214,7 +259,8 @@ export class AdminService {
       status: item.status, priority: 'NORMAL', createdAt: item.createdAt, updatedAt: item.updatedAt,
       dueAt: new Date(item.createdAt.getTime() + 24 * 60 * 60 * 1000), category: item.category,
       description: item.description ?? '', details: { Categoria: item.category, Competência: item.month && item.year ? `${String(item.month).padStart(2, '0')}/${item.year}` : 'Não informada' },
-      attachment: item.fileKey ? { originalName: item.originalName, mimeType: item.mimeType } : null,
+      attachment: item.fileKey ? { originalName: item.originalName, mimeType: item.mimeType, uploadedAt: item.fileUploadedAt } : null,
+      documentType: item.documentType ? { id: item.documentType.id, name: item.documentType.name, validityMonths: item.documentType.validityMonths } : null,
       timeline: this.timeline(item.createdAt, events),
     };
   }
@@ -231,4 +277,5 @@ export class AdminService {
   }
 
   private initials(name: string) { return name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase(); }
+  private slug(value: string) { return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
 }

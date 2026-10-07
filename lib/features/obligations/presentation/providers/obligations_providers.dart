@@ -28,6 +28,32 @@ final markObligationPaidProvider = Provider(
   },
 );
 
+final downloadObligationProvider = Provider(
+  (ref) => (String id) async {
+    final response = await ref.read(obligationsDioProvider).get<List<int>>(
+          'obligations/$id/file',
+          options: Options(responseType: ResponseType.bytes),
+        );
+    return response.data ?? const <int>[];
+  },
+);
+
+final requestObligationRecalculationProvider = Provider(
+  (ref) => ({required int month, required int year}) async {
+    await ref.read(obligationsDioProvider).post<Map<String, dynamic>>(
+      'documents',
+      data: {
+        'title': 'Recálculo de guia - ${_monthLabel(month)}/$year',
+        'category': 'Recálculo de guia',
+        'description':
+            'Solicitação de recálculo da guia da competência ${month.toString().padLeft(2, '0')}/$year.',
+        'month': month,
+        'year': year,
+      },
+    );
+  },
+);
+
 Obligation _obligationFromJson(Map<String, dynamic> json) {
   return Obligation(
     id: json['id'] as String,
@@ -42,5 +68,21 @@ Obligation _obligationFromJson(Map<String, dynamic> json) {
       _ => ObligationStatus.open,
     },
     paymentCode: json['paymentCode'] as String?,
+    hasFile: json['hasFile'] as bool? ?? false,
   );
 }
+
+String _monthLabel(int month) => const [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
+    ][month - 1];

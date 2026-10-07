@@ -3,11 +3,13 @@ class DocumentRequestDraft {
     required this.title,
     required this.category,
     this.description = '',
+    this.documentTypeId,
   });
 
   final String title;
   final String category;
   final String description;
+  final String? documentTypeId;
 }
 
 class InvoiceRequestDraft {

@@ -25,11 +25,17 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
   final _municipality = TextEditingController();
   final _takerName = TextEditingController();
   final _takerCnpj = TextEditingController();
-  final _date = TextEditingController(
-    text: DateTime.now().toIso8601String().split('T').first,
-  );
+  late final TextEditingController _date;
+  late DateTime _selectedDate;
   final _amount = TextEditingController();
   final _service = TextEditingController(text: 'Serviços médicos');
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDate = DateUtils.dateOnly(DateTime.now());
+    _date = TextEditingController(text: _formatDate(_selectedDate));
+  }
 
   @override
   void dispose() {
@@ -66,7 +72,15 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
                       AppTextField(
                           label: 'Município',
                           controller: _municipality,
-                          validator: _required),
+                          validator: _required,
+                          suffixIcon: _TipButton(
+                            tooltip: 'Dica sobre o município',
+                            onPressed: () => _showFieldTip(
+                              title: 'Qual município informar?',
+                              message:
+                                  'Informe o município onde o serviço foi prestado. Em caso de dúvida, confirme essa informação antes de solicitar a nota.',
+                            ),
+                          )),
                       const SizedBox(height: 12),
                       AppTextField(
                           label: 'Nome do tomador',
@@ -77,13 +91,27 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
                           label: 'CNPJ do tomador',
                           controller: _takerCnpj,
                           keyboardType: TextInputType.number,
-                          validator: _cnpj),
+                          validator: _cnpj,
+                          suffixIcon: _TipButton(
+                            tooltip: 'Dica sobre o CNPJ',
+                            onPressed: () => _showFieldTip(
+                              title: 'CNPJ do tomador',
+                              message:
+                                  'Digite os 14 números do CNPJ do hospital, clínica ou empresa que receberá a nota fiscal.',
+                            ),
+                          )),
                       const SizedBox(height: 12),
                       AppTextField(
-                        label: 'Data (AAAA-MM-DD)',
+                        label: 'Data do serviço',
                         controller: _date,
                         validator: _required,
-                        suffixIcon: const Icon(Icons.calendar_today_outlined),
+                        readOnly: true,
+                        onTap: _selectDate,
+                        suffixIcon: IconButton(
+                          tooltip: 'Selecionar data',
+                          onPressed: _selectDate,
+                          icon: const Icon(Icons.calendar_today_outlined),
+                        ),
                       ),
                       const SizedBox(height: 12),
                       AppTextField(
@@ -135,12 +163,72 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
     return digits.length == 14 ? null : 'Informe os 14 dígitos do CNPJ';
   }
 
+  String _formatDate(DateTime date) {
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$day/$month/${date.year}';
+  }
+
+  Future<void> _selectDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(DateTime.now().year + 2, 12, 31),
+      helpText: 'Selecione a data do serviço',
+      cancelText: 'Cancelar',
+      confirmText: 'Selecionar',
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _selectedDate = DateUtils.dateOnly(selected);
+      _date.text = _formatDate(_selectedDate);
+    });
+  }
+
+  Future<void> _showFieldTip({
+    required String title,
+    required String message,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.lightbulb_outline, color: AppColors.warning),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(message, style: const TextStyle(height: 1.5)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _continue() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final amount =
         double.tryParse(_amount.text.replaceAll('.', '').replaceAll(',', '.'));
-    final date = DateTime.tryParse(_date.text);
-    if (amount == null || amount <= 0 || date == null) {
+    if (amount == null || amount <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Confira a data e o valor informados.')),
       );
@@ -150,12 +238,29 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
       takerCnpj: _takerCnpj.text,
       takerName: _takerName.text.trim(),
       municipality: _municipality.text.trim(),
-      serviceDate: date,
+      serviceDate: _selectedDate,
       amount: amount,
       taxationCode: AppConstants.defaultTaxCode,
       description: _service.text.trim(),
     );
     context.go(RouteNames.invoiceDescription);
+  }
+}
+
+class _TipButton extends StatelessWidget {
+  const _TipButton({required this.tooltip, required this.onPressed});
+
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      color: AppColors.warning,
+      icon: const Icon(Icons.lightbulb_outline),
+    );
   }
 }
 

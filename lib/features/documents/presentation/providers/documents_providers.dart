@@ -30,6 +30,10 @@ final fetchDocumentsProvider = Provider(
   (ref) => FetchDocuments(ref.watch(documentsRepositoryProvider)),
 );
 
+final documentTypesProvider = FutureProvider.autoDispose(
+  (ref) => ref.watch(documentsRepositoryProvider).fetchDocumentTypes(),
+);
+
 final documentsProvider = StateNotifierProvider.autoDispose<DocumentsController,
     AsyncValue<List<DocumentItem>>>(
   (ref) => DocumentsController(ref.watch(fetchDocumentsProvider)),

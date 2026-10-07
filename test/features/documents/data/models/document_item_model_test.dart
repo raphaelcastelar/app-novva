@@ -40,6 +40,27 @@ void main() {
       expect(item.year, 2026);
     });
 
+    test('maps validity and possibly expired metadata', () {
+      final item = DocumentItemModel.fromJson({
+        'id': 'document-id',
+        'title': 'Certidão de regularidade',
+        'category': 'Fiscal',
+        'status': 'APPROVED',
+        'month': 1,
+        'year': 2026,
+        'hasFile': true,
+        'fileUploadedAt': '2026-01-10T12:00:00.000Z',
+        'expiresAt': '2026-07-10T12:00:00.000Z',
+        'validityMonths': 6,
+        'possiblyExpired': true,
+      });
+
+      expect(item.validityMonths, 6);
+      expect(item.fileUploadedAt, DateTime.utc(2026, 1, 10, 12));
+      expect(item.expiresAt, DateTime.utc(2026, 7, 10, 12));
+      expect(item.possiblyExpired, isTrue);
+    });
+
     test('rejects an unknown API status', () {
       expect(
         () => DocumentItemModel.fromJson({

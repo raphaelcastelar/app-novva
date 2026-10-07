@@ -16,12 +16,18 @@ class DocumentDetailsPage extends ConsumerStatefulWidget {
     required this.documentTitle,
     this.documentId,
     this.originalName,
+    this.documentTypeId,
+    this.possiblyExpired = false,
+    this.expiresAt,
     super.key,
   });
 
   final String documentTitle;
   final String? documentId;
   final String? originalName;
+  final String? documentTypeId;
+  final bool possiblyExpired;
+  final DateTime? expiresAt;
 
   @override
   ConsumerState<DocumentDetailsPage> createState() =>
@@ -68,6 +74,36 @@ class _DocumentDetailsPageState extends ConsumerState<DocumentDetailsPage> {
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 132),
         children: [
           _DocumentActionHeader(documentTitle: widget.documentTitle),
+          if (widget.possiblyExpired) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.28)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.warning_amber_rounded,
+                      color: AppColors.warning),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Este documento está possivelmente vencido${widget.expiresAt == null ? '.' : ' desde ${_date(widget.expiresAt!)}.'} Solicite uma versão atualizada se precisar utilizá-lo.',
+                      style: const TextStyle(
+                        color: AppColors.text,
+                        fontWeight: FontWeight.w700,
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 22),
           _DocumentActionTile(
             title: _downloading ? 'Baixando...' : 'Baixar documento',
@@ -86,13 +122,19 @@ class _DocumentDetailsPageState extends ConsumerState<DocumentDetailsPage> {
             subtitle: 'Abra a solicitação com observação para o contador.',
             icon: Icons.post_add_rounded,
             color: AppColors.accent,
-            route: _documentRequestRoute(widget.documentTitle),
+            route: _documentRequestRoute(
+              widget.documentTitle,
+              widget.documentTypeId,
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+String _date(DateTime value) =>
+    '${value.day.toString().padLeft(2, '0')}/${value.month.toString().padLeft(2, '0')}/${value.year}';
 
 class _DocumentActionHeader extends StatelessWidget {
   const _DocumentActionHeader({required this.documentTitle});
@@ -187,10 +229,13 @@ class _DocumentActionHeader extends StatelessWidget {
   }
 }
 
-String _documentRequestRoute(String documentTitle) {
+String _documentRequestRoute(String documentTitle, String? documentTypeId) {
   return Uri(
     path: RouteNames.documentRequest,
-    queryParameters: {'document': documentTitle},
+    queryParameters: {
+      'document': documentTitle,
+      if (documentTypeId != null) 'type': documentTypeId,
+    },
   ).toString();
 }
 

@@ -12,6 +12,10 @@ class DocumentItem {
     this.hasFile = false,
     this.originalName,
     this.mimeType,
+    this.fileUploadedAt,
+    this.expiresAt,
+    this.validityMonths,
+    this.possiblyExpired = false,
   });
 
   final String id;
@@ -24,4 +28,8 @@ class DocumentItem {
   final bool hasFile;
   final String? originalName;
   final String? mimeType;
+  final DateTime? fileUploadedAt;
+  final DateTime? expiresAt;
+  final int? validityMonths;
+  final bool possiblyExpired;
 }

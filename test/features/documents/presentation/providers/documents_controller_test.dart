@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:novva_app/features/documents/domain/entities/document_item.dart';
+import 'package:novva_app/features/documents/domain/entities/document_type.dart';
 import 'package:novva_app/features/documents/domain/repositories/documents_repository.dart';
 import 'package:novva_app/features/documents/domain/usecases/fetch_documents.dart';
 import 'package:novva_app/features/documents/presentation/providers/documents_providers.dart';
@@ -10,6 +11,9 @@ class FakeDocumentsRepository implements DocumentsRepository {
 
   @override
   Future<List<DocumentItem>> fetchDocuments() async => items;
+
+  @override
+  Future<List<DocumentType>> fetchDocumentTypes() async => const [];
 
   @override
   Future<List<int>> downloadDocument(String id) async => const [];

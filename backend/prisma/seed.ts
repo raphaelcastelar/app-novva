@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PRODUCTION_SEED !== 'true') throw new Error('Seed de demonstração bloqueado em produção.');
+  const currentYear = new Date().getUTCFullYear();
   const passwordHash = await argon2.hash('Novva@1234', { type: argon2.argon2id });
   const user = await prisma.user.upsert({
     where: { cpf: '12831146747' },
@@ -16,12 +17,12 @@ async function main() {
   const count = await prisma.obligation.count({ where: { userId: user.id } });
   if (!count) {
     await prisma.obligation.createMany({ data: [
-      { userId:user.id,name:'DAS Simples Nacional',kind:'DAS',dueDate:new Date('2026-07-20'),amount:1748.12,status:'DUE_SOON',paymentCode:'85890000017 48120385262 60720126052 00123456791' },
-      { userId:user.id,name:'INSS pró-labore',kind:'INSS',dueDate:new Date('2026-07-25'),amount:642.10,status:'OPEN' },
+      { userId:user.id,name:'DAS Simples Nacional',kind:'DAS',dueDate:new Date(Date.UTC(currentYear,6,20)),amount:1748.12,status:'DUE_SOON',paymentCode:'85890000017 48120385262 60720126052 00123456791' },
+      { userId:user.id,name:'INSS pró-labore',kind:'INSS',dueDate:new Date(Date.UTC(currentYear,6,25)),amount:642.10,status:'OPEN' },
     ]});
     await prisma.document.createMany({ data: [
-      { userId:user.id,title:'Extrato bancário',category:'Extratos bancários',status:'PENDING',month:7,year:2026 },
-      { userId:user.id,title:'Contrato social',category:'Contratos',status:'APPROVED',month:6,year:2026 },
+      { userId:user.id,title:'Extrato bancário',category:'Extratos bancários',status:'PENDING',month:7,year:currentYear },
+      { userId:user.id,title:'Contrato social',category:'Contratos',status:'APPROVED',month:6,year:currentYear },
     ]});
     await prisma.notification.create({ data: { userId:user.id,title:'Bem-vinda à Novva',body:'Seu ambiente está pronto para uso.',kind:'welcome' } });
   }

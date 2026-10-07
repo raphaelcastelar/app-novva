@@ -9,6 +9,7 @@ class AppTextField extends StatelessWidget {
     this.obscureText = false,
     this.validator,
     this.onChanged,
+    this.onTap,
     this.suffixIcon,
     this.maxLines = 1,
     this.readOnly = false,
@@ -22,6 +23,7 @@ class AppTextField extends StatelessWidget {
   final bool obscureText;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
+  final VoidCallback? onTap;
   final Widget? suffixIcon;
   final int maxLines;
   final bool readOnly;
@@ -35,6 +37,7 @@ class AppTextField extends StatelessWidget {
       obscureText: obscureText,
       validator: validator,
       onChanged: onChanged,
+      onTap: onTap,
       maxLines: maxLines,
       readOnly: readOnly,
       decoration: InputDecoration(labelText: label, suffixIcon: suffixIcon),

@@ -74,12 +74,17 @@ final appRouter = GoRouter(
             documentTitle: state.uri.queryParameters['document'] ?? 'Documento',
             documentId: state.uri.queryParameters['id'],
             originalName: state.uri.queryParameters['name'],
+            documentTypeId: state.uri.queryParameters['type'],
+            possiblyExpired: state.uri.queryParameters['expired'] == 'true',
+            expiresAt:
+                DateTime.tryParse(state.uri.queryParameters['expiresAt'] ?? ''),
           ),
         ),
         _appRoute(
           RouteNames.documentRequest,
           (_, state) => DocumentRequestPage(
             documentTitle: state.uri.queryParameters['document'] ?? 'Documento',
+            documentTypeId: state.uri.queryParameters['type'],
           ),
         ),
         _appRoute(RouteNames.obligations, (_, __) => const ObligationsPage()),

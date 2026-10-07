@@ -15,10 +15,12 @@ import '../providers/documents_providers.dart';
 class DocumentRequestPage extends ConsumerStatefulWidget {
   const DocumentRequestPage({
     required this.documentTitle,
+    this.documentTypeId,
     super.key,
   });
 
   final String documentTitle;
+  final String? documentTypeId;
 
   @override
   ConsumerState<DocumentRequestPage> createState() =>
@@ -110,6 +112,7 @@ class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
           title: widget.documentTitle,
           category: 'Documentos solicitados',
           description: _observationController.text.trim(),
+          documentTypeId: widget.documentTypeId,
         ),
       );
       state.state = AsyncData(created);

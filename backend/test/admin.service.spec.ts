@@ -37,3 +37,23 @@ describe('AdminService doctor registration', () => {
     await expect(service.createDoctor(dto)).rejects.toBeInstanceOf(ConflictException);
   });
 });
+
+describe('AdminService document types', () => {
+  it('creates a type without validity when the field is omitted', async () => {
+    const created = { id: 'type-id', key: 'contrato-social', name: 'Contrato social', category: 'Empresa', validityMonths: null, active: true, sortOrder: 10 };
+    const prisma = {
+      documentType: {
+        findFirst: jest.fn().mockResolvedValue(null),
+        findUnique: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockResolvedValue(created),
+      },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+    };
+    const service = new AdminService(prisma as any, {} as any);
+
+    const result = await service.createDocumentType({ name: 'Contrato social', category: 'Empresa', sortOrder: 10 });
+
+    expect(result).toEqual(created);
+    expect(prisma.documentType.create).toHaveBeenCalledWith({ data: expect.objectContaining({ validityMonths: null }) });
+  });
+});

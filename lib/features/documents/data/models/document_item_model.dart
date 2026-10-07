@@ -12,6 +12,10 @@ class DocumentItemModel extends DocumentItem {
     super.hasFile,
     super.originalName,
     super.mimeType,
+    super.fileUploadedAt,
+    super.expiresAt,
+    super.validityMonths,
+    super.possiblyExpired,
   });
 
   factory DocumentItemModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +33,11 @@ class DocumentItemModel extends DocumentItem {
       hasFile: json['hasFile'] as bool? ?? false,
       originalName: json['originalName'] as String?,
       mimeType: json['mimeType'] as String?,
+      fileUploadedAt:
+          DateTime.tryParse(json['fileUploadedAt'] as String? ?? ''),
+      expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? ''),
+      validityMonths: (json['validityMonths'] as num?)?.toInt(),
+      possiblyExpired: json['possiblyExpired'] as bool? ?? false,
     );
   }
 

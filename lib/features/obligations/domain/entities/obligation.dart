@@ -8,6 +8,7 @@ class Obligation {
     required this.amount,
     required this.status,
     this.paymentCode,
+    this.hasFile = false,
   });
 
   final String id;
@@ -16,6 +17,7 @@ class Obligation {
   final double amount;
   final ObligationStatus status;
   final String? paymentCode;
+  final bool hasFile;
 
   Obligation copyWith({
     String? id,
@@ -24,6 +26,7 @@ class Obligation {
     double? amount,
     ObligationStatus? status,
     String? paymentCode,
+    bool? hasFile,
   }) {
     return Obligation(
       id: id ?? this.id,
@@ -32,6 +35,7 @@ class Obligation {
       amount: amount ?? this.amount,
       status: status ?? this.status,
       paymentCode: paymentCode ?? this.paymentCode,
+      hasFile: hasFile ?? this.hasFile,
     );
   }
 }

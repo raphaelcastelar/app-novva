@@ -11,6 +11,7 @@ import { ResourcesService } from './resources.service';
 @ApiTags('resources') @ApiBearerAuth() @UseGuards(JwtAuthGuard) @Controller()
 export class ResourcesController {
   constructor(private readonly service: ResourcesService) {}
+  @Get('document-types') documentTypes() { return this.service.documentTypes(); }
   @Get('documents') documents(@CurrentUser() u: AuthenticatedUser, @Query() q: PageDto) { return this.service.documents(u.id, q); }
   @Post('documents') createDocument(@CurrentUser() u: AuthenticatedUser, @Body() dto: CreateDocumentDto) { return this.service.createDocument(u.id, dto); }
   @Get('documents/:id') document(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.document(u.id, id); }
@@ -34,6 +35,15 @@ export class ResourcesController {
   @Get('documents/:id/download-url') downloadUrl(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.documentDownloadUrl(u.id, id); }
   @Get('obligations') obligations(@CurrentUser() u: AuthenticatedUser, @Query() q: PageDto) { return this.service.obligations(u.id, q); }
   @Get('obligations/:id') obligation(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.obligation(u.id, id); }
+  @Get('obligations/:id/file')
+  async obligationFile(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string, @Res({ passthrough: true }) response: Response) {
+    const result = await this.service.obligationFile(u.id, id);
+    response.setHeader('Content-Type', 'application/pdf');
+    response.setHeader('Content-Disposition', contentDisposition(result.originalName));
+    if (result.contentLength != null) response.setHeader('Content-Length', String(result.contentLength));
+    response.setHeader('Cache-Control', 'private, no-store');
+    return new StreamableFile(result.stream);
+  }
   @Post('obligations/:id/paid') markPaid(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.markObligationPaid(u.id, id); }
   @Get('invoices') invoices(@CurrentUser() u: AuthenticatedUser, @Query() q: PageDto) { return this.service.invoices(u.id, q); }
   @Post('invoices') createInvoice(@CurrentUser() u: AuthenticatedUser, @Body() dto: CreateInvoiceDto) { return this.service.createInvoice(u.id, dto); }
