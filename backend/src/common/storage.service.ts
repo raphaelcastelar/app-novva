@@ -54,6 +54,25 @@ export class StorageService {
     return key;
   }
 
+  async storeNotice(noticeId: string, file: Express.Multer.File) {
+    this.validateFile(file);
+    const extension = MIME_EXTENSIONS[file.mimetype];
+    return this.store(`notices/${noticeId}/${randomUUID()}.${extension}`, file);
+  }
+
+  private async store(key: string, file: Express.Multer.File) {
+    if (this.driver() === 's3') {
+      await this.s3Client().send(new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET!, Key: key, Body: file.buffer, ContentType: file.mimetype,
+      }));
+      return key;
+    }
+    const filePath = this.localPath(key);
+    await mkdir(resolve(filePath, '..'), { recursive: true, mode: 0o700 });
+    await writeFile(filePath, file.buffer, { mode: 0o600 });
+    return key;
+  }
+
   async readDocument(key: string): Promise<StoredDocument> {
     if (this.driver() === 's3') {
       const object = await this.s3Client().send(new GetObjectCommand({

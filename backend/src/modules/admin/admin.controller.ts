@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Headers, Param, Patch, Post, Query, Res, StreamableFile, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Headers, HttpCode, Param, Patch, Post, Query, Res, StreamableFile, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
@@ -49,6 +49,28 @@ export class AdminController {
     @Body() dto: AdminUpdateDocumentTypeDto,
     @Headers('x-admin-actor') actor?: string,
   ) { return this.service.updateDocumentType(id, dto, actor); }
+  @Get('notices') notices() { return this.service.notices(); }
+  @Post('notices')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: DOCUMENT_MAX_BYTES } }))
+  createNotice(@Body() body: Record<string, string>, @UploadedFile() file?: Express.Multer.File, @Headers('x-admin-actor') actor?: string) {
+    return this.service.createNotice(body, file, actor);
+  }
+  @Patch('notices/:id')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: DOCUMENT_MAX_BYTES } }))
+  updateNotice(@Param('id') id: string, @Body() body: Record<string, string>, @UploadedFile() file?: Express.Multer.File, @Headers('x-admin-actor') actor?: string) {
+    return this.service.updateNotice(id, body, file, actor);
+  }
+  @Delete('notices/:id') @HttpCode(204)
+  removeNotice(@Param('id') id: string, @Headers('x-admin-actor') actor?: string) { return this.service.removeNotice(id, actor); }
+  @Get('notices/:id/file')
+  async noticeFile(@Param('id') id: string, @Res({ passthrough: true }) response: Response) {
+    const result = await this.service.noticeFile(id);
+    response.setHeader('Content-Type', result.mimeType);
+    response.setHeader('Content-Disposition', contentDisposition(result.originalName));
+    if (result.contentLength != null) response.setHeader('Content-Length', String(result.contentLength));
+    response.setHeader('Cache-Control', 'private, no-store');
+    return new StreamableFile(result.stream);
+  }
   @Get('dashboard') dashboard() { return this.service.dashboard(); }
 }
 

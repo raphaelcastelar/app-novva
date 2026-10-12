@@ -40,8 +40,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Central de guias'), findsOneWidget);
-    expect(find.text('Baixar guia'), findsWidgets);
-    expect(find.text('Pedir recálculo'), findsWidgets);
+    expect(find.text('Baixar guia'), findsOneWidget);
+    expect(find.text('Pedir recálculo'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded).first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Baixar guia'), findsNWidgets(2));
+    expect(find.text('Pedir recálculo'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
   });
 }

@@ -206,6 +206,111 @@ export class AdminService {
     return item;
   }
 
+  async notices() {
+    const items = await this.prisma.notice.findMany({
+      include: { recipients: { include: { user: { include: { profile: true } } }, orderBy: { user: { name: 'asc' } } } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return items.map((item) => this.noticeView(item));
+  }
+
+  async createNotice(body: Record<string, string>, file?: Express.Multer.File, actor = 'Equipe Novva') {
+    const payload = await this.noticePayload(body);
+    const item = await this.prisma.notice.create({
+      data: {
+        title: payload.title, description: payload.description, active: payload.active, createdBy: actor,
+        recipients: { create: payload.recipientIds.map((userId) => ({ userId })) },
+      },
+    });
+    let storedKey: string | undefined;
+    try {
+      if (file) {
+        storedKey = await this.storage.storeNotice(item.id, file);
+        await this.prisma.notice.update({ where: { id: item.id }, data: { attachmentKey: storedKey, attachmentOriginalName: file.originalname, attachmentMimeType: file.mimetype } });
+      }
+      await this.prisma.auditLog.create({ data: { action: 'NOTICE_CREATED', entity: 'Notice', entityId: item.id, metadata: { actor, recipientCount: payload.recipientIds.length } } });
+      return (await this.notices()).find((notice) => notice.id === item.id);
+    } catch (error) {
+      await this.prisma.notice.delete({ where: { id: item.id } }).catch(() => undefined);
+      await this.storage.deleteDocument(storedKey);
+      throw error;
+    }
+  }
+
+  async updateNotice(id: string, body: Record<string, string>, file?: Express.Multer.File, actor = 'Equipe Novva') {
+    const current = await this.prisma.notice.findUnique({ where: { id } });
+    if (!current) throw new NotFoundException('Aviso não encontrado.');
+    const payload = await this.noticePayload(body);
+    let newKey: string | undefined;
+    if (file) newKey = await this.storage.storeNotice(id, file);
+    try {
+      await this.prisma.$transaction(async (transaction) => {
+        await transaction.notice.update({
+          where: { id },
+          data: {
+            title: payload.title, description: payload.description, active: payload.active,
+            ...(newKey ? { attachmentKey: newKey, attachmentOriginalName: file!.originalname, attachmentMimeType: file!.mimetype } : {}),
+            ...(body.removeAttachment === 'true' && !newKey ? { attachmentKey: null, attachmentOriginalName: null, attachmentMimeType: null } : {}),
+          },
+        });
+        await transaction.noticeRecipient.deleteMany({ where: { noticeId: id, userId: { notIn: payload.recipientIds } } });
+        for (const userId of payload.recipientIds) {
+          await transaction.noticeRecipient.upsert({
+            where: { noticeId_userId: { noticeId: id, userId } }, update: {}, create: { noticeId: id, userId },
+          });
+        }
+        await transaction.auditLog.create({ data: { action: 'NOTICE_UPDATED', entity: 'Notice', entityId: id, metadata: { actor, recipientCount: payload.recipientIds.length } } });
+      });
+      if ((newKey || body.removeAttachment === 'true') && current.attachmentKey) await this.storage.deleteDocument(current.attachmentKey);
+      return (await this.notices()).find((notice) => notice.id === id);
+    } catch (error) {
+      if (newKey) await this.storage.deleteDocument(newKey);
+      throw error;
+    }
+  }
+
+  async removeNotice(id: string, actor = 'Equipe Novva') {
+    const item = await this.prisma.notice.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Aviso não encontrado.');
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.notice.delete({ where: { id } });
+      await transaction.auditLog.create({ data: { action: 'NOTICE_DELETED', entity: 'Notice', entityId: id, metadata: { actor } } });
+    });
+    await this.storage.deleteDocument(item.attachmentKey);
+  }
+
+  async noticeFile(id: string) {
+    const item = await this.prisma.notice.findUnique({ where: { id } });
+    if (!item) throw new NotFoundException('Aviso não encontrado.');
+    if (!item.attachmentKey || !item.attachmentMimeType || !item.attachmentOriginalName) throw new NotFoundException('Aviso sem anexo.');
+    return { ...await this.storage.readDocument(item.attachmentKey), mimeType: item.attachmentMimeType, originalName: item.attachmentOriginalName };
+  }
+
+  private async noticePayload(body: Record<string, string>) {
+    const title = (body.title ?? '').trim();
+    const description = (body.description ?? '').trim();
+    if (!title || !description) throw new BadRequestException('Título e descrição são obrigatórios.');
+    if (title.length > 160) throw new BadRequestException('O título deve ter no máximo 160 caracteres.');
+    let recipientIds: string[];
+    try { recipientIds = JSON.parse(body.recipientIds ?? '[]'); } catch { throw new BadRequestException('Destinatários inválidos.'); }
+    if (!Array.isArray(recipientIds)) throw new BadRequestException('Destinatários inválidos.');
+    recipientIds = [...new Set(recipientIds)].filter((value) => typeof value === 'string');
+    if (!recipientIds.length) throw new BadRequestException('Selecione ao menos um médico.');
+    const count = await this.prisma.user.count({ where: { id: { in: recipientIds }, status: 'ACTIVE' } });
+    if (count !== recipientIds.length) throw new BadRequestException('Um ou mais destinatários são inválidos ou estão bloqueados.');
+    return { title, description, recipientIds, active: body.active !== 'false' };
+  }
+
+  private noticeView(item: any) {
+    return {
+      id: item.id, title: item.title, description: item.description, active: item.active,
+      attachment: item.attachmentKey ? { originalName: item.attachmentOriginalName, mimeType: item.attachmentMimeType } : null,
+      recipients: item.recipients.map((recipient: any) => ({ id: recipient.user.id, name: recipient.user.name, email: recipient.user.email, company: recipient.user.profile?.companyName ?? '', status: recipient.user.status, readAt: recipient.readAt })),
+      recipientCount: item.recipients.length, readCount: item.recipients.filter((recipient: any) => recipient.readAt).length,
+      createdBy: item.createdBy, createdAt: item.createdAt, updatedAt: item.updatedAt,
+    };
+  }
+
   async dashboard() {
     const { results } = await this.listRequests({});
     const now = new Date();

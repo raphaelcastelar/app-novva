@@ -53,12 +53,14 @@ void main() {
         'expiresAt': '2026-07-10T12:00:00.000Z',
         'validityMonths': 6,
         'possiblyExpired': true,
+        'documentTypeId': 'type-id',
       });
 
       expect(item.validityMonths, 6);
       expect(item.fileUploadedAt, DateTime.utc(2026, 1, 10, 12));
       expect(item.expiresAt, DateTime.utc(2026, 7, 10, 12));
       expect(item.possiblyExpired, isTrue);
+      expect(item.documentTypeId, 'type-id');
     });
 
     test('rejects an unknown API status', () {

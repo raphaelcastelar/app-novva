@@ -16,6 +16,7 @@ class DocumentItem {
     this.expiresAt,
     this.validityMonths,
     this.possiblyExpired = false,
+    this.documentTypeId,
   });
 
   final String id;
@@ -32,4 +33,5 @@ class DocumentItem {
   final DateTime? expiresAt;
   final int? validityMonths;
   final bool possiblyExpired;
+  final String? documentTypeId;
 }

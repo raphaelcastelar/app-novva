@@ -17,6 +17,8 @@ import { StorageService } from './common/storage.service';
 import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
 import { InternalTokenGuard } from './modules/admin/internal-token.guard';
+import { NoticesController } from './modules/notices/notices.controller';
+import { NoticesService } from './modules/notices/notices.service';
 
 @Module({
   imports: [
@@ -33,7 +35,7 @@ import { InternalTokenGuard } from './modules/admin/internal-token.guard';
     }),
     JwtModule.register({ global: true, secret: process.env.JWT_SECRET, signOptions: { expiresIn: '15m' } }),
   ],
-  controllers: [HealthController, AuthController, UsersController, ResourcesController, DashboardController, AdminController],
-  providers: [PrismaService, MailService, StorageService, AuthService, JwtAuthGuard, UsersService, ResourcesService, DashboardService, AdminService, InternalTokenGuard],
+  controllers: [HealthController, AuthController, UsersController, ResourcesController, DashboardController, AdminController, NoticesController],
+  providers: [PrismaService, MailService, StorageService, AuthService, JwtAuthGuard, UsersService, ResourcesService, DashboardService, AdminService, InternalTokenGuard, NoticesService],
 })
 export class AppModule {}

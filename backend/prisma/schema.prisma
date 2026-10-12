@@ -74,6 +74,7 @@ model User {
   payments            Payment[]
   conversation        Conversation?
   notifications       Notification[]
+  noticeRecipients    NoticeRecipient[]
   auditLogs           AuditLog[]
 
   @@map("users")
@@ -268,6 +269,35 @@ model Notification {
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+model Notice {
+  id                     String            @id @default(uuid()) @db.Uuid
+  title                  String            @db.VarChar(160)
+  description            String
+  active                 Boolean           @default(true)
+  attachmentKey          String?           @map("attachment_key")
+  attachmentOriginalName String?           @map("attachment_original_name") @db.VarChar(255)
+  attachmentMimeType     String?           @map("attachment_mime_type") @db.VarChar(100)
+  createdBy              String?           @map("created_by") @db.VarChar(160)
+  createdAt              DateTime          @default(now()) @map("created_at")
+  updatedAt              DateTime          @updatedAt @map("updated_at")
+  recipients             NoticeRecipient[]
+
+  @@index([active, createdAt(sort: Desc)])
+  @@map("notices")
+}
+
+model NoticeRecipient {
+  noticeId String    @map("notice_id") @db.Uuid
+  userId   String    @map("user_id") @db.Uuid
+  readAt   DateTime? @map("read_at")
+  notice   Notice    @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([noticeId, userId])
+  @@index([userId, readAt])
+  @@map("notice_recipients")
 }
 
 model AuditLog {

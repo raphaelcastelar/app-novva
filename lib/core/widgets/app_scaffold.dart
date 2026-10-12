@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/routes/route_names.dart';
 import '../../app/theme/app_colors.dart';
+import 'novva_brand_mark.dart';
 
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
@@ -24,9 +25,18 @@ class AppScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appBarActions = [
+      ...?actions,
+      const Padding(
+        padding: EdgeInsets.only(left: 6, right: 14),
+        child: Center(child: NovvaBrandMark(size: 36)),
+      ),
+    ];
+
     return Scaffold(
-      appBar:
-          title.isEmpty ? null : AppBar(title: Text(title), actions: actions),
+      appBar: title.isEmpty
+          ? null
+          : AppBar(title: Text(title), actions: appBarActions),
       body: SafeArea(child: child),
       floatingActionButton: floatingActionButton == null
           ? null

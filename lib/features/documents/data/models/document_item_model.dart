@@ -16,6 +16,7 @@ class DocumentItemModel extends DocumentItem {
     super.expiresAt,
     super.validityMonths,
     super.possiblyExpired,
+    super.documentTypeId,
   });
 
   factory DocumentItemModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +39,8 @@ class DocumentItemModel extends DocumentItem {
       expiresAt: DateTime.tryParse(json['expiresAt'] as String? ?? ''),
       validityMonths: (json['validityMonths'] as num?)?.toInt(),
       possiblyExpired: json['possiblyExpired'] as bool? ?? false,
+      documentTypeId: json['documentTypeId'] as String? ??
+          (json['documentType'] as Map?)?['id'] as String?,
     );
   }
 

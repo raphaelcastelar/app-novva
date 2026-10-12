@@ -105,6 +105,15 @@ class _GuidesTimelineState extends State<_GuidesTimeline>
         .where((item) => item.hasFile)
         .map((item) => item.dueDate.month)
         .toSet();
+    final now = DateTime.now();
+    final showsCurrentMonth = _selectedYear == now.year;
+    final otherMonths = _orderedMonths
+        .where((month) => !showsCurrentMonth || month != now.month)
+        .toList();
+
+    List<Obligation> itemsForMonth(int month) => yearItems
+        .where((item) => item.dueDate.month == month)
+        .toList(growable: false);
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
@@ -119,44 +128,91 @@ class _GuidesTimelineState extends State<_GuidesTimeline>
             downloadCount: monthsWithFile.length,
             onYearSelected: (year) => setState(() => _selectedYear = year),
           ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Competências',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-                ),
-              ),
-              Text(
-                '$_selectedYear',
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Baixe sua guia ou solicite um recálculo em cada mês.',
-            style: TextStyle(color: AppColors.muted),
-          ),
-          const SizedBox(height: 14),
-          for (final month in _orderedMonths) ...[
-            _MonthGuideCard(
-              month: month,
-              year: _selectedYear,
-              items: yearItems
-                  .where((item) => item.dueDate.month == month)
-                  .toList(),
+          const SizedBox(height: 24),
+          if (showsCurrentMonth) ...[
+            const _GuidesSectionHeading(
+              eyebrow: 'AGORA',
+              title: 'Mês atual',
+              description: 'Acompanhe vencimentos e acesse suas guias.',
             ),
             const SizedBox(height: 12),
+            _MonthGuideCard(
+              key: ValueKey('$_selectedYear-${now.month}'),
+              month: now.month,
+              year: _selectedYear,
+              items: itemsForMonth(now.month),
+            ),
+            const SizedBox(height: 26),
           ],
+          _GuidesSectionHeading(
+            eyebrow: showsCurrentMonth ? 'HISTÓRICO' : 'ANO SELECIONADO',
+            title: showsCurrentMonth
+                ? 'Outras competências'
+                : 'Competências de $_selectedYear',
+            description: 'Toque em um mês para ver detalhes e ações.',
+          ),
+          const SizedBox(height: 12),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              children: [
+                for (var index = 0; index < otherMonths.length; index++) ...[
+                  _MonthGuideCard(
+                    key: ValueKey('$_selectedYear-${otherMonths[index]}'),
+                    month: otherMonths[index],
+                    year: _selectedYear,
+                    items: itemsForMonth(otherMonths[index]),
+                    grouped: true,
+                  ),
+                  if (index < otherMonths.length - 1)
+                    const Divider(height: 1, indent: 64),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+class _GuidesSectionHeading extends StatelessWidget {
+  const _GuidesSectionHeading({
+    required this.eyebrow,
+    required this.title,
+    required this.description,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String description;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            eyebrow,
+            style: const TextStyle(
+              color: AppColors.accent,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.15,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 3),
+          Text(description, style: const TextStyle(color: AppColors.muted)),
+        ],
+      );
 }
 
 class _GuidesHero extends StatelessWidget {
@@ -175,141 +231,159 @@ class _GuidesHero extends StatelessWidget {
   final ValueChanged<int> onYearSelected;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.premiumGradient,
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 30,
-            offset: Offset(0, 16),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: -24,
-            top: -28,
-            child: Icon(
-              Icons.receipt_long_outlined,
-              color: Colors.white.withValues(alpha: 0.08),
-              size: 150,
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const _GuidesHeroIcon(),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Central de guias',
+                        style: TextStyle(
+                          color: AppColors.text,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Resumo das competências do ano',
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: const Icon(
-                  Icons.calendar_view_month_rounded,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Central de guias',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'Tudo organizado por competência, em um só lugar.',
-                style: TextStyle(color: Color(0xD9FFFFFF), height: 1.35),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: _HeroMetric(
-                      value: '$downloadCount',
-                      label: 'para baixar',
-                      icon: Icons.download_done_rounded,
+                PopupMenuButton<int>(
+                  initialValue: year,
+                  tooltip: 'Selecionar ano',
+                  onSelected: onYearSelected,
+                  itemBuilder: (_) => [
+                    for (final option in years)
+                      PopupMenuItem(value: option, child: Text('$option')),
+                  ],
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 11,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.softPrimary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$year',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.primary,
+                          size: 18,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 10),
+                ),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
                   Expanded(
-                    child: _HeroMetric(
+                    child: _YearSummary(
+                      value: '$downloadCount',
+                      label: 'com download',
+                      icon: Icons.file_download_done_rounded,
+                      color: AppColors.success,
+                    ),
+                  ),
+                  Container(width: 1, height: 32, color: AppColors.border),
+                  Expanded(
+                    child: _YearSummary(
                       value: '$registeredCount',
                       label: 'cadastradas',
-                      icon: Icons.task_alt_rounded,
+                      icon: Icons.calendar_month_rounded,
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final option in years) ...[
-                      ChoiceChip(
-                        label: Text('$option'),
-                        selected: option == year,
-                        onSelected: (_) => onYearSelected(option),
-                        selectedColor: Colors.white,
-                        backgroundColor: Colors.white.withValues(alpha: 0.12),
-                        side: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.22),
-                        ),
-                        labelStyle: TextStyle(
-                          color: option == year
-                              ? AppColors.primaryDark
-                              : Colors.white,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+            ),
+          ],
+        ),
+      );
 }
 
-class _HeroMetric extends StatelessWidget {
-  const _HeroMetric({
+class _GuidesHeroIcon extends StatelessWidget {
+  const _GuidesHeroIcon();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          gradient: AppColors.premiumGradient,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(
+          Icons.receipt_long_rounded,
+          color: Colors.white,
+          size: 22,
+        ),
+      );
+}
+
+class _YearSummary extends StatelessWidget {
+  const _YearSummary({
     required this.value,
     required this.label,
     required this.icon,
+    required this.color,
   });
 
   final String value;
   final String label;
   final IconData icon;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(13),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-      ),
-      child: Row(
+  Widget build(BuildContext context) => Row(
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: Icon(icon, color: color, size: 18),
+          ),
           const SizedBox(width: 9),
           Expanded(
             child: Column(
@@ -318,8 +392,8 @@ class _HeroMetric extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+                    color: AppColors.text,
+                    fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -328,18 +402,15 @@ class _HeroMetric extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Color(0xCFFFFFFF),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
+                    color: AppColors.muted,
+                    fontSize: 10,
                   ),
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
+      );
 }
 
 class _MonthGuideCard extends ConsumerStatefulWidget {
@@ -347,11 +418,14 @@ class _MonthGuideCard extends ConsumerStatefulWidget {
     required this.month,
     required this.year,
     required this.items,
+    this.grouped = false,
+    super.key,
   });
 
   final int month;
   final int year;
   final List<Obligation> items;
+  final bool grouped;
 
   @override
   ConsumerState<_MonthGuideCard> createState() => _MonthGuideCardState();
@@ -360,6 +434,13 @@ class _MonthGuideCard extends ConsumerStatefulWidget {
 class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
   bool _downloading = false;
   bool _requesting = false;
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = _isCurrentMonth;
+  }
 
   List<Obligation> get _downloadable =>
       widget.items.where((item) => item.hasFile).toList();
@@ -368,6 +449,8 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
     final now = DateTime.now();
     return now.year == widget.year && now.month == widget.month;
   }
+
+  bool get _isOpen => _isCurrentMonth || _expanded;
 
   @override
   Widget build(BuildContext context) {
@@ -379,203 +462,256 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
+        color:
+            widget.grouped && !_isOpen ? Colors.transparent : AppColors.surface,
+        borderRadius: BorderRadius.circular(widget.grouped ? 18 : 24),
         border: Border.all(
-          color: _isCurrentMonth ? AppColors.accent : AppColors.border,
+          color: _isCurrentMonth
+              ? AppColors.accent
+              : widget.grouped && !_isOpen
+                  ? Colors.transparent
+                  : presentation.color.withValues(alpha: 0.24),
           width: _isCurrentMonth ? 1.5 : 1,
         ),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 22,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _MonthBadge(
-                  month: widget.month,
-                  color: presentation.color,
+        boxShadow: _isCurrentMonth
+            ? const [
+                BoxShadow(
+                  color: AppColors.shadow,
+                  blurRadius: 22,
+                  offset: Offset(0, 10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+              ]
+            : null,
+      ),
+      child: AnimatedSize(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: EdgeInsets.all(_isOpen ? 16 : 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _isCurrentMonth
+                    ? null
+                    : () => setState(() => _expanded = !_expanded),
+                child: Row(
+                  crossAxisAlignment: _isOpen
+                      ? CrossAxisAlignment.start
+                      : CrossAxisAlignment.center,
+                  children: [
+                    _MonthBadge(
+                      month: widget.month,
+                      color: presentation.color,
+                      compact: !_isOpen,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Flexible(
-                            child: Text(
-                              _monthLabel(widget.month),
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  _monthLabel(widget.month),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              if (_isCurrentMonth) ...[
+                                const SizedBox(width: 7),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.softAccent,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: const Text(
+                                    'MÊS ATUAL',
+                                    style: TextStyle(
+                                      color: AppColors.accent,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          if (_isOpen) ...[
+                            const SizedBox(height: 5),
+                            Text(
+                              presentation.description,
                               style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w900,
+                                color: AppColors.muted,
+                                height: 1.3,
                               ),
                             ),
-                          ),
-                          if (_isCurrentMonth) ...[
-                            const SizedBox(width: 7),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.softAccent,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: const Text(
-                                'MÊS ATUAL',
-                                style: TextStyle(
-                                  color: AppColors.accent,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w900,
-                                ),
+                          ] else ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              widget.items.isEmpty
+                                  ? 'Nenhuma guia disponível'
+                                  : '${widget.items.length} ${widget.items.length == 1 ? 'guia' : 'guias'} • ${AppFormatters.money(total)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: AppColors.muted,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ],
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        presentation.description,
-                        style: const TextStyle(
+                    ),
+                    const SizedBox(width: 8),
+                    StatusBadge(presentation.label, color: presentation.color),
+                    if (!_isCurrentMonth) ...[
+                      const SizedBox(width: 2),
+                      AnimatedRotation(
+                        turns: _expanded ? 0.5 : 0,
+                        duration: const Duration(milliseconds: 220),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down_rounded,
                           color: AppColors.muted,
-                          height: 1.3,
+                          size: 21,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (_isOpen) ...[
+                const SizedBox(height: 14),
+                if (widget.items.isEmpty)
+                  const _WaitingGuidePanel()
+                else ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 9),
+                        const Expanded(
+                          child: Text(
+                            'Total da competência',
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        Text(
+                          AppFormatters.money(total),
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (var index = 0; index < widget.items.length; index++) ...[
+                    _GuideEntry(widget.items[index]),
+                    if (index < widget.items.length - 1)
+                      const Divider(height: 22),
+                  ],
+                ],
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final buttonWidth = (constraints.maxWidth - 8) / 2;
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        SizedBox(
+                          width: buttonWidth,
+                          child: FilledButton.icon(
+                            onPressed: _downloadable.isEmpty || _downloading
+                                ? null
+                                : _downloadGuide,
+                            icon: _downloading
+                                ? const SizedBox.square(
+                                    dimension: 17,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.download_rounded, size: 19),
+                            label: Text(
+                              _downloading ? 'Baixando...' : 'Baixar guia',
+                              maxLines: 1,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: buttonWidth,
+                          child: OutlinedButton.icon(
+                            onPressed:
+                                _requesting ? null : _requestRecalculation,
+                            icon: _requesting
+                                ? const SizedBox.square(
+                                    dimension: 17,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.refresh_rounded, size: 19),
+                            label: const Text(
+                              'Pedir recálculo',
+                              maxLines: 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                if (_downloadable.isEmpty) ...[
+                  const SizedBox(height: 8),
+                  const Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 15,
+                        color: AppColors.muted,
+                      ),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'O download será liberado quando o PDF for publicado.',
+                          style: TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 11,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                StatusBadge(presentation.label, color: presentation.color),
-              ],
-            ),
-            const SizedBox(height: 14),
-            if (widget.items.isEmpty)
-              const _WaitingGuidePanel()
-            else ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 11,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.account_balance_wallet_outlined,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 9),
-                    const Expanded(
-                      child: Text(
-                        'Total da competência',
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      AppFormatters.money(total),
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              for (var index = 0; index < widget.items.length; index++) ...[
-                _GuideEntry(widget.items[index]),
-                if (index < widget.items.length - 1) const Divider(height: 22),
-              ],
-            ],
-            const SizedBox(height: 16),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final buttonWidth = (constraints.maxWidth - 8) / 2;
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    SizedBox(
-                      width: buttonWidth,
-                      child: FilledButton.icon(
-                        onPressed: _downloadable.isEmpty || _downloading
-                            ? null
-                            : _downloadGuide,
-                        icon: _downloading
-                            ? const SizedBox.square(
-                                dimension: 17,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.download_rounded, size: 19),
-                        label: Text(
-                          _downloading ? 'Baixando...' : 'Baixar guia',
-                          maxLines: 1,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: buttonWidth,
-                      child: OutlinedButton.icon(
-                        onPressed: _requesting ? null : _requestRecalculation,
-                        icon: _requesting
-                            ? const SizedBox.square(
-                                dimension: 17,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Icon(Icons.refresh_rounded, size: 19),
-                        label: const Text(
-                          'Pedir recálculo',
-                          maxLines: 1,
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-            if (_downloadable.isEmpty) ...[
-              const SizedBox(height: 8),
-              const Row(
-                children: [
-                  Icon(
-                    Icons.info_outline_rounded,
-                    size: 15,
-                    color: AppColors.muted,
-                  ),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'O download será liberado quando o PDF for publicado.',
-                      style: TextStyle(
-                        color: AppColors.muted,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
                 ],
-              ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -757,19 +893,24 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
 }
 
 class _MonthBadge extends StatelessWidget {
-  const _MonthBadge({required this.month, required this.color});
+  const _MonthBadge({
+    required this.month,
+    required this.color,
+    this.compact = false,
+  });
 
   final int month;
   final Color color;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 48,
-      height: 52,
+      width: compact ? 42 : 48,
+      height: compact ? 42 : 52,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 13 : 16),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -778,18 +919,19 @@ class _MonthBadge extends StatelessWidget {
             month.toString().padLeft(2, '0'),
             style: TextStyle(
               color: color,
-              fontSize: 18,
+              fontSize: compact ? 16 : 18,
               fontWeight: FontWeight.w900,
             ),
           ),
-          Text(
-            _monthShortLabel(month),
-            style: TextStyle(
-              color: color,
-              fontSize: 9,
-              fontWeight: FontWeight.w900,
+          if (!compact)
+            Text(
+              _monthShortLabel(month),
+              style: TextStyle(
+                color: color,
+                fontSize: 9,
+                fontWeight: FontWeight.w900,
+              ),
             ),
-          ),
         ],
       ),
     );
