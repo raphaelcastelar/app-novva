@@ -5,7 +5,7 @@ import type { Response } from 'express';
 import { AuthenticatedUser, CurrentUser } from '../../common/current-user.decorator';
 import { DOCUMENT_MAX_BYTES } from '../../common/storage.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, PageDto, SendMessageDto } from './resources.dto';
+import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, GenerateObligationDto, PageDto, SendMessageDto } from './resources.dto';
 import { ResourcesService } from './resources.service';
 
 @ApiTags('resources') @ApiBearerAuth() @UseGuards(JwtAuthGuard) @Controller()
@@ -34,6 +34,8 @@ export class ResourcesController {
   @Post('documents/:id/confirm-upload') confirmUpload(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string, @Body() dto: ConfirmDocumentUploadDto) { return this.service.confirmDocumentUpload(u.id, id, dto); }
   @Get('documents/:id/download-url') downloadUrl(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.documentDownloadUrl(u.id, id); }
   @Get('obligations') obligations(@CurrentUser() u: AuthenticatedUser, @Query() q: PageDto) { return this.service.obligations(u.id, q); }
+  @Post('obligations/generate') generateObligation(@CurrentUser() u: AuthenticatedUser, @Body() dto: GenerateObligationDto) { return this.service.generateObligation(u.id, dto); }
+  @Post('obligations/:id/recalculate') recalculateObligation(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.recalculateObligation(u.id, id); }
   @Get('obligations/:id') obligation(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.obligation(u.id, id); }
   @Get('obligations/:id/file')
   async obligationFile(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string, @Res({ passthrough: true }) response: Response) {

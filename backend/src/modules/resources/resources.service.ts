@@ -1,12 +1,18 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
+import { SerproService } from '../../common/serpro.service';
 import { isValidCnpj } from '../../common/validation';
-import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, PageDto } from './resources.dto';
+import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, GenerateObligationDto, PageDto } from './resources.dto';
 import { StorageService } from '../../common/storage.service';
 
 @Injectable()
 export class ResourcesService {
-  constructor(private readonly prisma: PrismaService, private readonly storage: StorageService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+    private readonly serpro: SerproService,
+  ) {}
   private paging(q: PageDto) { return { skip: (q.page - 1) * q.limit, take: q.limit }; }
   private async page<T>(items: T[], total: number, q: PageDto) { return { items, meta: { page: q.page, limit: q.limit, total, pages: Math.ceil(total / q.limit) } }; }
   async documentTypes() {
@@ -64,8 +70,43 @@ export class ResourcesService {
     return { ...await this.storage.readDocument(item.fileKey), mimeType: item.mimeType, originalName: item.originalName };
   }
   async obligations(userId: string, q: PageDto) { const where={userId}; const [items,total]=await this.prisma.$transaction([this.prisma.obligation.findMany({where,...this.paging(q),orderBy:{dueDate:'desc'}}),this.prisma.obligation.count({where})]); return this.page(items.map((item) => this.obligationView(item)),total,q); }
+  async generateObligation(userId: string, dto: GenerateObligationDto) {
+    const competenceStart = new Date(Date.UTC(dto.year, dto.month - 1, 1));
+    const competenceEnd = new Date(Date.UTC(dto.year, dto.month, 1));
+    const existing = await this.prisma.obligation.findFirst({
+      where: {
+        userId,
+        kind: 'DAS',
+        OR: [
+          { competenceYear: dto.year, competenceMonth: dto.month },
+          {
+            competenceYear: null,
+            competenceMonth: null,
+            dueDate: { gte: competenceStart, lt: competenceEnd },
+          },
+        ],
+      },
+    });
+    if (existing?.pdfKey) {
+      throw new BadRequestException('A guia já foi gerada. Use a opção Recalcular guia.');
+    }
+    return this.issueDas(userId, dto, existing);
+  }
+  async recalculateObligation(userId: string, id: string) {
+    const item = await this.owned(
+      this.prisma.obligation.findFirst({ where: { id, userId, kind: 'DAS' } }),
+      'Guia',
+    );
+    if (!item.pdfKey) {
+      throw new BadRequestException('Gere a guia antes de recalculá-la.');
+    }
+    return this.issueDas(userId, {
+      month: item.competenceMonth ?? item.dueDate.getUTCMonth() + 1,
+      year: item.competenceYear ?? item.dueDate.getUTCFullYear(),
+    }, item);
+  }
   obligation(userId:string,id:string){return this.owned(this.prisma.obligation.findFirst({where:{id,userId}}),'Obrigação').then((item) => this.obligationView(item));}
-  async obligationFile(userId:string,id:string){const item=await this.owned(this.prisma.obligation.findFirst({where:{id,userId}}),'Obrigação');if(!item.pdfKey)throw new NotFoundException('Guia ainda não disponível.');return {...await this.storage.readDocument(item.pdfKey),originalName:`guia-${item.dueDate.toISOString().slice(0,7)}.pdf`};}
+  async obligationFile(userId:string,id:string){const item=await this.owned(this.prisma.obligation.findFirst({where:{id,userId}}),'Obrigação');if(!item.pdfKey)throw new NotFoundException('Guia ainda não disponível.');const year=item.competenceYear??item.dueDate.getUTCFullYear();const month=item.competenceMonth??item.dueDate.getUTCMonth()+1;return {...await this.storage.readDocument(item.pdfKey),originalName:`DAS-${year}-${String(month).padStart(2,'0')}.pdf`};}
   async markObligationPaid(userId:string,id:string){await this.obligation(userId,id);return this.prisma.obligation.update({where:{id},data:{status:'PAID',paidAt:new Date()}}).then((item) => this.obligationView(item));}
   async invoices(userId:string,q:PageDto){const where={userId};const [items,total]=await this.prisma.$transaction([this.prisma.invoice.findMany({where,...this.paging(q),orderBy:{createdAt:'desc'}}),this.prisma.invoice.count({where})]);return this.page(items.map(this.decimal),total,q);}
   async createInvoice(userId:string,dto:CreateInvoiceDto){
@@ -110,6 +151,80 @@ export class ResourcesService {
     const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
     result.setUTCDate(Math.min(day, lastDay));
     return result;
+  }
+  private async issueDas(
+    userId: string,
+    dto: GenerateObligationDto,
+    existing: { id: string; pdfKey: string | null } | null,
+  ) {
+    const company = await this.prisma.cnpj.findFirst({
+      where: { userId, active: true },
+      select: { cnpj: true },
+    });
+    if (!company) {
+      throw new BadRequestException('Selecione um CNPJ ativo antes de gerar a guia.');
+    }
+    const period = `${dto.year}${String(dto.month).padStart(2, '0')}`;
+    const generated = await this.serpro.generateDas(company.cnpj, period);
+    const obligationId = existing?.id ?? randomUUID();
+    const newKey = await this.storage.storeObligationPdf(userId, obligationId, generated.content);
+    const dueDate = new Date(Date.UTC(dto.year, dto.month, 20));
+    const status = this.obligationStatusFor(dueDate);
+    const item = await this.prisma.$transaction(async (transaction) => {
+        const obligation = existing
+          ? await transaction.obligation.update({
+              where: { id: existing.id },
+              data: {
+                name: 'DAS Simples Nacional',
+                competenceMonth: dto.month,
+                competenceYear: dto.year,
+                dueDate,
+                amount: 0,
+                status,
+                paymentCode: null,
+                pdfKey: newKey,
+                generatedAt: new Date(),
+                paidAt: null,
+              },
+            })
+          : await transaction.obligation.create({
+              data: {
+                id: obligationId,
+                userId,
+                name: 'DAS Simples Nacional',
+                kind: 'DAS',
+                competenceMonth: dto.month,
+                competenceYear: dto.year,
+                dueDate,
+                amount: 0,
+                status,
+                pdfKey: newKey,
+                generatedAt: new Date(),
+              },
+            });
+        await transaction.notification.create({
+          data: {
+            userId,
+            title: existing ? 'Guia recalculada' : 'Guia gerada',
+            body: `O DAS de ${String(dto.month).padStart(2, '0')}/${dto.year} está disponível para download.`,
+            kind: existing ? 'obligation_recalculated' : 'obligation_generated',
+          },
+        });
+        return obligation;
+      }).catch(async (error) => {
+      await this.storage.deleteDocument(newKey);
+      throw error;
+    });
+    await this.storage.deleteDocument(existing?.pdfKey).catch(() => undefined);
+    return this.obligationView(item);
+  }
+  private obligationStatusFor(dueDate: Date) {
+    const today = new Date();
+    const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+    const differenceDays = Math.ceil((dueDate.getTime() - todayUtc) / 86_400_000);
+    if (differenceDays < 0) return 'OVERDUE' as const;
+    if (differenceDays <= 10) return 'DUE_SOON' as const;
+    return 'OPEN' as const;
   }
   private obligationView<T extends { amount: any; pdfKey?: string | null }>(item: T) { const { pdfKey: _pdfKey, ...data } = item; return { ...data, amount: Number(item.amount), hasFile: Boolean(_pdfKey) }; }
   private decimal<T extends {amount:any}>(item:T){return {...item,amount:Number(item.amount)};}

@@ -176,21 +176,25 @@ model DocumentType {
 }
 
 model Obligation {
-  id          String           @id @default(uuid()) @db.Uuid
-  userId      String           @map("user_id") @db.Uuid
-  name        String           @db.VarChar(160)
-  kind        String           @db.VarChar(40)
-  dueDate     DateTime         @map("due_date") @db.Date
-  amount      Decimal          @db.Decimal(12, 2)
-  status      ObligationStatus @default(OPEN)
-  paymentCode String?          @map("payment_code")
-  pdfKey      String?          @map("pdf_key")
-  paidAt      DateTime?        @map("paid_at")
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @updatedAt @map("updated_at")
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String           @id @default(uuid()) @db.Uuid
+  userId          String           @map("user_id") @db.Uuid
+  name            String           @db.VarChar(160)
+  kind            String           @db.VarChar(40)
+  competenceMonth Int?             @map("competence_month")
+  competenceYear  Int?             @map("competence_year")
+  dueDate         DateTime         @map("due_date") @db.Date
+  amount          Decimal          @db.Decimal(12, 2)
+  status          ObligationStatus @default(OPEN)
+  paymentCode     String?          @map("payment_code")
+  pdfKey          String?          @map("pdf_key")
+  generatedAt     DateTime?        @map("generated_at")
+  paidAt          DateTime?        @map("paid_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, dueDate(sort: Desc)])
+  @@unique([userId, kind, competenceYear, competenceMonth])
   @@map("obligations")
 }
 

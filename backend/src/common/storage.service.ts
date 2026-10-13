@@ -60,16 +60,34 @@ export class StorageService {
     return this.store(`notices/${noticeId}/${randomUUID()}.${extension}`, file);
   }
 
+  async storeObligationPdf(userId: string, obligationId: string, content: Buffer) {
+    if (!content.length || content.length > DOCUMENT_MAX_BYTES) {
+      throw new BadRequestException('A guia deve ter no máximo 10 MB.');
+    }
+    if (content.subarray(0, 5).toString() !== '%PDF-') {
+      throw new BadRequestException('O Integra Contador não retornou um PDF válido.');
+    }
+    return this.storeBytes(
+      `users/${userId}/obligations/${obligationId}/${randomUUID()}.pdf`,
+      content,
+      'application/pdf',
+    );
+  }
+
   private async store(key: string, file: Express.Multer.File) {
+    return this.storeBytes(key, file.buffer, file.mimetype);
+  }
+
+  private async storeBytes(key: string, content: Buffer, contentType: string) {
     if (this.driver() === 's3') {
       await this.s3Client().send(new PutObjectCommand({
-        Bucket: process.env.S3_BUCKET!, Key: key, Body: file.buffer, ContentType: file.mimetype,
+        Bucket: process.env.S3_BUCKET!, Key: key, Body: content, ContentType: contentType,
       }));
       return key;
     }
     const filePath = this.localPath(key);
     await mkdir(resolve(filePath, '..'), { recursive: true, mode: 0o700 });
-    await writeFile(filePath, file.buffer, { mode: 0o600 });
+    await writeFile(filePath, content, { mode: 0o600 });
     return key;
   }
 

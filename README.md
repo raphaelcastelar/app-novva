@@ -30,7 +30,7 @@ Riscos encontrados na referência: senha em texto puro, SendGrid API key hardcod
 - Autenticação por CPF/senha, criação e recuperação de senha.
 - Dashboard médico com situação contábil, pendências, guias, documentos, relatórios e mensagens.
 - Documentos com filtros, status, detalhe, upload, rejeição e motivo.
-- Obrigações/guias com vencimento, valor, status, código de pagamento e PDF.
+- Obrigações/guias com geração e recálculo de DAS pelo Integra Contador, vencimento, status e PDF.
 - Financeiro com mensalidade, impostos, boletos/PIX e histórico.
 - Relatórios com métricas e gráfico.
 - Perfil médico/empresa.

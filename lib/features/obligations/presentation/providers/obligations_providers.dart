@@ -38,19 +38,28 @@ final downloadObligationProvider = Provider(
   },
 );
 
-final requestObligationRecalculationProvider = Provider(
+final generateObligationProvider = Provider(
   (ref) => ({required int month, required int year}) async {
-    await ref.read(obligationsDioProvider).post<Map<String, dynamic>>(
-      'documents',
-      data: {
-        'title': 'Recálculo de guia - ${_monthLabel(month)}/$year',
-        'category': 'Recálculo de guia',
-        'description':
-            'Solicitação de recálculo da guia da competência ${month.toString().padLeft(2, '0')}/$year.',
-        'month': month,
-        'year': year,
-      },
-    );
+    final response =
+        await ref.read(obligationsDioProvider).post<Map<String, dynamic>>(
+              'obligations/generate',
+              data: {'month': month, 'year': year},
+              options: Options(receiveTimeout: const Duration(seconds: 60)),
+            );
+    ref.invalidate(obligationListProvider);
+    return _obligationFromJson(response.data!);
+  },
+);
+
+final recalculateObligationProvider = Provider(
+  (ref) => (String id) async {
+    final response =
+        await ref.read(obligationsDioProvider).post<Map<String, dynamic>>(
+              'obligations/$id/recalculate',
+              options: Options(receiveTimeout: const Duration(seconds: 60)),
+            );
+    ref.invalidate(obligationListProvider);
+    return _obligationFromJson(response.data!);
   },
 );
 
@@ -69,20 +78,10 @@ Obligation _obligationFromJson(Map<String, dynamic> json) {
     },
     paymentCode: json['paymentCode'] as String?,
     hasFile: json['hasFile'] as bool? ?? false,
+    competenceMonth: json['competenceMonth'] as int?,
+    competenceYear: json['competenceYear'] as int?,
+    generatedAt: json['generatedAt'] == null
+        ? null
+        : DateTime.parse(json['generatedAt'] as String).toLocal(),
   );
 }
-
-String _monthLabel(int month) => const [
-      'Janeiro',
-      'Fevereiro',
-      'Março',
-      'Abril',
-      'Maio',
-      'Junho',
-      'Julho',
-      'Agosto',
-      'Setembro',
-      'Outubro',
-      'Novembro',
-      'Dezembro',
-    ][month - 1];

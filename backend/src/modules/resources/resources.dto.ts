@@ -22,3 +22,7 @@ export class DocumentUploadDto {
   @IsIn(['application/pdf','image/jpeg','image/png']) mimeType!: string;
 }
 export class ConfirmDocumentUploadDto extends DocumentUploadDto { @IsString() @MaxLength(1000) key!: string; }
+export class GenerateObligationDto {
+  @Type(() => Number) @IsInt() @Min(1) @Max(12) month!: number;
+  @Type(() => Number) @IsInt() @Min(2000) @Max(2200) year!: number;
+}

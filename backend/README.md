@@ -27,7 +27,7 @@ Usuário criado pelo seed: CPF `12831146747`, senha `Novva@1234`. O seed é bloq
 - CNPJs: listagem, cadastro, edição, ativação e exclusão.
 - Dashboard: resumo consolidado do usuário.
 - Documentos: listagem, detalhe e solicitação.
-- Obrigações: listagem, detalhe e confirmação de pagamento.
+- Obrigações: listagem, geração e recálculo de DAS pelo Integra Contador, download e confirmação de pagamento.
 - NFS-e: listagem, detalhe e solicitação de emissão.
 - Pagamentos e relatórios: consultas consolidadas.
 - Chat: histórico e envio de mensagens.
@@ -45,6 +45,32 @@ Todas as rotas privadas usam `Authorization: Bearer <accessToken>` e filtram os 
 - Não execute o seed de demonstração.
 - O fluxo `forgot-password` cria o token com validade curta. A entrega por e-mail deve ser ligada ao provedor transacional escolhido antes do lançamento público.
 - Arquivos/PDFs são representados por chaves privadas no banco. Upload e URLs temporárias devem ser ligados ao bucket S3 escolhido antes do lançamento público.
+
+## Integra Contador / DAS
+
+A geração usa o serviço `PGDASD/GERARDAS12` do Integra Contador. Configure no
+ambiente do backend:
+
+```text
+SERPRO_ENABLED=true
+SERPRO_CONSUMER_KEY=
+SERPRO_CONSUMER_SECRET=
+SERPRO_CONTRACTOR_CNPJ=00000000000000
+SERPRO_CERT_PEM=
+SERPRO_PRIVATE_KEY_PEM=
+SERPRO_CERT_PASSWORD=
+```
+
+Os valores PEM podem ser fornecidos como secrets com quebras de linha reais ou
+com `\n`. Como alternativa, use `SERPRO_CERT_PATH` e
+`SERPRO_PRIVATE_KEY_PATH`. Credenciais e certificados nunca devem ser enviados
+ao app Flutter ou incluídos no repositório.
+
+Rotas autenticadas:
+
+- `POST /api/v1/obligations/generate` com `{ "month": 10, "year": 2026 }`;
+- `POST /api/v1/obligations/:id/recalculate` para emitir novamente uma guia existente;
+- `GET /api/v1/obligations/:id/file` para baixar o PDF armazenado.
 
 ## Qualidade
 

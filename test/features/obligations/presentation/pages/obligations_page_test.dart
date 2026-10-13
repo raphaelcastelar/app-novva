@@ -41,15 +41,29 @@ void main() {
 
     expect(find.text('Central de guias'), findsOneWidget);
     expect(find.text('Baixar guia'), findsOneWidget);
-    expect(find.text('Pedir recálculo'), findsOneWidget);
+    expect(find.text('Recalcular guia'), findsOneWidget);
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Recalcular guia'),
+          )
+          .onPressed,
+      isNotNull,
+    );
 
     await tester.drag(find.byType(ListView), const Offset(0, -600));
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.keyboard_arrow_down_rounded).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('Baixar guia'), findsNWidgets(2));
-    expect(find.text('Pedir recálculo'), findsNWidgets(2));
+    expect(find.text('Baixar guia'), findsOneWidget);
+    expect(find.text('Gerar guia'), findsOneWidget);
+    expect(find.text('Recalcular guia'), findsNWidgets(2));
+    final recalculationButtons = tester.widgetList<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Recalcular guia'),
+    );
+    expect(recalculationButtons.where((button) => button.onPressed == null),
+        hasLength(1));
     expect(tester.takeException(), isNull);
   });
 }

@@ -15,7 +15,7 @@ describe('ResourcesService document validity', () => {
       },
       $transaction: jest.fn().mockResolvedValue([[item], 1]),
     };
-    const service = new ResourcesService(prisma as any, {} as any);
+    const service = new ResourcesService(prisma as any, {} as any, {} as any);
 
     const result = await service.documents('user-id', { page: 1, limit: 30 });
 
@@ -30,7 +30,7 @@ describe('ResourcesService document validity', () => {
 
   it('only exposes active document types to the app', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
-    const service = new ResourcesService({ documentType: { findMany } } as any, {} as any);
+    const service = new ResourcesService({ documentType: { findMany } } as any, {} as any, {} as any);
 
     await service.documentTypes();
 

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -78,8 +79,9 @@ class _GuidesTimelineState extends State<_GuidesTimeline>
   }
 
   List<int> get _availableYears {
-    final years = widget.items.map((item) => item.dueDate.year).toSet()
-      ..add(DateTime.now().year);
+    final currentYear = DateTime.now().year;
+    final years = widget.items.map((item) => item.referenceYear).toSet()
+      ..addAll(List.generate(5, (index) => currentYear - index));
     return years.toList()..sort((a, b) => b.compareTo(a));
   }
 
@@ -97,13 +99,14 @@ class _GuidesTimelineState extends State<_GuidesTimeline>
   @override
   Widget build(BuildContext context) {
     final yearItems = widget.items
-        .where((item) => item.dueDate.year == _selectedYear)
+        .where((item) => item.referenceYear == _selectedYear)
         .toList()
       ..sort((a, b) => b.dueDate.compareTo(a.dueDate));
-    final availableMonths = yearItems.map((item) => item.dueDate.month).toSet();
+    final availableMonths =
+        yearItems.map((item) => item.referenceMonth).toSet();
     final monthsWithFile = yearItems
         .where((item) => item.hasFile)
-        .map((item) => item.dueDate.month)
+        .map((item) => item.referenceMonth)
         .toSet();
     final now = DateTime.now();
     final showsCurrentMonth = _selectedYear == now.year;
@@ -112,7 +115,7 @@ class _GuidesTimelineState extends State<_GuidesTimeline>
         .toList();
 
     List<Obligation> itemsForMonth(int month) => yearItems
-        .where((item) => item.dueDate.month == month)
+        .where((item) => item.referenceMonth == month)
         .toList(growable: false);
 
     return RefreshIndicator(
@@ -318,7 +321,7 @@ class _GuidesHero extends StatelessWidget {
                   Expanded(
                     child: _YearSummary(
                       value: '$downloadCount',
-                      label: 'com download',
+                      label: 'geradas',
                       icon: Icons.file_download_done_rounded,
                       color: AppColors.success,
                     ),
@@ -327,7 +330,7 @@ class _GuidesHero extends StatelessWidget {
                   Expanded(
                     child: _YearSummary(
                       value: '$registeredCount',
-                      label: 'cadastradas',
+                      label: 'competências',
                       icon: Icons.calendar_month_rounded,
                       color: AppColors.primary,
                     ),
@@ -433,7 +436,8 @@ class _MonthGuideCard extends ConsumerStatefulWidget {
 
 class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
   bool _downloading = false;
-  bool _requesting = false;
+  bool _generating = false;
+  bool _recalculating = false;
   late bool _expanded;
 
   @override
@@ -613,19 +617,28 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                           size: 20,
                         ),
                         const SizedBox(width: 9),
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Total da competência',
-                            style: TextStyle(
+                            total > 0
+                                ? 'Total da competência'
+                                : 'Valor disponível na guia',
+                            style: const TextStyle(
                               color: AppColors.muted,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        Text(
-                          AppFormatters.money(total),
-                          style: const TextStyle(fontWeight: FontWeight.w900),
-                        ),
+                        if (total > 0)
+                          Text(
+                            AppFormatters.money(total),
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          )
+                        else
+                          const Icon(
+                            Icons.picture_as_pdf_outlined,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
                       ],
                     ),
                   ),
@@ -647,19 +660,33 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                         SizedBox(
                           width: buttonWidth,
                           child: FilledButton.icon(
-                            onPressed: _downloadable.isEmpty || _downloading
-                                ? null
-                                : _downloadGuide,
-                            icon: _downloading
+                            onPressed:
+                                _generating || _downloading || _recalculating
+                                    ? null
+                                    : _downloadable.isEmpty
+                                        ? _generateGuide
+                                        : _downloadGuide,
+                            icon: _generating || _downloading
                                 ? const SizedBox.square(
                                     dimension: 17,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.download_rounded, size: 19),
+                                : Icon(
+                                    _downloadable.isEmpty
+                                        ? Icons.receipt_long_rounded
+                                        : Icons.download_rounded,
+                                    size: 19,
+                                  ),
                             label: Text(
-                              _downloading ? 'Baixando...' : 'Baixar guia',
+                              _generating
+                                  ? 'Gerando...'
+                                  : _downloading
+                                      ? 'Baixando...'
+                                      : _downloadable.isEmpty
+                                          ? 'Gerar guia'
+                                          : 'Baixar guia',
                               maxLines: 1,
                             ),
                           ),
@@ -667,9 +694,13 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                         SizedBox(
                           width: buttonWidth,
                           child: OutlinedButton.icon(
-                            onPressed:
-                                _requesting ? null : _requestRecalculation,
-                            icon: _requesting
+                            onPressed: _downloadable.isEmpty ||
+                                    _generating ||
+                                    _downloading ||
+                                    _recalculating
+                                ? null
+                                : _recalculateGuide,
+                            icon: _recalculating
                                 ? const SizedBox.square(
                                     dimension: 17,
                                     child: CircularProgressIndicator(
@@ -678,7 +709,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                                   )
                                 : const Icon(Icons.refresh_rounded, size: 19),
                             label: const Text(
-                              'Pedir recálculo',
+                              'Recalcular guia',
                               maxLines: 1,
                             ),
                           ),
@@ -699,7 +730,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                       SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'O download será liberado quando o PDF for publicado.',
+                          'Gere a guia para liberar o download e o recálculo.',
                           style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 11,
@@ -749,6 +780,35 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
     }
   }
 
+  Future<void> _generateGuide() async {
+    setState(() => _generating = true);
+    try {
+      await ref.read(generateObligationProvider)(
+        month: widget.month,
+        year: widget.year,
+      );
+      if (!mounted) return;
+      await ref.read(obligationListProvider.future);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Guia de ${_monthLabel(widget.month).toLowerCase()} gerada com sucesso.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(
+                _apiErrorMessage(error, 'Não foi possível gerar a guia.'))),
+      );
+    } finally {
+      if (mounted) setState(() => _generating = false);
+    }
+  }
+
   Future<Obligation?> _selectGuideToDownload() async {
     if (_downloadable.length == 1) return _downloadable.first;
     return showModalBottomSheet<Obligation>(
@@ -788,7 +848,9 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
     );
   }
 
-  Future<void> _requestRecalculation() async {
+  Future<void> _recalculateGuide() async {
+    final selected = await _selectGuideToRecalculate();
+    if (selected == null || !mounted) return;
     final confirmed = await showModalBottomSheet<bool>(
       context: context,
       showDragHandle: true,
@@ -819,7 +881,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Solicitar recálculo',
+                          'Recalcular guia',
                           style: TextStyle(
                             fontSize: 19,
                             fontWeight: FontWeight.w900,
@@ -836,7 +898,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'A equipe Novva receberá uma solicitação para revisar os valores e disponibilizar uma nova guia para esta competência.',
+                'A guia será emitida novamente pelo Integra Contador. O PDF atual será substituído pela nova versão.',
                 style: TextStyle(height: 1.45),
               ),
               const SizedBox(height: 20),
@@ -864,31 +926,66 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
     );
     if (confirmed != true || !mounted) return;
 
-    setState(() => _requesting = true);
+    setState(() => _recalculating = true);
     try {
-      await ref.read(requestObligationRecalculationProvider)(
-        month: widget.month,
-        year: widget.year,
-      );
+      await ref.read(recalculateObligationProvider)(selected.id);
+      if (!mounted) return;
+      await ref.read(obligationListProvider.future);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Recálculo de ${_monthLabel(widget.month).toLowerCase()} solicitado.',
+            'Guia de ${_monthLabel(widget.month).toLowerCase()} recalculada com sucesso.',
           ),
         ),
       );
-    } catch (_) {
+    } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Não foi possível solicitar o recálculo.'),
+          SnackBar(
+            content: Text(
+                _apiErrorMessage(error, 'Não foi possível recalcular a guia.')),
           ),
         );
       }
     } finally {
-      if (mounted) setState(() => _requesting = false);
+      if (mounted) setState(() => _recalculating = false);
     }
+  }
+
+  Future<Obligation?> _selectGuideToRecalculate() async {
+    if (_downloadable.length == 1) return _downloadable.first;
+    return showModalBottomSheet<Obligation>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Qual guia deseja recalcular?',
+                style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 10),
+              for (final item in _downloadable)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const CircleAvatar(
+                    backgroundColor: AppColors.softAccent,
+                    child: Icon(Icons.refresh_rounded, color: AppColors.accent),
+                  ),
+                  title: Text(item.name),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => Navigator.pop(context, item),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -956,7 +1053,7 @@ class _WaitingGuidePanel extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Nenhuma guia foi cadastrada para este mês.',
+              'Nenhuma guia foi gerada para este mês.',
               style: TextStyle(color: AppColors.muted),
             ),
           ),
@@ -999,13 +1096,15 @@ class _GuideEntryState extends ConsumerState<_GuideEntry> {
         ),
         const SizedBox(height: 5),
         Text(
-          'Vencimento ${AppFormatters.date(item.dueDate)} • ${AppFormatters.money(item.amount)}',
+          item.amount > 0
+              ? 'Vencimento ${AppFormatters.date(item.dueDate)} • ${AppFormatters.money(item.amount)}'
+              : 'Consulte o vencimento e o valor no PDF',
           style: const TextStyle(color: AppColors.muted, fontSize: 12),
         ),
         if (!item.hasFile) ...[
           const SizedBox(height: 6),
           const Text(
-            'PDF aguardando publicação',
+            'Guia ainda não gerada',
             style: TextStyle(
               color: AppColors.warning,
               fontSize: 11,
@@ -1087,7 +1186,7 @@ _MonthPresentation _monthPresentation(List<Obligation> items) {
   if (items.isEmpty) {
     return const _MonthPresentation(
       label: 'Aguardando',
-      description: 'A guia ainda não está no sistema.',
+      description: 'A guia ainda não foi gerada.',
       color: AppColors.muted,
     );
   }
@@ -1108,7 +1207,7 @@ _MonthPresentation _monthPresentation(List<Obligation> items) {
   if (!items.any((item) => item.hasFile)) {
     return const _MonthPresentation(
       label: 'Preparando',
-      description: 'A guia foi cadastrada e o PDF será publicado em breve.',
+      description: 'A guia ainda não possui um PDF.',
       color: AppColors.warning,
     );
   }
@@ -1148,6 +1247,20 @@ String _monthShortLabel(int month) => const [
       'NOV',
       'DEZ',
     ][month - 1];
+
+String _apiErrorMessage(Object error, String fallback) {
+  if (error is DioException) {
+    final data = error.response?.data;
+    if (data is Map) {
+      final message = data['message'] ?? data['error'];
+      if (message is String && message.trim().isNotEmpty) return message;
+      if (message is List && message.isNotEmpty) {
+        return message.first.toString();
+      }
+    }
+  }
+  return fallback;
+}
 
 String _statusLabel(ObligationStatus status) => switch (status) {
       ObligationStatus.open => 'Em aberto',

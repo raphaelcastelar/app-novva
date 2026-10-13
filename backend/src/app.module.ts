@@ -19,6 +19,7 @@ import { AdminService } from './modules/admin/admin.service';
 import { InternalTokenGuard } from './modules/admin/internal-token.guard';
 import { NoticesController } from './modules/notices/notices.controller';
 import { NoticesService } from './modules/notices/notices.service';
+import { SerproService } from './common/serpro.service';
 
 @Module({
   imports: [
@@ -30,12 +31,18 @@ import { NoticesService } from './modules/notices/notices.service';
         if (!env.JWT_SECRET || env.JWT_SECRET.length < 32) throw new Error('JWT_SECRET deve ter pelo menos 32 caracteres.');
         if (env.NODE_ENV === 'production' && (!env.APP_ORIGIN || env.APP_ORIGIN === '*')) throw new Error('APP_ORIGIN deve ser restrita em produção.');
         if (env.NODE_ENV === 'production' && (!env.INTERNAL_SERVICE_TOKEN || env.INTERNAL_SERVICE_TOKEN.length < 32)) throw new Error('INTERNAL_SERVICE_TOKEN deve ter pelo menos 32 caracteres.');
+        if (env.SERPRO_ENABLED === 'true') {
+          if (!env.SERPRO_CONSUMER_KEY || !env.SERPRO_CONSUMER_SECRET) throw new Error('Credenciais do Integra Contador são obrigatórias.');
+          if (!/^\d{14}$/.test(String(env.SERPRO_CONTRACTOR_CNPJ ?? '').replace(/\D/g, ''))) throw new Error('SERPRO_CONTRACTOR_CNPJ deve ter 14 dígitos.');
+          if (!env.SERPRO_CERT_PEM && !env.SERPRO_CERT_PATH) throw new Error('Certificado do Integra Contador é obrigatório.');
+          if (!env.SERPRO_PRIVATE_KEY_PEM && !env.SERPRO_PRIVATE_KEY_PATH) throw new Error('Chave privada do Integra Contador é obrigatória.');
+        }
         return env;
       },
     }),
     JwtModule.register({ global: true, secret: process.env.JWT_SECRET, signOptions: { expiresIn: '15m' } }),
   ],
   controllers: [HealthController, AuthController, UsersController, ResourcesController, DashboardController, AdminController, NoticesController],
-  providers: [PrismaService, MailService, StorageService, AuthService, JwtAuthGuard, UsersService, ResourcesService, DashboardService, AdminService, InternalTokenGuard, NoticesService],
+  providers: [PrismaService, MailService, StorageService, SerproService, AuthService, JwtAuthGuard, UsersService, ResourcesService, DashboardService, AdminService, InternalTokenGuard, NoticesService],
 })
 export class AppModule {}
