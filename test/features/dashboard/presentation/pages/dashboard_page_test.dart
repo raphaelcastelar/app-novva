@@ -123,6 +123,69 @@ void main() {
     expect(find.byType(NovvaBrandMark), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('shows tracking before the rotating notice cards',
+      (tester) async {
+    await initializeDateFormatting('pt_BR');
+    final notices = [
+      NoticeItem(
+        id: 'notice-1',
+        title: 'Primeiro aviso',
+        description: 'Primeira mensagem',
+        createdAt: DateTime(2026, 10, 12),
+        isRead: true,
+        hasAttachment: false,
+      ),
+      NoticeItem(
+        id: 'notice-2',
+        title: 'Segundo aviso',
+        description: 'Segunda mensagem',
+        createdAt: DateTime(2026, 10, 13),
+        isRead: true,
+        hasAttachment: false,
+      ),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dashboardSummaryProvider.overrideWith((ref) async =>
+              const DashboardSummary(
+                  pendingDocuments: 0,
+                  dueObligations: 0,
+                  monthRevenue: 0,
+                  orders: 0,
+                  nextObligation: null)),
+          noticesProvider.overrideWith((ref) async => notices),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light,
+          home: const DashboardPage(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final sectionKeys = tester
+        .widgetList<KeyedSubtree>(find.byType(KeyedSubtree))
+        .map((widget) => widget.key)
+        .toList();
+    expect(
+      sectionKeys.indexOf(const ValueKey('account-overview-section')),
+      lessThan(sectionKeys.indexOf(const ValueKey('notice-board-section'))),
+    );
+
+    final pageView = tester.widget<PageView>(
+      find.byKey(const ValueKey('notice-carousel')),
+    );
+    expect(pageView.controller?.page, 0);
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(pageView.controller?.page, 1);
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox());
+  });
 }
 
 class _RouteObserver extends NavigatorObserver {

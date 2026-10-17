@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -59,9 +60,15 @@ class DashboardPage extends ConsumerWidget {
                   children: [
                     _RevenueHero(summary: data),
                     const SizedBox(height: 24),
-                    const _NoticeBoard(),
+                    KeyedSubtree(
+                      key: const ValueKey('account-overview-section'),
+                      child: _AccountOverview(summary: data),
+                    ),
                     const SizedBox(height: 26),
-                    _AccountOverview(summary: data),
+                    const KeyedSubtree(
+                      key: ValueKey('notice-board-section'),
+                      child: _NoticeBoard(),
+                    ),
                     const SizedBox(height: 26),
                     const _QuickActions(),
                   ],
@@ -285,26 +292,110 @@ class _NoticeBoard extends ConsumerWidget {
                     message:
                         'A equipe Novva poderá usar este espaço para manter você informado.',
                     icon: Icons.campaign_outlined)
-                : Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: AppColors.border),
-                      color: AppColors.surface,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(children: [
-                      for (var index = 0;
-                          index < items.take(3).length;
-                          index++) ...[
-                        if (index > 0) const Divider(height: 1, indent: 68),
-                        _NoticeRow(notice: items[index])
-                      ]
-                    ]),
-                  )),
+                : _NoticeCarousel(items: items)),
       ],
     );
   }
+}
+
+class _NoticeCarousel extends StatefulWidget {
+  const _NoticeCarousel({required this.items});
+
+  final List<NoticeItem> items;
+
+  @override
+  State<_NoticeCarousel> createState() => _NoticeCarouselState();
+}
+
+class _NoticeCarouselState extends State<_NoticeCarousel> {
+  static const _rotationInterval = Duration(seconds: 5);
+  final PageController _controller = PageController();
+  Timer? _timer;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _startRotation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _NoticeCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.items.length != widget.items.length) {
+      _currentPage = 0;
+      if (_controller.hasClients) {
+        _controller.jumpToPage(0);
+      }
+      _startRotation();
+    }
+  }
+
+  void _startRotation() {
+    _timer?.cancel();
+    if (widget.items.length < 2) return;
+    _timer = Timer.periodic(_rotationInterval, (_) {
+      if (!mounted || !_controller.hasClients) return;
+      final nextPage = (_currentPage + 1) % widget.items.length;
+      _controller.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOutCubic,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+        children: [
+          SizedBox(
+            height: 118,
+            child: PageView.builder(
+              key: const ValueKey('notice-carousel'),
+              controller: _controller,
+              itemCount: widget.items.length,
+              onPageChanged: (page) => setState(() => _currentPage = page),
+              itemBuilder: (context, index) => Material(
+                color: AppColors.surface,
+                clipBehavior: Clip.antiAlias,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(22),
+                  side: const BorderSide(color: AppColors.border),
+                ),
+                child: _NoticeRow(notice: widget.items[index]),
+              ),
+            ),
+          ),
+          if (widget.items.length > 1) ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.items.length,
+                (index) => AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  width: index == _currentPage ? 18 : 7,
+                  height: 7,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    color: index == _currentPage
+                        ? AppColors.primary
+                        : AppColors.border,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      );
 }
 
 class _NoticeMessage extends StatelessWidget {

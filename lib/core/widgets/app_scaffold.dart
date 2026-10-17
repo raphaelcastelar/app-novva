@@ -65,17 +65,17 @@ class AppBottomNav extends StatelessWidget {
       route: RouteNames.documents,
     ),
     _NavItem(
-      label: 'Guias',
-      icon: Icons.receipt_long_outlined,
-      selectedIcon: Icons.receipt_long_rounded,
-      route: RouteNames.obligations,
-    ),
-    _NavItem(
       label: 'Notas',
       icon: Icons.add_rounded,
       selectedIcon: Icons.edit_note_rounded,
       route: RouteNames.invoices,
       featured: true,
+    ),
+    _NavItem(
+      label: 'Guias',
+      icon: Icons.receipt_long_outlined,
+      selectedIcon: Icons.receipt_long_rounded,
+      route: RouteNames.obligations,
     ),
     _NavItem(
       label: 'Mais',
@@ -141,8 +141,8 @@ class AppBottomNav extends StatelessWidget {
 
   int _indexFor(String location) {
     if (location.startsWith(RouteNames.documents)) return 1;
-    if (location.startsWith(RouteNames.obligations)) return 2;
-    if (location.startsWith(RouteNames.invoices)) return 3;
+    if (location.startsWith(RouteNames.invoices)) return 2;
+    if (location.startsWith(RouteNames.obligations)) return 3;
     if (location.startsWith(RouteNames.settings) ||
         location.startsWith(RouteNames.reports) ||
         location.startsWith(RouteNames.chat) ||
