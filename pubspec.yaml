@@ -1,7 +1,7 @@
 name: novva_app
 description: Aplicativo Flutter para gestão contábil de médicos.
 publish_to: "none"
-version: 0.1.0+1
+version: 0.1.0+2
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -21,6 +21,8 @@ dependencies:
   open_filex: ^4.7.0
   path_provider: ^2.1.5
   fl_chart: ^0.69.0
+  firebase_core: ^5.0.0
+  firebase_messaging: ^17.0.0
 
 dev_dependencies:
   flutter_test:

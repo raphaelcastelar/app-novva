@@ -13,6 +13,7 @@ import '../../features/documents/presentation/pages/documents_page.dart';
 import '../../features/invoices/presentation/pages/invoice_description_page.dart';
 import '../../features/invoices/presentation/pages/invoice_request_page.dart';
 import '../../features/obligations/presentation/pages/obligations_page.dart';
+import '../../features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
 import '../../features/settings/presentation/pages/support_page.dart';
@@ -88,6 +89,8 @@ final appRouter = GoRouter(
           ),
         ),
         _appRoute(RouteNames.obligations, (_, __) => const ObligationsPage()),
+        _appRoute(
+            RouteNames.notifications, (_, __) => const NotificationsPage()),
         _appRoute(RouteNames.settings, (_, __) => const SettingsPage()),
         _appRoute(RouteNames.privacy, (_, __) => const PrivacyPage()),
         _appRoute(RouteNames.support, (_, __) => const SupportPage()),
