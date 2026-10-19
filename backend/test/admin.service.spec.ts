@@ -1,4 +1,4 @@
-import { ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException } from '@nestjs/common';
 import { AdminService } from '../src/modules/admin/admin.service';
 
 describe('AdminService doctor registration', () => {
@@ -58,17 +58,16 @@ describe('AdminService document types', () => {
   });
 });
 
-describe('AdminService document attachment notifications', () => {
-  it('stores an in-app notification and sends a targeted push', async () => {
+describe('AdminService document availability notifications', () => {
+  it('does not notify while the file is only being attached', async () => {
     const item = {
       id: 'document-id', userId: 'user-id', title: 'Certidão negativa',
-      status: 'APPROVED', fileKey: null,
+      status: 'REVIEW', fileKey: null,
     };
     const transaction = {
       document: { update: jest.fn().mockResolvedValue(item) },
       requestEvent: { create: jest.fn().mockResolvedValue({}) },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
-      notification: { create: jest.fn().mockResolvedValue({ id: 'notification-id' }) },
     };
     const prisma = {
       document: { findUnique: jest.fn().mockResolvedValue(item) },
@@ -86,6 +85,33 @@ describe('AdminService document attachment notifications', () => {
       originalname: 'certidao.pdf', mimetype: 'application/pdf',
     } as Express.Multer.File);
 
+    expect(transaction.document.update).toHaveBeenCalled();
+    expect(pushNotifications.sendDocumentAvailable).not.toHaveBeenCalled();
+  });
+
+  it('notifies after saving the document as completed with an attachment', async () => {
+    const item = {
+      id: 'document-id', userId: 'user-id', title: 'Certidão negativa',
+      status: 'REVIEW', fileKey: 'users/user-id/documents/document-id/file.pdf',
+      mimeType: 'application/pdf', originalName: 'certidao.pdf',
+    };
+    const transaction = {
+      document: { update: jest.fn().mockResolvedValue({ ...item, status: 'APPROVED' }) },
+      requestEvent: { create: jest.fn().mockResolvedValue({}) },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+      notification: { create: jest.fn().mockResolvedValue({ id: 'notification-id' }) },
+    };
+    const prisma = {
+      document: { findUnique: jest.fn().mockResolvedValue(item) },
+      invoice: { findUnique: jest.fn().mockResolvedValue(null) },
+      $transaction: jest.fn((callback) => callback(transaction)),
+    };
+    const pushNotifications = { sendDocumentAvailable: jest.fn().mockResolvedValue(undefined) };
+    const service = new AdminService(prisma as any, {} as any, pushNotifications as any);
+    jest.spyOn(service, 'requestDetail').mockResolvedValue({ id: item.id } as any);
+
+    await service.updateStatus(item.id, { status: 'APPROVED' });
+
     expect(transaction.notification.create).toHaveBeenCalledWith({
       data: {
         userId: 'user-id',
@@ -100,5 +126,56 @@ describe('AdminService document attachment notifications', () => {
       documentTitle: 'Certidão negativa',
       notificationId: 'notification-id',
     });
+  });
+
+  it('rejects completion when the document has no attachment', async () => {
+    const item = {
+      id: 'document-id', userId: 'user-id', title: 'Certidão negativa',
+      status: 'REVIEW', fileKey: null, mimeType: null, originalName: null,
+    };
+    const prisma = {
+      document: { findUnique: jest.fn().mockResolvedValue(item) },
+      invoice: { findUnique: jest.fn().mockResolvedValue(null) },
+      $transaction: jest.fn(),
+    };
+    const pushNotifications = { sendDocumentAvailable: jest.fn() };
+    const service = new AdminService(prisma as any, {} as any, pushNotifications as any);
+
+    await expect(service.updateStatus(item.id, { status: 'APPROVED' }))
+      .rejects.toBeInstanceOf(BadRequestException);
+
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(pushNotifications.sendDocumentAvailable).not.toHaveBeenCalled();
+  });
+
+  it('does not send the ready notification again for an already completed document', async () => {
+    const item = {
+      id: 'document-id', userId: 'user-id', title: 'Certidão negativa',
+      status: 'APPROVED', fileKey: 'file.pdf', mimeType: 'application/pdf', originalName: 'certidao.pdf',
+    };
+    const transaction = {
+      document: { update: jest.fn().mockResolvedValue(item) },
+      requestEvent: { create: jest.fn().mockResolvedValue({}) },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+      notification: { create: jest.fn().mockResolvedValue({ id: 'notification-id' }) },
+    };
+    const prisma = {
+      document: { findUnique: jest.fn().mockResolvedValue(item) },
+      invoice: { findUnique: jest.fn().mockResolvedValue(null) },
+      $transaction: jest.fn((callback) => callback(transaction)),
+    };
+    const pushNotifications = { sendDocumentAvailable: jest.fn() };
+    const service = new AdminService(prisma as any, {} as any, pushNotifications as any);
+    jest.spyOn(service, 'requestDetail').mockResolvedValue({ id: item.id } as any);
+
+    await service.updateStatus(item.id, { status: 'APPROVED', note: 'Observação adicional' });
+
+    expect(transaction.notification.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-id', title: 'Solicitação atualizada',
+        body: 'Observação adicional', kind: 'request_status',
+      },
+    });
+    expect(pushNotifications.sendDocumentAvailable).not.toHaveBeenCalled();
   });
 });

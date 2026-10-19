@@ -70,14 +70,37 @@ export class AdminService {
     if (dto.status !== current && !(TRANSITIONS[kind][current] ?? []).includes(dto.status)) {
       throw new BadRequestException(`Transição de ${current} para ${dto.status} não permitida.`);
     }
+    const documentBecameAvailable = kind === 'DOCUMENT' && current !== 'APPROVED' && dto.status === 'APPROVED';
+    if (documentBecameAvailable && (!document?.fileKey || !document.mimeType || !document.originalName)) {
+      throw new BadRequestException('Anexe o arquivo antes de concluir o documento.');
+    }
+    const availableDocumentTitle = documentBecameAvailable ? document!.title : null;
     const notificationBody = dto.note?.trim() || `Sua solicitação foi atualizada para ${dto.status}.`;
-    await this.prisma.$transaction(async (transaction) => {
+    const notification = await this.prisma.$transaction(async (transaction) => {
       if (kind === 'DOCUMENT') await transaction.document.update({ where: { id }, data: { status: dto.status as any } });
       else await transaction.invoice.update({ where: { id }, data: { status: dto.status as any } });
       await transaction.requestEvent.create({ data: { requestKind: kind, requestId: id, status: dto.status, note: dto.note, actor } });
-      await transaction.notification.create({ data: { userId: item.userId, title: 'Solicitação atualizada', body: notificationBody, kind: 'request_status' } });
+      const createdNotification = await transaction.notification.create({
+        data: documentBecameAvailable
+          ? {
+              userId: item.userId,
+              title: 'Documento disponível',
+              body: `O documento ${availableDocumentTitle} está pronto e pode ser acessado no app.`,
+              kind: 'document_available',
+            }
+          : { userId: item.userId, title: 'Solicitação atualizada', body: notificationBody, kind: 'request_status' },
+      });
       await transaction.auditLog.create({ data: { action: 'REQUEST_STATUS_UPDATED', entity: kind, entityId: id, metadata: { previousStatus: current, status: dto.status, note: dto.note ?? '', actor } } });
+      return createdNotification;
     });
+    if (documentBecameAvailable) {
+      await this.pushNotifications.sendDocumentAvailable({
+        userId: item.userId,
+        documentId: item.id,
+        documentTitle: availableDocumentTitle!,
+        notificationId: notification.id,
+      });
+    }
     return this.requestDetail(id);
   }
 
@@ -86,26 +109,12 @@ export class AdminService {
     if (!item) throw new NotFoundException('Solicitação de documento não encontrada.');
     const key = await this.storage.storeDocument(item.userId, id, file);
     try {
-      const notification = await this.prisma.$transaction(async (transaction) => {
+      await this.prisma.$transaction(async (transaction) => {
         await transaction.document.update({ where: { id }, data: { fileKey: key, mimeType: file.mimetype, originalName: file.originalname, fileUploadedAt: new Date() } });
         await transaction.requestEvent.create({ data: { requestKind: 'DOCUMENT', requestId: id, status: item.status, note: `Arquivo ${file.originalname} anexado`, actor } });
         await transaction.auditLog.create({ data: { action: 'DOCUMENT_FILE_ATTACHED', entity: 'DOCUMENT', entityId: id, metadata: { originalName: file.originalname, mimeType: file.mimetype, actor } } });
-        return transaction.notification.create({
-          data: {
-            userId: item.userId,
-            title: 'Documento disponível',
-            body: `O documento ${item.title} está pronto e pode ser acessado no app.`,
-            kind: 'document_available',
-          },
-        });
       });
       await this.storage.deleteDocument(item.fileKey);
-      await this.pushNotifications.sendDocumentAvailable({
-        userId: item.userId,
-        documentId: item.id,
-        documentTitle: item.title,
-        notificationId: notification.id,
-      });
       return this.requestDetail(id);
     } catch (error) {
       await this.storage.deleteDocument(key);
