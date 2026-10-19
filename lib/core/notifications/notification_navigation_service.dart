@@ -29,17 +29,10 @@ class NotificationNavigationService {
 
   String _locationFor(Map<String, dynamic> data) {
     final type = data['type']?.toString();
-    final entityId = data['entityId']?.toString();
 
     switch (type) {
       case 'document_available':
       case 'document_rejected':
-        if (entityId != null && entityId.isNotEmpty) {
-          return Uri(
-            path: RouteNames.documentDetails,
-            queryParameters: {'id': entityId},
-          ).toString();
-        }
         return RouteNames.documents;
       case 'obligation_available':
       case 'obligation_due':

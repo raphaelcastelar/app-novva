@@ -20,6 +20,8 @@ import { InternalTokenGuard } from './modules/admin/internal-token.guard';
 import { NoticesController } from './modules/notices/notices.controller';
 import { NoticesService } from './modules/notices/notices.service';
 import { SerproService } from './common/serpro.service';
+import { PushDevicesController } from './modules/push-devices/push-devices.controller';
+import { PushNotificationsService } from './modules/push-devices/push-notifications.service';
 
 @Module({
   imports: [
@@ -37,12 +39,19 @@ import { SerproService } from './common/serpro.service';
           if (!env.SERPRO_CERT_PEM && !env.SERPRO_CERT_PATH) throw new Error('Certificado do Integra Contador é obrigatório.');
           if (!env.SERPRO_PRIVATE_KEY_PEM && !env.SERPRO_PRIVATE_KEY_PATH) throw new Error('Chave privada do Integra Contador é obrigatória.');
         }
+        if (env.PUSH_NOTIFICATIONS_ENABLED === 'true') {
+          const hasEncodedAccount = Boolean(env.FIREBASE_SERVICE_ACCOUNT_BASE64);
+          const hasSeparateCredentials = Boolean(env.FIREBASE_PROJECT_ID && env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY);
+          if (!hasEncodedAccount && !hasSeparateCredentials) {
+            throw new Error('Configure FIREBASE_SERVICE_ACCOUNT_BASE64 ou as três credenciais FIREBASE_* para ativar notificações push.');
+          }
+        }
         return env;
       },
     }),
     JwtModule.register({ global: true, secret: process.env.JWT_SECRET, signOptions: { expiresIn: '15m' } }),
   ],
-  controllers: [HealthController, AuthController, UsersController, ResourcesController, DashboardController, AdminController, NoticesController],
-  providers: [PrismaService, MailService, StorageService, SerproService, AuthService, JwtAuthGuard, UsersService, ResourcesService, DashboardService, AdminService, InternalTokenGuard, NoticesService],
+  controllers: [HealthController, AuthController, UsersController, ResourcesController, DashboardController, AdminController, NoticesController, PushDevicesController],
+  providers: [PrismaService, MailService, StorageService, SerproService, AuthService, JwtAuthGuard, UsersService, ResourcesService, DashboardService, AdminService, InternalTokenGuard, NoticesService, PushNotificationsService],
 })
 export class AppModule {}

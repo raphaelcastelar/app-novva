@@ -5,6 +5,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/security/token_manager.dart';
 import '../../../../core/network/dio_client.dart';
+import '../../../../core/notifications/push_device_remote_data_source.dart';
+import '../../../../core/notifications/push_notification_service.dart';
 import '../../../../app/config/env.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
@@ -38,6 +40,9 @@ final authRemoteDataSourceProvider = Provider<AuthRemoteDataSource>(
       ? MockAuthRemoteDataSource()
       : DioAuthRemoteDataSource(ref.watch(authDioProvider)),
 );
+final pushDeviceRemoteDataSourceProvider = Provider(
+  (ref) => PushDeviceRemoteDataSource(ref.watch(authDioProvider)),
+);
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepositoryImpl(
       ref.watch(authRemoteDataSourceProvider), ref.watch(tokenManagerProvider)),
@@ -53,16 +58,22 @@ final authControllerProvider =
     ref.watch(authRepositoryProvider),
     ref.watch(verifyCpfUseCaseProvider),
     ref.watch(loginUseCaseProvider),
+    ref.watch(pushDeviceRemoteDataSourceProvider),
   ),
 );
 
 class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
-  AuthController(this._repository, this._verifyCpf, this._login)
-      : super(const AsyncData(null));
+  AuthController(
+    this._repository,
+    this._verifyCpf,
+    this._login,
+    this._pushDevices,
+  ) : super(const AsyncData(null));
 
   final AuthRepository _repository;
   final VerifyCpfUseCase _verifyCpf;
   final LoginUseCase _login;
+  final PushDeviceRemoteDataSource _pushDevices;
 
   Future<AuthUser?> verifyCpf(String cpf) async {
     state = const AsyncLoading();
@@ -100,6 +111,14 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
   }
 
   Future<void> logout() async {
+    final token = PushNotificationService.instance.registrationToken.value;
+    if (token != null && token.isNotEmpty) {
+      try {
+        await _pushDevices.remove(token);
+      } catch (error) {
+        debugPrint('Não foi possível desativar o token push no logout: $error');
+      }
+    }
     await _repository.logout();
     authListenable.setAuthenticated(false);
     state = const AsyncData(null);

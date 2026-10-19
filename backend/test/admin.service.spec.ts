@@ -20,7 +20,7 @@ describe('AdminService doctor registration', () => {
       user: { findFirst: jest.fn().mockResolvedValue(null) },
       $transaction: jest.fn((callback) => callback(transaction)),
     };
-    const service = new AdminService(prisma as any, {} as any);
+    const service = new AdminService(prisma as any, {} as any, {} as any);
 
     const result = await service.createDoctor(dto, 'Matheus Eler');
 
@@ -33,7 +33,7 @@ describe('AdminService doctor registration', () => {
 
   it('rejects a duplicated CPF', async () => {
     const prisma = { user: { findFirst: jest.fn().mockResolvedValue({ cpf: dto.cpf, email: 'other@example.com' }) } };
-    const service = new AdminService(prisma as any, {} as any);
+    const service = new AdminService(prisma as any, {} as any, {} as any);
     await expect(service.createDoctor(dto)).rejects.toBeInstanceOf(ConflictException);
   });
 });
@@ -49,11 +49,56 @@ describe('AdminService document types', () => {
       },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
-    const service = new AdminService(prisma as any, {} as any);
+    const service = new AdminService(prisma as any, {} as any, {} as any);
 
     const result = await service.createDocumentType({ name: 'Contrato social', category: 'Empresa', sortOrder: 10 });
 
     expect(result).toEqual(created);
     expect(prisma.documentType.create).toHaveBeenCalledWith({ data: expect.objectContaining({ validityMonths: null }) });
+  });
+});
+
+describe('AdminService document attachment notifications', () => {
+  it('stores an in-app notification and sends a targeted push', async () => {
+    const item = {
+      id: 'document-id', userId: 'user-id', title: 'Certidão negativa',
+      status: 'APPROVED', fileKey: null,
+    };
+    const transaction = {
+      document: { update: jest.fn().mockResolvedValue(item) },
+      requestEvent: { create: jest.fn().mockResolvedValue({}) },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+      notification: { create: jest.fn().mockResolvedValue({ id: 'notification-id' }) },
+    };
+    const prisma = {
+      document: { findUnique: jest.fn().mockResolvedValue(item) },
+      $transaction: jest.fn((callback) => callback(transaction)),
+    };
+    const storage = {
+      storeDocument: jest.fn().mockResolvedValue('users/user-id/documents/document-id/file.pdf'),
+      deleteDocument: jest.fn().mockResolvedValue(undefined),
+    };
+    const pushNotifications = { sendDocumentAvailable: jest.fn().mockResolvedValue(undefined) };
+    const service = new AdminService(prisma as any, storage as any, pushNotifications as any);
+    jest.spyOn(service, 'requestDetail').mockResolvedValue({ id: item.id } as any);
+
+    await service.storeDocumentFile(item.id, {
+      originalname: 'certidao.pdf', mimetype: 'application/pdf',
+    } as Express.Multer.File);
+
+    expect(transaction.notification.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-id',
+        title: 'Documento disponível',
+        body: 'O documento Certidão negativa está pronto e pode ser acessado no app.',
+        kind: 'document_available',
+      },
+    });
+    expect(pushNotifications.sendDocumentAvailable).toHaveBeenCalledWith({
+      userId: 'user-id',
+      documentId: 'document-id',
+      documentTitle: 'Certidão negativa',
+      notificationId: 'notification-id',
+    });
   });
 });

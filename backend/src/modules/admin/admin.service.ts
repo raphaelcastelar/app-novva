@@ -4,6 +4,7 @@ import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage.service';
 import { isValidCpf } from '../../common/validation';
 import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
+import { PushNotificationsService } from '../push-devices/push-notifications.service';
 
 const CLOSED_STATUSES = new Set(['APPROVED', 'ISSUED', 'REJECTED', 'CANCELED']);
 const TRANSITIONS: Record<RequestKind, Record<string, string[]>> = {
@@ -19,7 +20,11 @@ const TRANSITIONS: Record<RequestKind, Record<string, string[]>> = {
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prisma: PrismaService, private readonly storage: StorageService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+    private readonly pushNotifications: PushNotificationsService,
+  ) {}
 
   async listRequests(query: AdminRequestQueryDto) {
     const [documents, invoices] = await Promise.all([
@@ -81,12 +86,26 @@ export class AdminService {
     if (!item) throw new NotFoundException('Solicitação de documento não encontrada.');
     const key = await this.storage.storeDocument(item.userId, id, file);
     try {
-      await this.prisma.$transaction(async (transaction) => {
+      const notification = await this.prisma.$transaction(async (transaction) => {
         await transaction.document.update({ where: { id }, data: { fileKey: key, mimeType: file.mimetype, originalName: file.originalname, fileUploadedAt: new Date() } });
         await transaction.requestEvent.create({ data: { requestKind: 'DOCUMENT', requestId: id, status: item.status, note: `Arquivo ${file.originalname} anexado`, actor } });
         await transaction.auditLog.create({ data: { action: 'DOCUMENT_FILE_ATTACHED', entity: 'DOCUMENT', entityId: id, metadata: { originalName: file.originalname, mimeType: file.mimetype, actor } } });
+        return transaction.notification.create({
+          data: {
+            userId: item.userId,
+            title: 'Documento disponível',
+            body: `O documento ${item.title} está pronto e pode ser acessado no app.`,
+            kind: 'document_available',
+          },
+        });
       });
       await this.storage.deleteDocument(item.fileKey);
+      await this.pushNotifications.sendDocumentAvailable({
+        userId: item.userId,
+        documentId: item.id,
+        documentTitle: item.title,
+        notificationId: notification.id,
+      });
       return this.requestDetail(id);
     } catch (error) {
       await this.storage.deleteDocument(key);

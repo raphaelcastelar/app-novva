@@ -17,6 +17,12 @@ class SettingsPage extends ConsumerWidget {
     final user = ref.watch(authControllerProvider).valueOrNull;
     const options = [
       (
+        'Notificações',
+        'Avisos e diagnóstico de entrega',
+        Icons.notifications_outlined,
+        RouteNames.notifications,
+      ),
+      (
         'Privacidade e conta',
         'Seus dados e exclusão da conta',
         Icons.privacy_tip_outlined,

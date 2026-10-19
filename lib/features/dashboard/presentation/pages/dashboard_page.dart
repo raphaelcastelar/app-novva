@@ -119,7 +119,16 @@ class _Header extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          IconButton(
+            tooltip: 'Notificações',
+            onPressed: () => context.go(RouteNames.notifications),
+            style: IconButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              backgroundColor: AppColors.softPrimary,
+            ),
+            icon: const Icon(Icons.notifications_outlined),
+          ),
+          const SizedBox(width: 6),
           const NovvaBrandMark(size: 36),
         ],
       );

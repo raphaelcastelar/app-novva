@@ -32,8 +32,30 @@ Usuário criado pelo seed: CPF `12831146747`, senha `Novva@1234`. O seed é bloq
 - Pagamentos e relatórios: consultas consolidadas.
 - Chat: histórico e envio de mensagens.
 - Notificações: listagem, leitura individual e leitura em lote.
+- Dispositivos push: registro e remoção do token FCM do aparelho autenticado.
 
 Todas as rotas privadas usam `Authorization: Bearer <accessToken>` e filtram os dados pelo usuário do token. Valores monetários são devolvidos como números na API.
+
+## Notificações push
+
+Ao anexar um arquivo a um documento pela área administrativa, a API registra a
+notificação e envia um push aos aparelhos vinculados ao usuário. Gere uma conta
+de serviço em Firebase Console > Configurações do projeto > Contas de serviço e
+configure o ambiente do backend:
+
+```text
+PUSH_NOTIFICATIONS_ENABLED=true
+FIREBASE_SERVICE_ACCOUNT_BASE64=<JSON da conta de serviço codificado em base64>
+```
+
+Como alternativa, configure `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` e
+`FIREBASE_PRIVATE_KEY`. O JSON e a chave privada são segredos do servidor e não
+devem ser incluídos no app, no Git ou em imagens Docker.
+
+Rotas autenticadas do aparelho:
+
+- `PUT /api/v1/devices/current` para registrar ou renovar o token FCM;
+- `DELETE /api/v1/devices/current` para desativar o token no logout.
 
 ## Produção
 

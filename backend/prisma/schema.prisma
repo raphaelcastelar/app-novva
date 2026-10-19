@@ -54,6 +54,11 @@ enum RequestKind {
   INVOICE
 }
 
+enum PushPlatform {
+  IOS
+  ANDROID
+}
+
 model User {
   id                  String               @id @default(uuid()) @db.Uuid
   cpf                 String               @unique @db.VarChar(11)
@@ -74,6 +79,7 @@ model User {
   payments            Payment[]
   conversation        Conversation?
   notifications       Notification[]
+  pushDevices         PushDevice[]
   noticeRecipients    NoticeRecipient[]
   auditLogs           AuditLog[]
 
@@ -273,6 +279,23 @@ model Notification {
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+model PushDevice {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @map("user_id") @db.Uuid
+  token       String       @unique
+  platform    PushPlatform
+  appVersion  String?      @map("app_version") @db.VarChar(40)
+  deviceId    String?      @map("device_id") @db.VarChar(160)
+  enabled     Boolean      @default(true)
+  lastSeenAt  DateTime     @default(now()) @map("last_seen_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, enabled])
+  @@map("push_devices")
 }
 
 model Notice {
