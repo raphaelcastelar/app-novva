@@ -17,6 +17,8 @@ class FakeAuthRepository implements AuthRepository {
           {required String cpf, required String password}) =>
       throw UnimplementedError();
   @override
+  Future<AuthUser?> restoreSession() => throw UnimplementedError();
+  @override
   Future<void> requestPasswordReset(String cpf) => throw UnimplementedError();
   @override
   Future<AuthUser?> verifyCpf(String cpf) => throw UnimplementedError();

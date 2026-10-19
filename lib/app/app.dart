@@ -27,6 +27,67 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
     super.initState();
     _pushNotifications.registrationToken.addListener(_scheduleRegistration);
     authListenable.addListener(_scheduleRegistration);
+    authListenable.addListener(_scheduleBiometricOffer);
+  }
+
+  bool _offeringBiometrics = false;
+
+  void _scheduleBiometricOffer() {
+    if (!mounted || !authListenable.isAuthenticated || _offeringBiometrics) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_offerBiometricSetup());
+    });
+  }
+
+  Future<void> _offerBiometricSetup() async {
+    _offeringBiometrics = true;
+    try {
+      await Future<void>.delayed(const Duration(milliseconds: 600));
+      if (!mounted || !authListenable.isAuthenticated) return;
+      final biometrics = ref.read(biometricAuthServiceProvider);
+      if (!await biometrics.shouldOfferSetup()) return;
+      final context = rootNavigatorKey.currentContext;
+      if (context == null || !context.mounted) return;
+      final activate = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          icon: const Icon(Icons.face_outlined),
+          title: const Text('Ativar Face ID?'),
+          content: const Text(
+            'Use o Face ID para acessar sua conta Novva nas próximas vezes, sem precisar digitar CPF e senha.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Agora não'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('Ativar'),
+            ),
+          ],
+        ),
+      );
+      if (activate != true) {
+        await biometrics.markOfferHandled();
+        return;
+      }
+      final enabled = await biometrics.enable();
+      final currentContext = rootNavigatorKey.currentContext;
+      if (currentContext != null && currentContext.mounted) {
+        ScaffoldMessenger.of(currentContext).showSnackBar(
+          SnackBar(
+            content: Text(enabled
+                ? 'Face ID ativado com sucesso.'
+                : 'Não foi possível ativar o Face ID.'),
+          ),
+        );
+      }
+    } finally {
+      _offeringBiometrics = false;
+    }
   }
 
   void _scheduleRegistration() {
@@ -73,6 +134,7 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
     _registrationRetry?.cancel();
     _pushNotifications.registrationToken.removeListener(_scheduleRegistration);
     authListenable.removeListener(_scheduleRegistration);
+    authListenable.removeListener(_scheduleBiometricOffer);
     super.dispose();
   }
 

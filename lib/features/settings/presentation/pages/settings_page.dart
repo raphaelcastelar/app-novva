@@ -9,11 +9,63 @@ import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/profile_avatar.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
-class SettingsPage extends ConsumerWidget {
+class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends ConsumerState<SettingsPage> {
+  bool? _faceIdAvailable;
+  bool _faceIdEnabled = false;
+  bool _updatingFaceId = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFaceId();
+  }
+
+  Future<void> _loadFaceId() async {
+    final service = ref.read(biometricAuthServiceProvider);
+    final values = await Future.wait([
+      service.canCheckBiometrics(),
+      service.isEnabled,
+    ]);
+    if (!mounted) return;
+    setState(() {
+      _faceIdAvailable = values[0];
+      _faceIdEnabled = values[1];
+    });
+  }
+
+  Future<void> _toggleFaceId(bool enabled) async {
+    if (_updatingFaceId) return;
+    setState(() => _updatingFaceId = true);
+    final service = ref.read(biometricAuthServiceProvider);
+    final changed = enabled ? await service.enable() : true;
+    if (!enabled) await service.disable();
+    if (!mounted) return;
+    setState(() {
+      _updatingFaceId = false;
+      _faceIdEnabled = enabled && changed;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          enabled
+              ? changed
+                  ? 'Face ID ativado com sucesso.'
+                  : 'Não foi possível ativar o Face ID.'
+              : 'Face ID desativado.',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).valueOrNull;
     const options = [
       (
@@ -71,6 +123,29 @@ class SettingsPage extends ConsumerWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          AppCard(
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              secondary: const CircleAvatar(
+                backgroundColor: AppColors.softPrimary,
+                child: Icon(Icons.face_outlined, color: AppColors.primary),
+              ),
+              title: const Text('Entrar com Face ID',
+                  style: TextStyle(fontWeight: FontWeight.w900)),
+              subtitle: Text(
+                _faceIdAvailable == null
+                    ? 'Verificando disponibilidade...'
+                    : _faceIdAvailable!
+                        ? 'Acesse sua conta sem digitar CPF e senha'
+                        : 'Face ID não está configurado neste aparelho',
+              ),
+              value: _faceIdEnabled,
+              onChanged: _faceIdAvailable == true && !_updatingFaceId
+                  ? _toggleFaceId
+                  : null,
             ),
           ),
           const SizedBox(height: 14),

@@ -48,6 +48,10 @@ void main() {
     expect(await tokenManager.refreshToken, 'refresh-novo');
   });
 
+  test('recognizes a stored session for biometric login', () async {
+    expect(await tokenManager.hasStoredSession(), isTrue);
+  });
+
   test('clears only session data when refresh is rejected', () async {
     await expectLater(
       tokenManager.refreshAccessToken(

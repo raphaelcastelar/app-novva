@@ -34,6 +34,14 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<AuthUser?> restoreSession() async {
+    if (!await _tokenManager.hasStoredSession()) return null;
+    final user = await _remote.currentUser();
+    await _tokenManager.updateUserName(user.name);
+    return user;
+  }
+
+  @override
   Future<void> requestPasswordReset(String cpf) =>
       _remote.requestPasswordReset(cpf);
 

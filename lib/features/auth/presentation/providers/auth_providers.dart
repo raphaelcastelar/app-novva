@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
 
+import '../../../../core/security/biometric_auth_service.dart';
 import '../../../../core/security/secure_storage_service.dart';
 import '../../../../core/security/token_manager.dart';
 import '../../../../core/network/dio_client.dart';
@@ -32,6 +34,13 @@ final secureStorageProvider = Provider(
 
 final tokenManagerProvider =
     Provider((ref) => TokenManager(ref.watch(secureStorageProvider)));
+final biometricAuthServiceProvider = Provider(
+  (ref) => BiometricAuthService(
+    LocalAuthentication(),
+    ref.watch(secureStorageProvider),
+    ref.watch(tokenManagerProvider),
+  ),
+);
 final authDioProvider = Provider(
   (ref) => DioClient(ref.watch(tokenManagerProvider)).dio,
 );
@@ -59,6 +68,7 @@ final authControllerProvider =
     ref.watch(verifyCpfUseCaseProvider),
     ref.watch(loginUseCaseProvider),
     ref.watch(pushDeviceRemoteDataSourceProvider),
+    ref.watch(biometricAuthServiceProvider),
   ),
 );
 
@@ -68,12 +78,14 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
     this._verifyCpf,
     this._login,
     this._pushDevices,
+    this._biometrics,
   ) : super(const AsyncData(null));
 
   final AuthRepository _repository;
   final VerifyCpfUseCase _verifyCpf;
   final LoginUseCase _login;
   final PushDeviceRemoteDataSource _pushDevices;
+  final BiometricAuthService _biometrics;
 
   Future<AuthUser?> verifyCpf(String cpf) async {
     state = const AsyncLoading();
@@ -110,6 +122,29 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
     );
   }
 
+  Future<bool> loginWithBiometrics() async {
+    state = const AsyncLoading();
+    if (!await _biometrics.canUseForLogin() ||
+        !await _biometrics.authenticate()) {
+      state = const AsyncData(null);
+      return false;
+    }
+    try {
+      final user = await _repository.restoreSession();
+      if (user == null) {
+        await _biometrics.disable();
+        state = const AsyncData(null);
+        return false;
+      }
+      state = AsyncData(user);
+      authListenable.setAuthenticated(true);
+      return true;
+    } catch (error, stackTrace) {
+      state = AsyncError(error, stackTrace);
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     final token = PushNotificationService.instance.registrationToken.value;
     if (token != null && token.isNotEmpty) {
@@ -120,6 +155,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
       }
     }
     await _repository.logout();
+    await _biometrics.clear();
     authListenable.setAuthenticated(false);
     state = const AsyncData(null);
   }
@@ -128,6 +164,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
     state = const AsyncLoading();
     try {
       await _repository.deleteAccount(password);
+      await _biometrics.clear();
       authListenable.setAuthenticated(false);
       state = const AsyncData(null);
     } catch (error, stackTrace) {

@@ -26,6 +26,16 @@ class TokenManager {
   Future<String?> get cpf => _storage.read(_cpfKey);
   Future<String?> get userName => _storage.read(_userNameKey);
 
+  Future<bool> hasStoredSession() async {
+    final values = await Future.wait([accessToken, refreshToken, cpf]);
+    final hasToken =
+        (values[0]?.isNotEmpty ?? false) || (values[1]?.isNotEmpty ?? false);
+    return hasToken && (values[2]?.isNotEmpty ?? false);
+  }
+
+  Future<void> updateUserName(String value) =>
+      _storage.write(_userNameKey, value);
+
   Future<void> saveSession({
     required String accessToken,
     required String cpf,

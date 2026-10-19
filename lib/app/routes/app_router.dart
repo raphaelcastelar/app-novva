@@ -22,7 +22,10 @@ import '../../core/widgets/app_scaffold.dart';
 import '../../core/widgets/error_state.dart';
 import 'route_names.dart';
 
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final appRouter = GoRouter(
+  navigatorKey: rootNavigatorKey,
   initialLocation: RouteNames.splash,
   refreshListenable: authListenable,
   redirect: (context, state) {

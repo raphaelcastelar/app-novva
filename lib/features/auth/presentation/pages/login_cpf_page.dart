@@ -18,6 +18,13 @@ class LoginCpfPage extends ConsumerStatefulWidget {
 class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
   final _formKey = GlobalKey<FormState>();
   final _cpfController = TextEditingController();
+  late final Future<bool> _canUseFaceId;
+
+  @override
+  void initState() {
+    super.initState();
+    _canUseFaceId = ref.read(biometricAuthServiceProvider).canUseForLogin();
+  }
 
   @override
   void dispose() {
@@ -40,6 +47,10 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
         ? RouteNames.createPassword
         : RouteNames.loginPassword;
     context.go('$route?cpf=${user.cpf}');
+  }
+
+  Future<void> _loginWithFaceId() async {
+    await ref.read(authControllerProvider.notifier).loginWithBiometrics();
   }
 
   @override
@@ -126,6 +137,23 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
                           icon: Icons.arrow_forward,
                           loading: state.isLoading,
                           onPressed: _continue,
+                        ),
+                        FutureBuilder<bool>(
+                          future: _canUseFaceId,
+                          builder: (context, snapshot) {
+                            if (snapshot.data != true) {
+                              return const SizedBox.shrink();
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: OutlinedButton.icon(
+                                onPressed:
+                                    state.isLoading ? null : _loginWithFaceId,
+                                icon: const Icon(Icons.face_outlined),
+                                label: const Text('Entrar com Face ID'),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

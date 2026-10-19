@@ -8,6 +8,7 @@ abstract interface class AuthRemoteDataSource {
   Future<AuthUserModel?> verifyCpf(String cpf);
   Future<Session> login(String cpf, String password);
   Future<Session> createPassword(String cpf, String password);
+  Future<AuthUserModel> currentUser();
   Future<void> requestPasswordReset(String cpf);
   Future<void> deleteAccount(String password);
 }
@@ -32,6 +33,12 @@ class DioAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<Session> createPassword(String cpf, String password) =>
       _createSession('auth/create-password', cpf, password);
+
+  @override
+  Future<AuthUserModel> currentUser() async {
+    final response = await _dio.get<Map<String, dynamic>>('me');
+    return AuthUserModel.fromJson(response.data!);
+  }
 
   Future<Session> _createSession(
       String path, String cpf, String password) async {
@@ -105,6 +112,12 @@ class MockAuthRemoteDataSource implements AuthRemoteDataSource {
     data['senha'] = password;
     final user = AuthUserModel.fromJson(data);
     return Session(accessToken: 'mock-access-token', user: user);
+  }
+
+  @override
+  Future<AuthUserModel> currentUser() async {
+    final data = _users.values.first;
+    return AuthUserModel.fromJson(data);
   }
 
   @override
