@@ -28,6 +28,10 @@
 	<false/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use o Face ID para acessar sua conta Novva com segurança.</string>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../core/widgets/novva_logo.dart';
+
 const authBackground = Color(0xFF031923);
 const authSurface = Color(0xFF102630);
 const authBorder = Color(0xFF294652);
@@ -183,7 +185,7 @@ class _AuthCarouselState extends State<AuthCarousel> {
             top: 20,
             child: const Column(
               children: [
-                _NovvaLogo(size: 50),
+                NovvaLogo(size: 50),
                 SizedBox(height: 4),
                 Text(
                   'Novva',
@@ -240,7 +242,7 @@ class _CompactAuthHeader extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _NovvaLogo(size: 42),
+              NovvaLogo(size: 42),
               SizedBox(width: 10),
               Text(
                 'Novva',
@@ -253,46 +255,6 @@ class _CompactAuthHeader extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _NovvaLogo extends StatelessWidget {
-  const _NovvaLogo({required this.size});
-
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return ColorFiltered(
-      colorFilter: const ColorFilter.matrix([
-        1,
-        1.05,
-        -0.63,
-        0,
-        0,
-        0,
-        3.1,
-        -1.26,
-        0,
-        0,
-        0,
-        2.1,
-        -0.26,
-        0,
-        0,
-        0,
-        0,
-        0,
-        1,
-        0,
-      ]),
-      child: Image.asset(
-        'assets/images/logo_mark_transparent.png',
-        width: size,
-        height: size,
-        fit: BoxFit.contain,
       ),
     );
   }
