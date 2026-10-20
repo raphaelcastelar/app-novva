@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes/route_names.dart';
-import '../../../../app/theme/app_colors.dart';
 import '../../../../core/errors/error_handler.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../providers/auth_providers.dart';
+import '../widgets/auth_page_shell.dart';
 
 class LoginCpfPage extends ConsumerStatefulWidget {
   const LoginCpfPage({super.key});
@@ -79,7 +78,6 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
       context.go('${RouteNames.createPassword}?cpf=${user.cpf}');
       return;
     }
-
     context.go('${RouteNames.loginPassword}?cpf=${user.cpf}');
   }
 
@@ -96,163 +94,210 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
     ref.listen(authControllerProvider, (_, next) {
       next.whenOrNull(error: (error, _) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(ErrorHandler.userMessage(error))));
+          SnackBar(content: Text(ErrorHandler.userMessage(error))),
+        );
       });
     });
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/firstpage.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.04),
-                    Colors.black.withValues(alpha: 0.24),
-                    Colors.black.withValues(alpha: 0.58),
+    return AuthPageShell(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+        child: _loadingSavedAccount
+            ? const Center(
+                child: CircularProgressIndicator(color: authAccent),
+              )
+            : Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_showCpfForm)
+                      _CpfForm(
+                        controller: _cpfController,
+                        loading: state.isLoading,
+                        onContinue: _continueWithAnotherAccount,
+                      )
+                    else
+                      _SavedAccount(
+                        name: _savedUserName ?? 'Usuário Novva',
+                        cpf: _formattedCpf(_savedCpf!),
+                        loading: state.isLoading,
+                        onContinue: _accessSavedAccount,
+                        onChangeAccount: _accessAnotherAccount,
+                      ),
+                    const Spacer(),
+                    const AuthHelpFooter(),
                   ],
                 ),
               ),
-            ),
+      ),
+    );
+  }
+}
+
+class _CpfForm extends StatelessWidget {
+  const _CpfForm({
+    required this.controller,
+    required this.loading,
+    required this.onContinue,
+  });
+
+  final TextEditingController controller;
+  final bool loading;
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AuthTextField(
+          label: 'CPF',
+          controller: controller,
+          hintText: '000.000.000-00',
+          keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            const _CpfInputFormatter(),
+          ],
+          validator: (value) =>
+              (value ?? '').replaceAll(RegExp(r'\D'), '').length == 11
+                  ? null
+                  : 'Digite 11 números.',
+          onFieldSubmitted: (_) => onContinue(),
+        ),
+        const SizedBox(height: 12),
+        AuthPrimaryButton(
+          label: 'Continuar',
+          loading: loading,
+          onPressed: onContinue,
+        ),
+      ],
+    );
+  }
+}
+
+class _SavedAccount extends StatelessWidget {
+  const _SavedAccount({
+    required this.name,
+    required this.cpf,
+    required this.loading,
+    required this.onContinue,
+    required this.onChangeAccount,
+  });
+
+  final String name;
+  final String cpf;
+  final bool loading;
+  final VoidCallback onContinue;
+  final VoidCallback onChangeAccount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Continuar como',
+          style: TextStyle(color: Color(0xFFC1CED4), fontSize: 12),
+        ),
+        const SizedBox(height: 7),
+        Container(
+          height: 62,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: authSurface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: authAccent),
           ),
-          SafeArea(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.72),
+          child: Row(
+            children: [
+              const CircleAvatar(
+                radius: 19,
+                backgroundColor: Color(0xFF143542),
+                foregroundColor: Color(0xFFB7D0DA),
+                child: Icon(Icons.person_outline, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  child: _loadingSavedAccount
-                      ? const SizedBox(
-                          height: 160,
-                          child: Center(child: CircularProgressIndicator()),
-                        )
-                      : Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _showCpfForm
-                                    ? 'Acesse sua área contábil'
-                                    : 'Bem-vindo de volta',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(fontWeight: FontWeight.w700),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                _showCpfForm
-                                    ? 'Informe seu CPF para continuar.'
-                                    : 'Confirme a conta que deseja acessar.',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              if (_showCpfForm) ...[
-                                const SizedBox(height: 20),
-                                AppTextField(
-                                  label: 'Informe seu CPF',
-                                  controller: _cpfController,
-                                  keyboardType: TextInputType.number,
-                                  validator: (value) => (value ?? '')
-                                              .replaceAll(RegExp(r'\D'), '')
-                                              .length ==
-                                          11
-                                      ? null
-                                      : 'Digite 11 números.',
-                                ),
-                                const SizedBox(height: 20),
-                                AppButton(
-                                  label: 'Continuar',
-                                  icon: Icons.arrow_forward,
-                                  loading: state.isLoading,
-                                  onPressed: _continueWithAnotherAccount,
-                                ),
-                              ] else ...[
-                                const SizedBox(height: 20),
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.softPrimary,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: AppColors.border),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const CircleAvatar(
-                                        backgroundColor: AppColors.primary,
-                                        foregroundColor: Colors.white,
-                                        child: Icon(Icons.person_outline),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            if (_savedUserName case final name?)
-                                              Text(
-                                                name,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                ),
-                                              ),
-                                            Text(
-                                              _formattedCpf(_savedCpf!),
-                                              style: const TextStyle(
-                                                color: AppColors.muted,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                AppButton(
-                                  label: 'Acessar',
-                                  icon: Icons.login,
-                                  loading: state.isLoading,
-                                  onPressed: _accessSavedAccount,
-                                ),
-                                const SizedBox(height: 8),
-                                OutlinedButton(
-                                  onPressed: state.isLoading
-                                      ? null
-                                      : _accessAnotherAccount,
-                                  child: const Text('Acessar com outra conta'),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
+                    Text(
+                      'CPF: $cpf',
+                      style: const TextStyle(color: authMuted, fontSize: 11),
+                    ),
+                  ],
                 ),
               ),
+              const CircleAvatar(
+                radius: 11,
+                backgroundColor: authAccent,
+                foregroundColor: Color(0xFF063140),
+                child: Icon(Icons.check, size: 15),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        AuthPrimaryButton(
+          label: 'Continuar',
+          loading: loading,
+          onPressed: onContinue,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 50,
+          child: OutlinedButton.icon(
+            onPressed: loading ? null : onChangeAccount,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.white,
+              side: const BorderSide(color: authBorder),
+              shape: const StadiumBorder(),
+            ),
+            icon: const Icon(Icons.swap_horiz, color: authAccent, size: 20),
+            label: const Text(
+              'Alterar conta',
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CpfInputFormatter extends TextInputFormatter {
+  const _CpfInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final limited = digits.length > 11 ? digits.substring(0, 11) : digits;
+    final buffer = StringBuffer();
+    for (var index = 0; index < limited.length; index++) {
+      if (index == 3 || index == 6) buffer.write('.');
+      if (index == 9) buffer.write('-');
+      buffer.write(limited[index]);
+    }
+    final text = buffer.toString();
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 }

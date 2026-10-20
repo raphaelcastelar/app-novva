@@ -14,8 +14,9 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: NovvaApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Acesse sua área contábil'), findsOneWidget);
-    expect(find.text('Informe seu CPF'), findsOneWidget);
+    expect(find.text('Gestão médica,'), findsOneWidget);
+    expect(find.text('CPF'), findsOneWidget);
+    expect(find.text('Continuar'), findsOneWidget);
     expect(find.text('Entrar com Face ID'), findsNothing);
     expect(find.byType(NovvaBrandMark), findsNothing);
   });
@@ -34,16 +35,16 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: NovvaApp()));
     await tester.pumpAndSettle();
 
-    expect(find.text('Bem-vindo de volta'), findsOneWidget);
+    expect(find.text('Continuar como'), findsOneWidget);
     expect(find.text('Dr. Matheus'), findsOneWidget);
-    expect(find.text('128.311.467-47'), findsOneWidget);
-    expect(find.text('Acessar'), findsOneWidget);
-    expect(find.text('Acessar com outra conta'), findsOneWidget);
-    expect(find.text('Informe seu CPF'), findsNothing);
+    expect(find.text('CPF: 128.311.467-47'), findsOneWidget);
+    expect(find.text('Continuar'), findsOneWidget);
+    expect(find.text('Alterar conta'), findsOneWidget);
+    expect(find.text('CPF'), findsNothing);
 
-    await tester.tap(find.text('Acessar com outra conta'));
+    await tester.tap(find.text('Alterar conta'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Informe seu CPF'), findsOneWidget);
+    expect(find.text('CPF'), findsOneWidget);
   });
 }
