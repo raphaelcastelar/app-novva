@@ -19,6 +19,8 @@ class AuthPageShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
+
     return Scaffold(
       backgroundColor: authBackground,
       resizeToAvoidBottomInset: true,
@@ -26,21 +28,26 @@ class AuthPageShell extends StatelessWidget {
         bottom: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final heroHeight =
-                (constraints.maxHeight * 0.54).clamp(360.0, 500.0);
+            final heroHeight = keyboardVisible
+                ? 104.0
+                : (constraints.maxHeight * 0.64).clamp(360.0, 525.0);
+            final minimumContentHeight = keyboardVisible ? 330.0 : 300.0;
+            final contentHeight = (constraints.maxHeight - heroHeight)
+                .clamp(minimumContentHeight, double.infinity);
+
             return SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SizedBox(height: heroHeight, child: const AuthCarousel()),
-                      Expanded(child: child),
-                    ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 260),
+                    curve: Curves.easeOutCubic,
+                    height: heroHeight,
+                    child: AuthCarousel(compact: keyboardVisible),
                   ),
-                ),
+                  SizedBox(height: contentHeight, child: child),
+                ],
               ),
             );
           },
@@ -51,7 +58,9 @@ class AuthPageShell extends StatelessWidget {
 }
 
 class AuthCarousel extends StatefulWidget {
-  const AuthCarousel({super.key});
+  const AuthCarousel({required this.compact, super.key});
+
+  final bool compact;
 
   @override
   State<AuthCarousel> createState() => _AuthCarouselState();
@@ -117,6 +126,8 @@ class _AuthCarouselState extends State<AuthCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.compact) return const _CompactAuthHeader();
+
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
       child: Stack(
@@ -133,13 +144,11 @@ class _AuthCarouselState extends State<AuthCarousel> {
             top: 20,
             child: Column(
               children: [
-                ClipOval(
-                  child: Image.asset(
-                    'assets/images/logo_mark.png',
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
+                Image.asset(
+                  'assets/images/logo_mark_transparent.png',
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.contain,
                 ),
                 const SizedBox(height: 4),
                 const Text(
@@ -173,6 +182,47 @@ class _AuthCarouselState extends State<AuthCarousel> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CompactAuthHeader extends StatelessWidget {
+  const _CompactAuthHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+      child: const DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF123541), Color(0xFF061C25)],
+          ),
+        ),
+        child: Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image(
+                image: AssetImage('assets/images/logo_mark_transparent.png'),
+                width: 42,
+                height: 42,
+              ),
+              SizedBox(width: 10),
+              Text(
+                'Novva',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 21,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

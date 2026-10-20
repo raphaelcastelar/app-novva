@@ -1,3 +1,5 @@
+import 'dart:ui' show Size;
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,5 +48,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('CPF'), findsOneWidget);
+  });
+
+  testWidgets('compacts the authentication header when the keyboard opens',
+      (tester) async {
+    FlutterSecureStorage.setMockInitialValues({});
+    tester.view.physicalSize = const Size(393, 852);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    appRouter.go(RouteNames.loginCpf);
+    addTearDown(() => appRouter.go(RouteNames.splash));
+
+    await tester.pumpWidget(const ProviderScope(child: NovvaApp()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Médica sorrindo no consultório'), findsOneWidget);
+
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Médica sorrindo no consultório'), findsNothing);
+    expect(find.text('Novva'), findsOneWidget);
+    expect(find.text('CPF'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
