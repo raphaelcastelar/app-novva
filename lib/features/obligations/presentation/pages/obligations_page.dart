@@ -200,7 +200,7 @@ class _GuidesSectionHeading extends StatelessWidget {
         children: [
           Text(
             eyebrow,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.accent,
               fontSize: 10,
               fontWeight: FontWeight.w900,
@@ -210,10 +210,10 @@ class _GuidesSectionHeading extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 3),
-          Text(description, style: const TextStyle(color: AppColors.muted)),
+          Text(description, style: TextStyle(color: AppColors.muted)),
         ],
       );
 }
@@ -247,7 +247,7 @@ class _GuidesHero extends StatelessWidget {
               children: [
                 const _GuidesHeroIcon(),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -292,13 +292,13 @@ class _GuidesHero extends StatelessWidget {
                       children: [
                         Text(
                           '$year',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
+                        Icon(
                           Icons.keyboard_arrow_down_rounded,
                           color: AppColors.primary,
                           size: 18,
@@ -354,7 +354,7 @@ class _GuidesHeroIcon extends StatelessWidget {
           gradient: AppColors.premiumGradient,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.receipt_long_rounded,
           color: Colors.white,
           size: 22,
@@ -394,7 +394,7 @@ class _YearSummary extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.text,
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
@@ -404,7 +404,7 @@ class _YearSummary extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 10,
                   ),
@@ -478,7 +478,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
           width: _isCurrentMonth ? 1.5 : 1,
         ),
         boxShadow: _isCurrentMonth
-            ? const [
+            ? [
                 BoxShadow(
                   color: AppColors.shadow,
                   blurRadius: 22,
@@ -521,7 +521,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                               Flexible(
                                 child: Text(
                                   _monthLabel(widget.month),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                   ),
@@ -538,7 +538,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                                     color: AppColors.softAccent,
                                     borderRadius: BorderRadius.circular(999),
                                   ),
-                                  child: const Text(
+                                  child: Text(
                                     'MÊS ATUAL',
                                     style: TextStyle(
                                       color: AppColors.accent,
@@ -554,7 +554,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                             const SizedBox(height: 5),
                             Text(
                               presentation.description,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.muted,
                                 height: 1.3,
                               ),
@@ -567,7 +567,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                                   : '${widget.items.length} ${widget.items.length == 1 ? 'guia' : 'guias'} • ${AppFormatters.money(total)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: AppColors.muted,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -584,7 +584,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                       AnimatedRotation(
                         turns: _expanded ? 0.5 : 0,
                         duration: const Duration(milliseconds: 220),
-                        child: const Icon(
+                        child: Icon(
                           Icons.keyboard_arrow_down_rounded,
                           color: AppColors.muted,
                           size: 21,
@@ -611,7 +611,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.account_balance_wallet_outlined,
                           color: AppColors.primary,
                           size: 20,
@@ -622,7 +622,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                             total > 0
                                 ? 'Total da competência'
                                 : 'Valor disponível na guia',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.muted,
                               fontWeight: FontWeight.w700,
                             ),
@@ -631,10 +631,10 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                         if (total > 0)
                           Text(
                             AppFormatters.money(total),
-                            style: const TextStyle(fontWeight: FontWeight.w900),
+                            style: TextStyle(fontWeight: FontWeight.w900),
                           )
                         else
-                          const Icon(
+                          Icon(
                             Icons.picture_as_pdf_outlined,
                             color: AppColors.primary,
                             size: 20,
@@ -707,8 +707,8 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                : const Icon(Icons.refresh_rounded, size: 19),
-                            label: const Text(
+                                : Icon(Icons.refresh_rounded, size: 19),
+                            label: Text(
                               'Recalcular guia',
                               maxLines: 1,
                             ),
@@ -720,7 +720,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                 ),
                 if (_downloadable.isEmpty) ...[
                   const SizedBox(height: 8),
-                  const Row(
+                  Row(
                     children: [
                       Icon(
                         Icons.info_outline_rounded,
@@ -821,7 +821,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Qual guia deseja baixar?',
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
               ),
@@ -829,7 +829,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
               for (final item in _downloadable)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const CircleAvatar(
+                  leading: CircleAvatar(
                     backgroundColor: AppColors.softPrimary,
                     child: Icon(
                       Icons.picture_as_pdf_outlined,
@@ -838,7 +838,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                   ),
                   title: Text(item.name),
                   subtitle: Text(AppFormatters.money(item.amount)),
-                  trailing: const Icon(Icons.chevron_right_rounded),
+                  trailing: Icon(Icons.chevron_right_rounded),
                   onTap: () => Navigator.pop(context, item),
                 ),
             ],
@@ -870,7 +870,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                       color: AppColors.softAccent,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.refresh_rounded,
                       color: AppColors.accent,
                     ),
@@ -880,7 +880,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Recalcular guia',
                           style: TextStyle(
                             fontSize: 19,
@@ -889,7 +889,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                         ),
                         Text(
                           '${_monthLabel(widget.month)} de ${widget.year}',
-                          style: const TextStyle(color: AppColors.muted),
+                          style: TextStyle(color: AppColors.muted),
                         ),
                       ],
                     ),
@@ -897,7 +897,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                 ],
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'A guia será emitida novamente pelo Integra Contador. O PDF atual será substituído pela nova versão.',
                 style: TextStyle(height: 1.45),
               ),
@@ -907,14 +907,14 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancelar'),
+                      child: Text('Cancelar'),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton(
                       onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Confirmar'),
+                      child: Text('Confirmar'),
                     ),
                   ),
                 ],
@@ -965,7 +965,7 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Qual guia deseja recalcular?',
                 style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
               ),
@@ -973,12 +973,12 @@ class _MonthGuideCardState extends ConsumerState<_MonthGuideCard> {
               for (final item in _downloadable)
                 ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const CircleAvatar(
+                  leading: CircleAvatar(
                     backgroundColor: AppColors.softAccent,
                     child: Icon(Icons.refresh_rounded, color: AppColors.accent),
                   ),
                   title: Text(item.name),
-                  trailing: const Icon(Icons.chevron_right_rounded),
+                  trailing: Icon(Icons.chevron_right_rounded),
                   onTap: () => Navigator.pop(context, item),
                 ),
             ],
@@ -1047,7 +1047,7 @@ class _WaitingGuidePanel extends StatelessWidget {
         color: AppColors.background,
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Row(
+      child: Row(
         children: [
           Icon(Icons.schedule_rounded, color: AppColors.muted, size: 21),
           SizedBox(width: 10),
@@ -1087,7 +1087,7 @@ class _GuideEntryState extends ConsumerState<_GuideEntry> {
             Expanded(
               child: Text(
                 item.name,
-                style: const TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w900),
               ),
             ),
             const SizedBox(width: 8),
@@ -1099,11 +1099,11 @@ class _GuideEntryState extends ConsumerState<_GuideEntry> {
           item.amount > 0
               ? 'Vencimento ${AppFormatters.date(item.dueDate)} • ${AppFormatters.money(item.amount)}'
               : 'Consulte o vencimento e o valor no PDF',
-          style: const TextStyle(color: AppColors.muted, fontSize: 12),
+          style: TextStyle(color: AppColors.muted, fontSize: 12),
         ),
         if (!item.hasFile) ...[
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Guia ainda não gerada',
             style: TextStyle(
               color: AppColors.warning,
@@ -1123,8 +1123,8 @@ class _GuideEntryState extends ConsumerState<_GuideEntry> {
               if (item.paymentCode case final code?)
                 TextButton.icon(
                   onPressed: () => _copyCode(code),
-                  icon: const Icon(Icons.copy_outlined, size: 17),
-                  label: const Text('Copiar código'),
+                  icon: Icon(Icons.copy_outlined, size: 17),
+                  label: Text('Copiar código'),
                 ),
               if (item.status != ObligationStatus.paid &&
                   item.status != ObligationStatus.canceled)
@@ -1135,8 +1135,8 @@ class _GuideEntryState extends ConsumerState<_GuideEntry> {
                           dimension: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.check_circle_outline, size: 17),
-                  label: const Text('Informar pagamento'),
+                      : Icon(Icons.check_circle_outline, size: 17),
+                  label: Text('Informar pagamento'),
                 ),
             ],
           ),
@@ -1171,7 +1171,7 @@ class _GuideEntryState extends ConsumerState<_GuideEntry> {
 }
 
 class _MonthPresentation {
-  const _MonthPresentation({
+  _MonthPresentation({
     required this.label,
     required this.description,
     required this.color,
@@ -1184,34 +1184,34 @@ class _MonthPresentation {
 
 _MonthPresentation _monthPresentation(List<Obligation> items) {
   if (items.isEmpty) {
-    return const _MonthPresentation(
+    return _MonthPresentation(
       label: 'Aguardando',
       description: 'A guia ainda não foi gerada.',
       color: AppColors.muted,
     );
   }
   if (items.every((item) => item.status == ObligationStatus.paid)) {
-    return const _MonthPresentation(
+    return _MonthPresentation(
       label: 'Concluído',
       description: 'Todas as guias desta competência estão pagas.',
       color: AppColors.success,
     );
   }
   if (items.any((item) => item.status == ObligationStatus.overdue)) {
-    return const _MonthPresentation(
+    return _MonthPresentation(
       label: 'Atenção',
       description: 'Existe uma guia vencida nesta competência.',
       color: AppColors.danger,
     );
   }
   if (!items.any((item) => item.hasFile)) {
-    return const _MonthPresentation(
+    return _MonthPresentation(
       label: 'Preparando',
       description: 'A guia ainda não possui um PDF.',
       color: AppColors.warning,
     );
   }
-  return const _MonthPresentation(
+  return _MonthPresentation(
     label: 'Disponível',
     description: 'Sua guia está pronta para download.',
     color: AppColors.primary,

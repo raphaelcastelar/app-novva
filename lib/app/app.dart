@@ -53,19 +53,19 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
       final activate = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          icon: const Icon(Icons.face_outlined),
-          title: const Text('Ativar Face ID?'),
-          content: const Text(
+          icon: Icon(Icons.face_outlined),
+          title: Text('Ativar Face ID?'),
+          content: Text(
             'Nas próximas vezes, confirme o CPF salvo e use o Face ID no lugar da senha.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Agora não'),
+              child: Text('Agora não'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text('Ativar'),
+              child: Text('Ativar'),
             ),
           ],
         ),
@@ -144,6 +144,8 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
       title: 'Novva',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: ThemeMode.system,
       routerConfig: appRouter,
       locale: const Locale('pt', 'BR'),
       supportedLocales: const [Locale('pt', 'BR')],

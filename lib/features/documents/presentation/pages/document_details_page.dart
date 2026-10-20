@@ -87,13 +87,12 @@ class _DocumentDetailsPageState extends ConsumerState<DocumentDetailsPage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.warning_amber_rounded,
-                      color: AppColors.warning),
+                  Icon(Icons.warning_amber_rounded, color: AppColors.warning),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Este documento está possivelmente vencido${widget.expiresAt == null ? '.' : ' desde ${_date(widget.expiresAt!)}.'} Solicite uma versão atualizada se precisar utilizá-lo.',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.text,
                         fontWeight: FontWeight.w700,
                         height: 1.35,
@@ -148,7 +147,7 @@ class _DocumentActionHeader extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppColors.premiumGradient,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
             blurRadius: 30,
@@ -172,7 +171,7 @@ class _DocumentActionHeader extends StatelessWidget {
             children: [
               const _HeaderIcon(),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'O que você precisa fazer?',
                 style: TextStyle(
                   color: Colors.white,
@@ -181,7 +180,7 @@ class _DocumentActionHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Escolha uma ação para este documento.',
                 style: TextStyle(
                   color: Color(0xD9FFFFFF),
@@ -201,7 +200,7 @@ class _DocumentActionHeader extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.description_outlined,
                       color: Colors.white,
                       size: 18,
@@ -212,7 +211,7 @@ class _DocumentActionHeader extends StatelessWidget {
                         documentTitle,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
                         ),
@@ -252,7 +251,7 @@ class _HeaderIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.folder_copy_outlined,
         color: Colors.white,
         size: 28,
@@ -300,7 +299,7 @@ class _DocumentActionTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: AppColors.border),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
                 color: AppColors.shadow,
                 blurRadius: 24,
@@ -330,7 +329,7 @@ class _DocumentActionTile extends StatelessWidget {
                         title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.text,
                           fontSize: 17,
                           fontWeight: FontWeight.w900,
@@ -339,7 +338,7 @@ class _DocumentActionTile extends StatelessWidget {
                       const SizedBox(height: 5),
                       Text(
                         subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           height: 1.3,
                         ),

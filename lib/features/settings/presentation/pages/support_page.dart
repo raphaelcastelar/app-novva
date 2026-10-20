@@ -27,16 +27,16 @@ class SupportPage extends StatelessWidget {
                     color: AppColors.softAccent,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(Icons.support_agent,
+                  child: Icon(Icons.support_agent,
                       color: AppColors.primary, size: 28),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Como podemos ajudar?',
                   style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Envie sua dúvida, relate um problema ou solicite informações sobre seus dados e sua conta.',
                   style: TextStyle(color: AppColors.muted, height: 1.5),
                 ),
@@ -47,11 +47,11 @@ class SupportPage extends StatelessWidget {
           AppCard(
             child: ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const CircleAvatar(
+              leading: CircleAvatar(
                 backgroundColor: AppColors.softPrimary,
                 child: Icon(Icons.email_outlined, color: AppColors.primary),
               ),
-              title: const Text('Atendimento por e-mail',
+              title: Text('Atendimento por e-mail',
                   style: TextStyle(fontWeight: FontWeight.w900)),
               subtitle: const Padding(
                 padding: EdgeInsets.only(top: 4),
@@ -59,7 +59,7 @@ class SupportPage extends StatelessWidget {
               ),
               trailing: IconButton(
                 tooltip: 'Copiar e-mail',
-                icon: const Icon(Icons.copy_outlined),
+                icon: Icon(Icons.copy_outlined),
                 onPressed: () async {
                   await Clipboard.setData(
                     const ClipboardData(text: AppConstants.supportEmail),
@@ -73,7 +73,7 @@ class SupportPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          const AppCard(
+          AppCard(
             child: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
@@ -89,7 +89,7 @@ class SupportPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Ao entrar em contato, não envie senhas, códigos de acesso ou documentos sensíveis por e-mail.',
             textAlign: TextAlign.center,
             style:

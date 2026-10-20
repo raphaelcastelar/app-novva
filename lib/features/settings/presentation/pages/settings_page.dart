@@ -96,7 +96,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           AppCard(
             child: Row(
               children: [
-                const ProfileAvatar(
+                ProfileAvatar(
                   radius: 26,
                   backgroundColor: AppColors.softAccent,
                   foregroundColor: AppColors.primary,
@@ -110,14 +110,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                         user?.name ?? 'Conta Novva',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w900),
+                        style: TextStyle(fontWeight: FontWeight.w900),
                       ),
                       if (user?.email case final email?) ...[
                         const SizedBox(height: 2),
                         Text(email,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: AppColors.muted)),
+                            style: TextStyle(color: AppColors.muted)),
                       ],
                     ],
                   ),
@@ -129,11 +129,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           AppCard(
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              secondary: const CircleAvatar(
+              secondary: CircleAvatar(
                 backgroundColor: AppColors.softPrimary,
                 child: Icon(Icons.face_outlined, color: AppColors.primary),
               ),
-              title: const Text('Entrar com Face ID',
+              title: Text('Entrar com Face ID',
                   style: TextStyle(fontWeight: FontWeight.w900)),
               subtitle: Text(
                 _faceIdAvailable == null
@@ -161,17 +161,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     child: Icon(item.$3, color: AppColors.primary),
                   ),
                   title: Text(item.$1,
-                      style: const TextStyle(fontWeight: FontWeight.w900)),
+                      style: TextStyle(fontWeight: FontWeight.w900)),
                   subtitle: Text(item.$2),
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(Icons.chevron_right),
                 ),
               ),
             ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: () => ref.read(authControllerProvider.notifier).logout(),
-            icon: const Icon(Icons.logout),
-            label: const Text('Sair com segurança'),
+            icon: Icon(Icons.logout),
+            label: Text('Sair com segurança'),
           ),
         ],
       ),

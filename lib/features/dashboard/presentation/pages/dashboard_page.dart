@@ -90,7 +90,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
         children: [
-          const ProfileAvatar(
+          ProfileAvatar(
             radius: 23,
             backgroundColor: AppColors.softAccent,
             foregroundColor: AppColors.primary,
@@ -111,7 +111,7 @@ class _Header extends StatelessWidget {
                 ),
                 Text(
                   _todayLabel(DateTime.now()),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 12,
                   ),
@@ -126,7 +126,7 @@ class _Header extends StatelessWidget {
               foregroundColor: AppColors.primary,
               backgroundColor: AppColors.softPrimary,
             ),
-            icon: const Icon(Icons.notifications_outlined),
+            icon: Icon(Icons.notifications_outlined),
           ),
           const SizedBox(width: 6),
           const NovvaBrandMark(size: 36),
@@ -187,7 +187,7 @@ class _RevenueHero extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.14),
                   ),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.receipt_long_rounded,
                   color: Colors.white,
                 ),
@@ -196,7 +196,7 @@ class _RevenueHero extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Faturamento de $month',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Color(0xD9FFFFFF),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
@@ -205,14 +205,14 @@ class _RevenueHero extends StatelessWidget {
               ),
               Text(
                 '${summary.orders}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(width: 5),
-              const Icon(
+              Icon(
                 Icons.description_outlined,
                 color: Color(0xBFFFFFFF),
                 size: 18,
@@ -224,7 +224,7 @@ class _RevenueHero extends StatelessWidget {
             AppFormatters.money(summary.monthRevenue),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white,
               fontSize: 34,
               fontWeight: FontWeight.w900,
@@ -235,7 +235,7 @@ class _RevenueHero extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             invoiceLabel,
-            style: const TextStyle(color: Color(0xBFFFFFFF), fontSize: 12),
+            style: TextStyle(color: Color(0xBFFFFFFF), fontSize: 12),
           ),
           const SizedBox(height: 22),
           Row(
@@ -247,8 +247,8 @@ class _RevenueHero extends StatelessWidget {
                     foregroundColor: AppColors.primaryDark,
                   ),
                   onPressed: () => context.go(RouteNames.invoices),
-                  icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Emitir nota'),
+                  icon: Icon(Icons.add_rounded, size: 18),
+                  label: Text('Emitir nota'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -259,7 +259,7 @@ class _RevenueHero extends StatelessWidget {
                   foregroundColor: Colors.white,
                 ),
                 onPressed: () => context.go(RouteNames.invoices),
-                icon: const Icon(Icons.arrow_forward_rounded),
+                icon: Icon(Icons.arrow_forward_rounded),
               ),
             ],
           ),
@@ -278,12 +278,12 @@ class _NoticeBoard extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Quadro de avisos',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Comunicados importantes aparecerão aqui.',
           style: TextStyle(color: AppColors.muted),
         ),
@@ -376,7 +376,7 @@ class _NoticeCarouselState extends State<_NoticeCarousel> {
                 clipBehavior: Clip.antiAlias,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(22),
-                  side: const BorderSide(color: AppColors.border),
+                  side: BorderSide(color: AppColors.border),
                 ),
                 child: _NoticeRow(notice: widget.items[index]),
               ),
@@ -430,11 +430,10 @@ class _NoticeMessage extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w900)),
+                Text(title, style: TextStyle(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 4),
                 Text(message,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.muted, fontSize: 12, height: 1.35))
               ]))
         ]),
@@ -491,25 +490,25 @@ class _NoticeRow extends ConsumerWidget {
                     Text(notice.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w900)),
+                        style: TextStyle(fontWeight: FontWeight.w900)),
                     const SizedBox(height: 4),
                     Text(notice.description,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppColors.muted,
                             fontSize: 12,
                             height: 1.35)),
                     const SizedBox(height: 7),
                     Row(children: [
                       Text(AppFormatters.date(notice.createdAt),
-                          style: const TextStyle(
-                              color: AppColors.muted, fontSize: 10)),
+                          style:
+                              TextStyle(color: AppColors.muted, fontSize: 10)),
                       if (notice.hasAttachment) ...[
                         const SizedBox(width: 8),
-                        const Icon(Icons.attach_file_rounded,
+                        Icon(Icons.attach_file_rounded,
                             size: 13, color: AppColors.primary),
-                        const Text(' Anexo',
+                        Text(' Anexo',
                             style: TextStyle(
                                 color: AppColors.primary,
                                 fontSize: 10,
@@ -517,7 +516,7 @@ class _NoticeRow extends ConsumerWidget {
                       ]
                     ])
                   ])),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+              Icon(Icons.chevron_right_rounded, color: AppColors.muted),
             ])),
       ));
 }
@@ -571,20 +570,19 @@ class _NoticeDetailsState extends ConsumerState<_NoticeDetails> {
                     IconButton(
                       tooltip: 'Fechar aviso',
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
+                      icon: Icon(Icons.close_rounded),
                     ),
                   ]),
                   const SizedBox(height: 16),
                   Text(widget.notice.title,
-                      style: const TextStyle(
-                          fontSize: 22, fontWeight: FontWeight.w900)),
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 6),
                   Text(AppFormatters.date(widget.notice.createdAt),
-                      style: const TextStyle(
-                          color: AppColors.muted, fontSize: 11)),
+                      style: TextStyle(color: AppColors.muted, fontSize: 11)),
                   const SizedBox(height: 18),
                   Text(widget.notice.description,
-                      style: const TextStyle(fontSize: 14, height: 1.55)),
+                      style: TextStyle(fontSize: 14, height: 1.55)),
                   if (widget.notice.hasAttachment) ...[
                     const SizedBox(height: 20),
                     SizedBox(
@@ -597,13 +595,12 @@ class _NoticeDetailsState extends ConsumerState<_NoticeDetails> {
                                     height: 18,
                                     child: CircularProgressIndicator(
                                         strokeWidth: 2))
-                                : const Icon(Icons.download_rounded),
+                                : Icon(Icons.download_rounded),
                             label: Text(
                                 downloading ? 'Baixando...' : 'Baixar anexo'))),
                     const SizedBox(height: 8),
                     Text(widget.notice.attachmentOriginalName ?? 'Anexo',
-                        style: const TextStyle(
-                            color: AppColors.muted, fontSize: 12)),
+                        style: TextStyle(color: AppColors.muted, fontSize: 12)),
                   ],
                 ]),
           )));
@@ -638,12 +635,12 @@ class _AccountOverview extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Acompanhamento',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Veja rapidamente o que está em andamento.',
             style: TextStyle(color: AppColors.muted),
           ),
@@ -714,7 +711,7 @@ class _DeadlineRow extends StatelessWidget {
                     color: AppColors.warning.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(13),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.event_outlined,
                     color: AppColors.warning,
                     size: 20,
@@ -729,14 +726,14 @@ class _DeadlineRow extends StatelessWidget {
                         obligation.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Vence em ${AppFormatters.date(obligation.dueDate)} • ${AppFormatters.money(obligation.amount)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 11,
                         ),
@@ -745,7 +742,7 @@ class _DeadlineRow extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 5),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.muted,
                 ),
@@ -797,14 +794,14 @@ class _OverviewRow extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         detail,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 11,
                         ),
@@ -825,7 +822,7 @@ class _OverviewRow extends StatelessWidget {
                     child: Text(
                       '$value',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w900,
@@ -834,7 +831,7 @@ class _OverviewRow extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(width: 5),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.muted,
                 ),
@@ -852,12 +849,12 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Precisa resolver algo?',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Comece pelos pedidos mais usados.',
             style: TextStyle(color: AppColors.muted),
           ),
@@ -866,8 +863,8 @@ class _QuickActions extends StatelessWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: () => context.go(RouteNames.invoices),
-              icon: const Icon(Icons.edit_note_rounded),
-              label: const Text('Solicitar emissão de nota fiscal'),
+              icon: Icon(Icons.edit_note_rounded),
+              label: Text('Solicitar emissão de nota fiscal'),
             ),
           ),
           const SizedBox(height: 9),
@@ -876,19 +873,19 @@ class _QuickActions extends StatelessWidget {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => context.go(RouteNames.documents),
-                  icon: const Icon(Icons.post_add_rounded, size: 18),
-                  label: const Text('Pedir documento'),
+                  icon: Icon(Icons.post_add_rounded, size: 18),
+                  label: Text('Pedir documento'),
                 ),
               ),
               const SizedBox(width: 9),
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => context.go(RouteNames.chat),
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.chat_bubble_outline_rounded,
                     size: 18,
                   ),
-                  label: const Text('Falar com a Novva'),
+                  label: Text('Falar com a Novva'),
                 ),
               ),
             ],

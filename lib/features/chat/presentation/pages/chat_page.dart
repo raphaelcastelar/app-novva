@@ -95,7 +95,7 @@ class _AgentHero extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppColors.premiumGradient,
         borderRadius: BorderRadius.circular(26),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
             blurRadius: 30,
@@ -176,9 +176,9 @@ class _QuickActions extends StatelessWidget {
           ActionChip(
             avatar: Icon(action.$2, size: 18, color: AppColors.primary),
             label: Text(action.$1),
-            labelStyle: const TextStyle(fontWeight: FontWeight.w800),
+            labelStyle: TextStyle(fontWeight: FontWeight.w800),
             backgroundColor: AppColors.surface,
-            side: const BorderSide(color: AppColors.border),
+            side: BorderSide(color: AppColors.border),
             onPressed: () {},
           ),
       ],
@@ -226,7 +226,7 @@ class _MessageBubble extends StatelessWidget {
                 if (sender != null) ...[
                   Text(
                     sender!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.muted,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
@@ -244,7 +244,7 @@ class _MessageBubble extends StatelessWidget {
                       bottomRight: Radius.circular(isUser ? 6 : 18),
                     ),
                     border: isUser ? null : Border.all(color: AppColors.border),
-                    boxShadow: const [
+                    boxShadow: [
                       BoxShadow(
                         color: AppColors.shadow,
                         blurRadius: 18,
@@ -283,7 +283,7 @@ class _MessageBubble extends StatelessWidget {
           ),
           if (isUser) ...[
             const SizedBox(width: 9),
-            const CircleAvatar(
+            CircleAvatar(
               radius: 20,
               backgroundColor: AppColors.softAccent,
               child: Text(
@@ -315,7 +315,7 @@ class _Composer extends StatelessWidget {
           IconButton(
             tooltip: 'Anexar',
             onPressed: () {},
-            icon: const Icon(Icons.attach_file_rounded),
+            icon: Icon(Icons.attach_file_rounded),
             color: AppColors.primary,
           ),
           const SizedBox(width: 4),
@@ -334,7 +334,7 @@ class _Composer extends StatelessWidget {
           IconButton.filled(
             tooltip: 'Enviar',
             onPressed: () {},
-            icon: const Icon(Icons.arrow_upward_rounded),
+            icon: Icon(Icons.arrow_upward_rounded),
           ),
         ],
       ),
@@ -366,7 +366,7 @@ class _TicketCard extends StatelessWidget {
               color: AppColors.softPrimary,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.forum_outlined, color: AppColors.primary),
+            child: Icon(Icons.forum_outlined, color: AppColors.primary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -377,14 +377,14 @@ class _TicketCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+                  style: TextStyle(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: AppColors.muted),
                 ),
               ],
             ),
@@ -424,7 +424,7 @@ class _MascotAvatar extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.82),
           width: 2,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
             blurRadius: 18,
@@ -459,7 +459,7 @@ class _HeroBadge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
             fontSize: 12,
             fontWeight: FontWeight.w800,

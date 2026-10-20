@@ -110,7 +110,7 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
                         suffixIcon: IconButton(
                           tooltip: 'Selecionar data',
                           onPressed: _selectDate,
-                          icon: const Icon(Icons.calendar_today_outlined),
+                          icon: Icon(Icons.calendar_today_outlined),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -202,12 +202,12 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.lightbulb_outline, color: AppColors.warning),
+                  Icon(Icons.lightbulb_outline, color: AppColors.warning),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
                       ),
@@ -216,7 +216,7 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
                 ],
               ),
               const SizedBox(height: 12),
-              Text(message, style: const TextStyle(height: 1.5)),
+              Text(message, style: TextStyle(height: 1.5)),
             ],
           ),
         ),
@@ -259,7 +259,7 @@ class _TipButton extends StatelessWidget {
       tooltip: tooltip,
       onPressed: onPressed,
       color: AppColors.warning,
-      icon: const Icon(Icons.lightbulb_outline),
+      icon: Icon(Icons.lightbulb_outline),
     );
   }
 }
@@ -299,13 +299,13 @@ class _StepHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Etapa 1 de 4',
             style:
                 TextStyle(color: AppColors.muted, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Dados da nota',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),

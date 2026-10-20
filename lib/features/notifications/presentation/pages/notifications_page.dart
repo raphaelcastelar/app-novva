@@ -115,7 +115,7 @@ class _NotificationCard extends StatelessWidget {
                 Text(
                   DateFormat("dd/MM/yyyy 'às' HH:mm", 'pt_BR')
                       .format(item.createdAt),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.muted,
                     fontSize: 12,
                   ),
@@ -124,7 +124,7 @@ class _NotificationCard extends StatelessWidget {
             ),
           ),
           if (!item.isRead)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 8, top: 4),
               child:
                   CircleAvatar(radius: 4, backgroundColor: AppColors.primary),

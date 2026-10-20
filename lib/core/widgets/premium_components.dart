@@ -32,7 +32,7 @@ class PremiumHeader extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppColors.premiumGradient,
         borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
             blurRadius: 30,
@@ -84,7 +84,7 @@ class PremiumHeader extends StatelessWidget {
                   backgroundColor: Colors.white.withValues(alpha: 0.16),
                   foregroundColor: Colors.white,
                 ),
-                icon: const Icon(Icons.notifications_outlined),
+                icon: Icon(Icons.notifications_outlined),
               ),
             ],
           ),
@@ -98,15 +98,14 @@ class PremiumHeader extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.business_outlined,
-                    color: Colors.white, size: 20),
+                Icon(Icons.business_outlined, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     cnpj,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
@@ -131,7 +130,7 @@ class MetricCard extends StatelessWidget {
     required this.icon,
     this.subtitle,
     this.variation,
-    this.color = AppColors.primary,
+    this.color,
     super.key,
   });
 
@@ -140,10 +139,11 @@ class MetricCard extends StatelessWidget {
   final IconData icon;
   final String? subtitle;
   final String? variation;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Theme.of(context).colorScheme.primary;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,14 +154,14 @@ class MetricCard extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.11),
+                  color: effectiveColor.withValues(alpha: 0.11),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: color, size: 21),
+                child: Icon(icon, color: effectiveColor, size: 21),
               ),
               if (variation != null) ...[
                 const Spacer(),
-                StatusBadge(variation!, color: color),
+                StatusBadge(variation!, color: effectiveColor),
               ],
             ],
           ),
@@ -180,7 +180,7 @@ class MetricCard extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.text,
               fontWeight: FontWeight.w800,
             ),
@@ -191,7 +191,7 @@ class MetricCard extends StatelessWidget {
               subtitle!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
           ],
         ],
@@ -206,18 +206,19 @@ class ActionTile extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.subtitle,
-    this.color = AppColors.primary,
+    this.color,
     super.key,
   });
 
   final String title;
   final String? subtitle;
   final IconData icon;
-  final Color color;
+  final Color? color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Theme.of(context).colorScheme.primary;
     return AppCard(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
@@ -230,13 +231,13 @@ class ActionTile extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.11),
+                  color: effectiveColor.withValues(alpha: 0.11),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(icon, color: color, size: 21),
+                child: Icon(icon, color: effectiveColor, size: 21),
               ),
               const Spacer(),
-              const Icon(Icons.arrow_forward_ios_rounded,
+              Icon(Icons.arrow_forward_ios_rounded,
                   size: 13, color: AppColors.muted),
             ],
           ),
@@ -245,7 +246,7 @@ class ActionTile extends StatelessWidget {
             title,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.text,
               fontWeight: FontWeight.w800,
               height: 1.15,
@@ -257,7 +258,7 @@ class ActionTile extends StatelessWidget {
               subtitle!,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(color: AppColors.muted, fontSize: 12),
             ),
           ],
         ],
@@ -303,7 +304,7 @@ class InsightCard extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.text,
                     fontWeight: FontWeight.w900,
                   ),
@@ -311,7 +312,7 @@ class InsightCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: const TextStyle(color: AppColors.muted, height: 1.35),
+                  style: TextStyle(color: AppColors.muted, height: 1.35),
                 ),
               ],
             ),
@@ -397,7 +398,7 @@ class TimelineStatus extends StatelessWidget {
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.muted,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -416,14 +417,14 @@ class TimelineStatus extends StatelessWidget {
 }
 
 class MiniBarChart extends StatelessWidget {
-  const MiniBarChart(
-      {required this.values, this.color = AppColors.accent, super.key});
+  const MiniBarChart({required this.values, this.color, super.key});
 
   final List<double> values;
-  final Color color;
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = color ?? Theme.of(context).colorScheme.secondary;
     final maxValue =
         values.fold<double>(0, (max, value) => value > max ? value : max);
     return Row(
@@ -439,7 +440,7 @@ class MiniBarChart extends StatelessWidget {
                 alignment: Alignment.bottomCenter,
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.78),
+                    color: effectiveColor.withValues(alpha: 0.78),
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),

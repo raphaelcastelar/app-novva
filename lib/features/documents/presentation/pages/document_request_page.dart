@@ -55,14 +55,14 @@ class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
                     color: AppColors.softAccent,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.post_add_rounded,
                     color: AppColors.accent,
                     size: 30,
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'Nova solicitação',
                   style: TextStyle(
                     color: AppColors.text,
@@ -71,7 +71,7 @@ class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Confira o documento e adicione uma observação, se precisar.',
                   style: TextStyle(color: AppColors.muted, height: 1.35),
                 ),
@@ -83,7 +83,7 @@ class _DocumentRequestPageState extends ConsumerState<DocumentRequestPage> {
             label: 'Documento solicitado',
             initialValue: widget.documentTitle,
             readOnly: true,
-            suffixIcon: const Icon(Icons.lock_outline),
+            suffixIcon: Icon(Icons.lock_outline),
           ),
           const SizedBox(height: 12),
           AppTextField(

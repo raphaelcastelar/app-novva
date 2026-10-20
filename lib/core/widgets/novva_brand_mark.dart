@@ -21,7 +21,7 @@ class NovvaBrandMark extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.94),
               borderRadius: BorderRadius.circular(size * 0.32),
               border: Border.all(color: AppColors.border),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
                   color: AppColors.shadow,
                   blurRadius: 10,

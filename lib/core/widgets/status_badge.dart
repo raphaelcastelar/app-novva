@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme/app_colors.dart';
-
 class StatusBadge extends StatelessWidget {
   const StatusBadge(this.label, {this.color, super.key});
 
@@ -10,7 +8,7 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badgeColor = color ?? AppColors.primary;
+    final badgeColor = color ?? Theme.of(context).colorScheme.primary;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: badgeColor.withValues(alpha: 0.12),

@@ -41,16 +41,16 @@ class _PrivacyPageState extends ConsumerState<PrivacyPage> {
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        icon: const Icon(Icons.warning_amber_rounded,
+        icon: Icon(Icons.warning_amber_rounded,
             color: AppColors.danger, size: 34),
-        title: const Text('Excluir sua conta?'),
+        title: Text('Excluir sua conta?'),
         content: Form(
           key: formKey,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Esta ação é permanente. Seu acesso, solicitações, documentos e demais dados vinculados serão excluídos.',
               ),
               const SizedBox(height: 16),
@@ -73,7 +73,7 @@ class _PrivacyPageState extends ConsumerState<PrivacyPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancelar'),
+            child: Text('Cancelar'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
@@ -82,7 +82,7 @@ class _PrivacyPageState extends ConsumerState<PrivacyPage> {
                 Navigator.pop(dialogContext, controller.text);
               }
             },
-            child: const Text('Excluir definitivamente'),
+            child: Text('Excluir definitivamente'),
           ),
         ],
       ),
@@ -141,7 +141,7 @@ class _PrivacyPageState extends ConsumerState<PrivacyPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Excluir conta',
                   style: TextStyle(
                     color: AppColors.danger,
@@ -150,7 +150,7 @@ class _PrivacyPageState extends ConsumerState<PrivacyPage> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'A exclusão é permanente e encerra imediatamente todas as suas sessões.',
                   style: TextStyle(color: AppColors.muted, height: 1.45),
                 ),
@@ -165,7 +165,7 @@ class _PrivacyPageState extends ConsumerState<PrivacyPage> {
             ),
           ),
           const SizedBox(height: 16),
-          const Center(
+          Center(
             child: Text(
               'Política atualizada em 3 de outubro de 2026',
               style: TextStyle(color: AppColors.muted, fontSize: 12),
@@ -208,12 +208,10 @@ class _PrivacySection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w900)),
+                Text(title, style: TextStyle(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 5),
                 Text(body,
-                    style:
-                        const TextStyle(color: AppColors.muted, height: 1.45)),
+                    style: TextStyle(color: AppColors.muted, height: 1.45)),
               ],
             ),
           ),

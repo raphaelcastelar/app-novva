@@ -47,7 +47,7 @@ class DocumentsPage extends ConsumerWidget {
           IconButton(
             tooltip: 'Atualizar documentos',
             onPressed: refreshAll,
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded),
           ),
         ],
         floatingActionButton: FloatingActionButton.extended(
@@ -55,8 +55,8 @@ class DocumentsPage extends ConsumerWidget {
           onPressed: () => context.go(
             _documentRequestRoute(_findOtherType(documentTypes.valueOrNull)),
           ),
-          icon: const Icon(Icons.add),
-          label: const Text('Nova solicitação'),
+          icon: Icon(Icons.add),
+          label: Text('Nova solicitação'),
         ),
         child: documents.when(
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -170,7 +170,7 @@ class _DocumentArchiveHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(
                     Icons.folder_copy_outlined,
@@ -191,7 +191,7 @@ class _DocumentArchiveHeader extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              const Text(
+              Text(
                 'Documentos da sua empresa, organizados para consultar ou solicitar.',
                 style: TextStyle(
                   color: AppColors.muted,
@@ -242,7 +242,7 @@ class _DocumentArchiveHeader extends StatelessWidget {
                 color: AppColors.primary.withValues(alpha: 0.14),
               ),
             ),
-            child: const Text(
+            child: Text(
               'Arquivo Novva',
               style: TextStyle(
                 color: AppColors.primary,
@@ -280,7 +280,7 @@ class _ArchiveCount extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '$value $label',
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.text,
               fontSize: 11,
               fontWeight: FontWeight.w700,
@@ -314,11 +314,11 @@ class _DocumentTabs extends StatelessWidget {
           ),
           labelColor: Colors.white,
           unselectedLabelColor: AppColors.muted,
-          labelStyle: const TextStyle(
+          labelStyle: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w800,
           ),
-          unselectedLabelStyle: const TextStyle(
+          unselectedLabelStyle: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
@@ -366,12 +366,12 @@ class _DocumentRequestTab extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          Text(
             'Escolha um documento',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 3),
-          const Text(
+          Text(
             'Abra um item para baixar o arquivo ou fazer um pedido.',
             style: TextStyle(color: AppColors.muted, fontSize: 12),
           ),
@@ -536,14 +536,14 @@ class _ExpandableDocumentTypeState
                             widget.type.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w900),
+                            style: TextStyle(fontWeight: FontWeight.w900),
                           ),
                           const SizedBox(height: 3),
                           Text(
                             presentation.summary,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.muted,
                               fontSize: 12,
                             ),
@@ -557,7 +557,7 @@ class _ExpandableDocumentTypeState
                     AnimatedRotation(
                       turns: _expanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 220),
-                      child: const Icon(
+                      child: Icon(
                         Icons.keyboard_arrow_down_rounded,
                         color: AppColors.muted,
                       ),
@@ -600,7 +600,7 @@ class _ExpandableDocumentTypeState
   Widget _actions(DocumentItem? available, bool expired) {
     final requestButton = OutlinedButton.icon(
       onPressed: () => context.go(_documentRequestRoute(widget.type)),
-      icon: const Icon(Icons.post_add_rounded, size: 18),
+      icon: Icon(Icons.post_add_rounded, size: 18),
       label: Text(
           available == null ? 'Solicitar documento' : 'Solicitar atualização'),
     );
@@ -616,7 +616,7 @@ class _ExpandableDocumentTypeState
               dimension: 17,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Icon(Icons.download_rounded, size: 18),
+          : Icon(Icons.download_rounded, size: 18),
       label: Text(_downloading ? 'Baixando...' : 'Baixar documento'),
     );
 
@@ -730,11 +730,10 @@ class _DocumentAvailabilityPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w900)),
+                Text(title, style: TextStyle(fontWeight: FontWeight.w900)),
                 const SizedBox(height: 3),
                 Text(description,
-                    style: const TextStyle(
+                    style: TextStyle(
                         color: AppColors.muted, height: 1.35, fontSize: 12)),
               ],
             ),
@@ -751,45 +750,43 @@ _DocumentTypePresentation _documentTypePresentation({
   required bool expired,
 }) {
   if (expired) {
-    return const _DocumentTypePresentation(
+    return _DocumentTypePresentation(
       label: 'Vencido',
       summary: 'Solicite uma versão atualizada',
       color: AppColors.warning,
     );
   }
   if (available != null) {
-    return const _DocumentTypePresentation(
+    return _DocumentTypePresentation(
       label: 'Disponível',
       summary: 'Pronto para baixar',
       color: AppColors.success,
     );
   }
   if (latest == null) {
-    return const _DocumentTypePresentation(
+    return _DocumentTypePresentation(
       label: 'Pedir',
       summary: 'Ainda não solicitado',
       color: AppColors.muted,
     );
   }
   return switch (latest.status) {
-    DocumentStatus.pending => const _DocumentTypePresentation(
+    DocumentStatus.pending => _DocumentTypePresentation(
         label: 'Solicitado',
         summary: 'Aguardando atendimento',
         color: AppColors.warning,
       ),
-    DocumentStatus.sent ||
-    DocumentStatus.review =>
-      const _DocumentTypePresentation(
+    DocumentStatus.sent || DocumentStatus.review => _DocumentTypePresentation(
         label: 'Em análise',
         summary: 'Documento sendo preparado',
         color: AppColors.info,
       ),
-    DocumentStatus.rejected => const _DocumentTypePresentation(
+    DocumentStatus.rejected => _DocumentTypePresentation(
         label: 'Ajustar',
         summary: 'Confira a orientação da equipe',
         color: AppColors.danger,
       ),
-    DocumentStatus.approved => const _DocumentTypePresentation(
+    DocumentStatus.approved => _DocumentTypePresentation(
         label: 'Pedir',
         summary: 'Arquivo ainda não anexado',
         color: AppColors.muted,
@@ -798,7 +795,7 @@ _DocumentTypePresentation _documentTypePresentation({
 }
 
 class _DocumentTypePresentation {
-  const _DocumentTypePresentation({
+  _DocumentTypePresentation({
     required this.label,
     required this.summary,
     required this.color,

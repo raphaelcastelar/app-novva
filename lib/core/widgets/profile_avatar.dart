@@ -6,15 +6,15 @@ class ProfileAvatar extends StatelessWidget {
   const ProfileAvatar({
     this.radius = 24,
     this.imageUrl,
-    this.backgroundColor = AppColors.softAccent,
-    this.foregroundColor = AppColors.primary,
+    this.backgroundColor,
+    this.foregroundColor,
     super.key,
   });
 
   final double radius;
   final String? imageUrl;
-  final Color backgroundColor;
-  final Color foregroundColor;
+  final Color? backgroundColor;
+  final Color? foregroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -26,13 +26,13 @@ class ProfileAvatar extends StatelessWidget {
       label: hasPhoto ? 'Foto de perfil' : 'Sem foto de perfil',
       child: CircleAvatar(
         radius: radius,
-        backgroundColor: backgroundColor,
+        backgroundColor: backgroundColor ?? AppColors.softAccent,
         backgroundImage: hasPhoto ? NetworkImage(normalizedUrl) : null,
         child: hasPhoto
             ? null
             : Icon(
                 Icons.person_outline_rounded,
-                color: foregroundColor,
+                color: foregroundColor ?? Theme.of(context).colorScheme.primary,
                 size: radius,
               ),
       ),

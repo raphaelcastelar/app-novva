@@ -16,12 +16,12 @@ class ReportsPage extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
+          Text(
             'Inteligência financeira',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'Acompanhe faturamento, notas e estimativa de impostos com clareza.',
             style: TextStyle(color: AppColors.muted, height: 1.35),
           ),
@@ -57,7 +57,7 @@ class ReportsPage extends StatelessWidget {
           SizedBox(
             height: 164,
             child: Row(
-              children: const [
+              children: [
                 Expanded(
                   child: MetricCard(
                     title: 'Faturamento do ano',
@@ -85,7 +85,7 @@ class ReportsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Faturamento por mês',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                 ),
@@ -137,8 +137,8 @@ class ReportsPage extends StatelessWidget {
           const SizedBox(height: 16),
           OutlinedButton.icon(
             onPressed: () {},
-            icon: const Icon(Icons.picture_as_pdf_outlined),
-            label: const Text('Exportar PDF'),
+            icon: Icon(Icons.picture_as_pdf_outlined),
+            label: Text('Exportar PDF'),
           ),
         ],
       ),

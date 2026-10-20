@@ -89,6 +89,7 @@ class AppBottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
     final index = _indexFor(location);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
       child: ClipRRect(
@@ -100,9 +101,11 @@ class AppBottomNav extends StatelessWidget {
               color: AppColors.surface.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(28),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: isDark
+                    ? AppColors.border
+                    : Colors.white.withValues(alpha: 0.72),
               ),
-              boxShadow: const [
+              boxShadow: [
                 BoxShadow(
                   color: AppColors.shadow,
                   blurRadius: 30,
@@ -168,6 +171,7 @@ class _DockDestination extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     if (item.featured) {
       return _FeaturedDestination(
         item: item,
@@ -192,7 +196,7 @@ class _DockDestination extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: selected ? 10 : 6),
             decoration: BoxDecoration(
               color: selected
-                  ? AppColors.primary.withValues(alpha: 0.1)
+                  ? primary.withValues(alpha: 0.14)
                   : Colors.transparent,
               borderRadius: BorderRadius.circular(22),
             ),
@@ -205,7 +209,7 @@ class _DockDestination extends StatelessWidget {
                   curve: Curves.easeOutCubic,
                   child: Icon(
                     selected ? item.selectedIcon : item.icon,
-                    color: selected ? AppColors.primary : AppColors.muted,
+                    color: selected ? primary : AppColors.muted,
                     size: 22,
                   ),
                 ),
@@ -213,7 +217,7 @@ class _DockDestination extends StatelessWidget {
                 AnimatedDefaultTextStyle(
                   duration: const Duration(milliseconds: 200),
                   style: TextStyle(
-                    color: selected ? AppColors.primary : AppColors.muted,
+                    color: selected ? primary : AppColors.muted,
                     fontSize: 10.5,
                     fontWeight: selected ? FontWeight.w900 : FontWeight.w700,
                     height: 1,
@@ -285,7 +289,7 @@ class _FeaturedDestination extends StatelessWidget {
                   item.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 10.5,
                     fontWeight: FontWeight.w900,
