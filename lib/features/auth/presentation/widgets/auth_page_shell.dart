@@ -21,36 +21,43 @@ class AuthPageShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
 
-    return Scaffold(
-      backgroundColor: authBackground,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        bottom: false,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final heroHeight = keyboardVisible
-                ? 104.0
-                : (constraints.maxHeight * 0.64).clamp(360.0, 525.0);
-            final minimumContentHeight = keyboardVisible ? 330.0 : 300.0;
-            final contentHeight = (constraints.maxHeight - heroHeight)
-                .clamp(minimumContentHeight, double.infinity);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+        systemStatusBarContrastEnforced: false,
+      ),
+      child: Scaffold(
+        backgroundColor: authBackground,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          bottom: false,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final heroHeight = keyboardVisible
+                  ? 104.0
+                  : (constraints.maxHeight * 0.64).clamp(360.0, 525.0);
+              final minimumContentHeight = keyboardVisible ? 330.0 : 300.0;
+              final contentHeight = (constraints.maxHeight - heroHeight)
+                  .clamp(minimumContentHeight, double.infinity);
 
-            return SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 260),
-                    curve: Curves.easeOutCubic,
-                    height: heroHeight,
-                    child: AuthCarousel(compact: keyboardVisible),
-                  ),
-                  SizedBox(height: contentHeight, child: child),
-                ],
-              ),
-            );
-          },
+              return SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 260),
+                      curve: Curves.easeOutCubic,
+                      height: heroHeight,
+                      child: AuthCarousel(compact: keyboardVisible),
+                    ),
+                    SizedBox(height: contentHeight, child: child),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
