@@ -142,16 +142,11 @@ class _AuthCarouselState extends State<AuthCarousel> {
             left: 0,
             right: 0,
             top: 20,
-            child: Column(
+            child: const Column(
               children: [
-                Image.asset(
-                  'assets/images/logo_mark_transparent.png',
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.contain,
-                ),
-                const SizedBox(height: 4),
-                const Text(
+                _NovvaLogo(size: 50),
+                SizedBox(height: 4),
+                Text(
                   'Novva',
                   style: TextStyle(
                     color: Colors.white,
@@ -206,11 +201,7 @@ class _CompactAuthHeader extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image(
-                image: AssetImage('assets/images/logo_mark_transparent.png'),
-                width: 42,
-                height: 42,
-              ),
+              _NovvaLogo(size: 42),
               SizedBox(width: 10),
               Text(
                 'Novva',
@@ -223,6 +214,46 @@ class _CompactAuthHeader extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NovvaLogo extends StatelessWidget {
+  const _NovvaLogo({required this.size});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColorFiltered(
+      colorFilter: const ColorFilter.matrix([
+        1,
+        1.05,
+        -0.63,
+        0,
+        0,
+        0,
+        3.1,
+        -1.26,
+        0,
+        0,
+        0,
+        2.1,
+        -0.26,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+      ]),
+      child: Image.asset(
+        'assets/images/logo_mark_transparent.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
       ),
     );
   }
