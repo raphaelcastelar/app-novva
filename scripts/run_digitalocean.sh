@@ -2,7 +2,7 @@
 set -euo pipefail
 
 app_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-public_api_url="${NOVVA_PUBLIC_API_URL:-https://api-novva.inovarcontabilidadex.com.br/api/v1/}"
+public_api_url="${NOVVA_PUBLIC_API_URL:-https://api-novva.134-209-223-54.sslip.io/api/v1/}"
 
 cd "$app_root"
 flutter run \

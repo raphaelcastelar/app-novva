@@ -38,6 +38,7 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
         .read(authControllerProvider.notifier)
         .verifyCpf(_cpfController.text);
     if (!mounted) return;
+    if (ref.read(authControllerProvider).hasError) return;
     if (user == null) {
       ScaffoldMessenger.of(context)
           .showSnackBar(const SnackBar(content: Text('CPF não encontrado.')));

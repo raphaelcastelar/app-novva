@@ -3,7 +3,7 @@ class Env {
 
   static const apiBaseUrl = String.fromEnvironment(
     'NOVVA_API_BASE_URL',
-    defaultValue: 'https://api-novva.inovarcontabilidadex.com.br/api/v1/',
+    defaultValue: 'https://api-novva.134-209-223-54.sslip.io/api/v1/',
   );
 
   static const useMockApi = bool.fromEnvironment(
