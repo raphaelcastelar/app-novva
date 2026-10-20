@@ -122,9 +122,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
     );
   }
 
-  Future<bool> loginWithBiometrics() async {
+  Future<bool> loginWithBiometrics(String cpf) async {
     state = const AsyncLoading();
-    if (!await _biometrics.canUseForLogin() ||
+    if (!await _biometrics.canUseForCpf(cpf) ||
         !await _biometrics.authenticate()) {
       state = const AsyncData(null);
       return false;
@@ -139,8 +139,9 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
       state = AsyncData(user);
       authListenable.setAuthenticated(true);
       return true;
-    } catch (error, stackTrace) {
-      state = AsyncError(error, stackTrace);
+    } catch (error) {
+      state = const AsyncData(null);
+      debugPrint('Não foi possível restaurar a sessão com Face ID: $error');
       return false;
     }
   }

@@ -139,7 +139,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 _faceIdAvailable == null
                     ? 'Verificando disponibilidade...'
                     : _faceIdAvailable!
-                        ? 'Acesse sua conta sem digitar CPF e senha'
+                        ? 'Use o Face ID após confirmar o CPF salvo'
                         : 'Face ID não está configurado neste aparelho',
               ),
               value: _faceIdEnabled,

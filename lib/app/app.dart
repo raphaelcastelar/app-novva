@@ -56,7 +56,7 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
           icon: const Icon(Icons.face_outlined),
           title: const Text('Ativar Face ID?'),
           content: const Text(
-            'Use o Face ID para acessar sua conta Novva nas próximas vezes, sem precisar digitar CPF e senha.',
+            'Nas próximas vezes, confirme o CPF salvo e use o Face ID no lugar da senha.',
           ),
           actions: [
             TextButton(

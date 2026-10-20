@@ -18,12 +18,17 @@ class LoginCpfPage extends ConsumerStatefulWidget {
 class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
   final _formKey = GlobalKey<FormState>();
   final _cpfController = TextEditingController();
-  late final Future<bool> _canUseFaceId;
 
   @override
   void initState() {
     super.initState();
-    _canUseFaceId = ref.read(biometricAuthServiceProvider).canUseForLogin();
+    _loadSavedCpf();
+  }
+
+  Future<void> _loadSavedCpf() async {
+    final cpf = await ref.read(tokenManagerProvider).cpf;
+    if (!mounted || cpf == null || cpf.isEmpty) return;
+    _cpfController.text = cpf;
   }
 
   @override
@@ -44,14 +49,16 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
           .showSnackBar(const SnackBar(content: Text('CPF não encontrado.')));
       return;
     }
-    final route = user.needsPasswordCreation
-        ? RouteNames.createPassword
-        : RouteNames.loginPassword;
-    context.go('$route?cpf=${user.cpf}');
-  }
+    if (user.needsPasswordCreation) {
+      context.go('${RouteNames.createPassword}?cpf=${user.cpf}');
+      return;
+    }
 
-  Future<void> _loginWithFaceId() async {
-    await ref.read(authControllerProvider.notifier).loginWithBiometrics();
+    final authenticated = await ref
+        .read(authControllerProvider.notifier)
+        .loginWithBiometrics(user.cpf);
+    if (!mounted || authenticated) return;
+    context.go('${RouteNames.loginPassword}?cpf=${user.cpf}');
   }
 
   @override
@@ -138,23 +145,6 @@ class _LoginCpfPageState extends ConsumerState<LoginCpfPage> {
                           icon: Icons.arrow_forward,
                           loading: state.isLoading,
                           onPressed: _continue,
-                        ),
-                        FutureBuilder<bool>(
-                          future: _canUseFaceId,
-                          builder: (context, snapshot) {
-                            if (snapshot.data != true) {
-                              return const SizedBox.shrink();
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: OutlinedButton.icon(
-                                onPressed:
-                                    state.isLoading ? null : _loginWithFaceId,
-                                icon: const Icon(Icons.face_outlined),
-                                label: const Text('Entrar com Face ID'),
-                              ),
-                            );
-                          },
                         ),
                       ],
                     ),

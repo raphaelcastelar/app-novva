@@ -48,6 +48,12 @@ class BiometricAuthService {
       await canCheckBiometrics() &&
       await _tokenManager.hasStoredSession();
 
+  Future<bool> canUseForCpf(String cpf) async {
+    final storedCpf = await _tokenManager.cpf;
+    return storedCpf == cpf.replaceAll(RegExp(r'\D'), '') &&
+        await canUseForLogin();
+  }
+
   Future<bool> shouldOfferSetup() async =>
       !await isEnabled &&
       !await wasOfferHandled &&

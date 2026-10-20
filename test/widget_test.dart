@@ -14,6 +14,7 @@ void main() {
 
     expect(find.text('Acesse sua área contábil'), findsOneWidget);
     expect(find.text('Informe seu CPF'), findsOneWidget);
+    expect(find.text('Entrar com Face ID'), findsNothing);
     expect(find.byType(NovvaBrandMark), findsNothing);
   });
 }
