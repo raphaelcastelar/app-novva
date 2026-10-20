@@ -8,8 +8,14 @@ const authSurface = Color(0xFF102630);
 const authBorder = Color(0xFF294652);
 const authAccent = Color(0xFF35C8F5);
 const authMuted = Color(0xFF9AAEB8);
+const authSystemUiStyle = SystemUiOverlayStyle(
+  statusBarColor: Colors.transparent,
+  statusBarBrightness: Brightness.dark,
+  statusBarIconBrightness: Brightness.light,
+  systemStatusBarContrastEnforced: false,
+);
 
-class AuthPageShell extends StatelessWidget {
+class AuthPageShell extends StatefulWidget {
   const AuthPageShell({
     required this.child,
     super.key,
@@ -18,14 +24,40 @@ class AuthPageShell extends StatelessWidget {
   final Widget child;
 
   @override
+  State<AuthPageShell> createState() => _AuthPageShellState();
+}
+
+class _AuthPageShellState extends State<AuthPageShell>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _applyLightStatusBar();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _applyLightStatusBar();
+  }
+
+  void _applyLightStatusBar() {
+    SystemChrome.setSystemUIOverlayStyle(authSystemUiStyle);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final keyboardVisible = MediaQuery.viewInsetsOf(context).bottom > 0;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-        systemStatusBarContrastEnforced: false,
-      ),
+      value: authSystemUiStyle,
       child: Scaffold(
         backgroundColor: authBackground,
         resizeToAvoidBottomInset: true,
@@ -52,7 +84,7 @@ class AuthPageShell extends StatelessWidget {
                       height: heroHeight,
                       child: AuthCarousel(compact: keyboardVisible),
                     ),
-                    SizedBox(height: contentHeight, child: child),
+                    SizedBox(height: contentHeight, child: widget.child),
                   ],
                 ),
               );
