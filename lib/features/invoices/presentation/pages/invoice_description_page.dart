@@ -24,6 +24,13 @@ class InvoiceDescriptionPage extends ConsumerStatefulWidget {
 
 class _InvoiceDescriptionPageState
     extends ConsumerState<InvoiceDescriptionPage> {
+  static const _suggestions = [
+    'Serviços médicos prestados conforme contrato.',
+    'Atendimento médico especializado.',
+    'Plantão médico realizado no período informado.',
+    'Serviços de saúde prestados à instituição contratante.',
+  ];
+
   late final TextEditingController _description;
 
   @override
@@ -44,11 +51,14 @@ class _InvoiceDescriptionPageState
   Widget build(BuildContext context) {
     final draft = ref.watch(pendingInvoiceDraftProvider);
     final submission = ref.watch(requestSubmissionProvider);
-    const suggestions = [
-      'Serviços médicos prestados conforme contrato.',
-      'Atendimento médico especializado.',
-      'Plantão médico realizado no período de maio/2026.',
-      'Serviços de saúde prestados à instituição contratante.',
+    final savingDraft = ref.watch(invoiceDraftSavingProvider);
+    final favorites = ref.watch(invoiceDescriptionFavoritesProvider);
+    final favoriteDescriptions =
+        favorites.valueOrNull?.map((item) => item.description).toSet() ??
+            const <String>{};
+    final suggestions = [
+      ..._suggestions.where(favoriteDescriptions.contains),
+      ..._suggestions.where((item) => !favoriteDescriptions.contains(item)),
     ];
 
     return AppScaffold(
@@ -94,16 +104,27 @@ class _InvoiceDescriptionPageState
           const SizedBox(height: 10),
           for (final suggestion in suggestions) ...[
             AppCard(
-              onTap: () {},
+              onTap: () => _useSuggestion(suggestion),
               child: Row(
                 children: [
                   Icon(Icons.auto_awesome_outlined, color: AppColors.accent),
                   const SizedBox(width: 12),
                   Expanded(child: Text(suggestion)),
                   IconButton(
-                    tooltip: 'Favoritar descrição',
-                    onPressed: () {},
-                    icon: Icon(Icons.star_border_rounded),
+                    tooltip: favoriteDescriptions.contains(suggestion)
+                        ? 'Remover dos favoritos'
+                        : 'Adicionar aos favoritos',
+                    onPressed: favorites.isLoading
+                        ? null
+                        : () => _toggleFavorite(suggestion),
+                    icon: Icon(
+                      favoriteDescriptions.contains(suggestion)
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
+                      color: favoriteDescriptions.contains(suggestion)
+                          ? AppColors.warning
+                          : AppColors.muted,
+                    ),
                   ),
                 ],
               ),
@@ -121,13 +142,65 @@ class _InvoiceDescriptionPageState
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: () {},
-            icon: Icon(Icons.drafts_outlined),
-            label: Text('Salvar rascunho'),
+            onPressed:
+                draft == null || savingDraft.isLoading ? null : _saveDraft,
+            icon: savingDraft.isLoading
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.drafts_outlined),
+            label: Text(
+              savingDraft.isLoading ? 'Salvando...' : 'Salvar rascunho',
+            ),
           ),
         ],
       ),
     );
+  }
+
+  void _useSuggestion(String suggestion) {
+    _description
+      ..text = suggestion
+      ..selection = TextSelection.collapsed(offset: suggestion.length);
+  }
+
+  Future<void> _toggleFavorite(String suggestion) async {
+    try {
+      await ref
+          .read(invoiceDescriptionFavoritesProvider.notifier)
+          .toggle(suggestion);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorHandler.userMessage(error))),
+      );
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    final draft = ref.read(pendingInvoiceDraftProvider);
+    if (draft == null) return;
+    final saving = ref.read(invoiceDraftSavingProvider.notifier);
+    saving.state = const AsyncLoading();
+    final updated = draft.copyWith(description: _description.text.trim());
+    try {
+      await ref
+          .read(serviceRequestRepositoryProvider)
+          .saveInvoiceDraft(updated);
+      ref.read(pendingInvoiceDraftProvider.notifier).state = updated;
+      saving.state = const AsyncData(null);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rascunho salvo com sucesso.')),
+      );
+    } catch (error, stackTrace) {
+      saving.state = AsyncError(error, stackTrace);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ErrorHandler.userMessage(error))),
+      );
+    }
   }
 
   Future<void> _submit() async {
@@ -140,6 +213,7 @@ class _InvoiceDescriptionPageState
         draft.copyWith(description: _description.text.trim()),
       );
       state.state = AsyncData(created);
+      ref.read(pendingInvoiceDraftProvider.notifier).state = null;
       if (mounted) _showSuccess(context, created.id);
     } catch (error, stackTrace) {
       state.state = AsyncError(error, stackTrace);

@@ -35,12 +35,14 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
   final _amount = TextEditingController();
   final _service = TextEditingController(text: 'Serviços médicos');
   String? _selectedTakerId;
+  bool _restoredDraft = false;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = DateUtils.dateOnly(DateTime.now());
     _date = TextEditingController(text: _formatDate(_selectedDate));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreDraft());
   }
 
   @override
@@ -70,6 +72,23 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
             padding: const EdgeInsets.all(16),
             children: [
               const _StepHeader(current: 1),
+              if (_restoredDraft) ...[
+                const SizedBox(height: 14),
+                const AppCard(
+                  child: Row(
+                    children: [
+                      Icon(Icons.drafts_outlined),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Seu último rascunho foi restaurado.',
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               const SizedBox(height: 14),
               AppCard(
                 child: Form(
@@ -168,6 +187,38 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
   Future<void> _addTaker() async {
     final taker = await showTakerFormSheet(context);
     if (taker != null && mounted) _selectTaker(taker);
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final draft = ref.read(pendingInvoiceDraftProvider) ??
+          await ref.read(serviceRequestRepositoryProvider).fetchInvoiceDraft();
+      if (draft == null || !mounted) return;
+      await ref.read(takersProvider.notifier).load();
+      if (!mounted) return;
+      final takers = ref.read(takersProvider).valueOrNull ?? const <Taker>[];
+      Taker? selected;
+      for (final taker in takers) {
+        if (taker.cnpj == draft.takerCnpj) {
+          selected = taker;
+          break;
+        }
+      }
+      setState(() {
+        _restoredDraft = true;
+        _selectedTakerId = selected?.id;
+        _takerName.text = draft.takerName;
+        _takerCnpj.text = draft.takerCnpj;
+        _municipality.text = draft.municipality;
+        _selectedDate = DateUtils.dateOnly(draft.serviceDate);
+        _date.text = _formatDate(_selectedDate);
+        _amount.text = draft.amount.toStringAsFixed(2).replaceAll('.', ',');
+        _service.text = draft.description;
+      });
+      ref.read(pendingInvoiceDraftProvider.notifier).state = draft;
+    } catch (_) {
+      // The invoice form remains available even if there is no saved draft.
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -304,36 +355,7 @@ class _TakerSelector extends StatelessWidget {
         ),
         data: (items) {
           if (items.isEmpty) {
-            return Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.softPrimary,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  Icon(Icons.business_outlined, color: AppColors.primary),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Cadastre seu primeiro tomador',
-                    style: TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Você fará isso uma vez e poderá reutilizar nas próximas notas.',
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: onAdd,
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Cadastrar tomador'),
-                  ),
-                ],
-              ),
-            );
+            return _EmptyTakerPrompt(onAdd: onAdd);
           }
 
           final validSelection =
@@ -374,6 +396,103 @@ class _TakerSelector extends StatelessWidget {
             ],
           );
         },
+      );
+}
+
+class _EmptyTakerPrompt extends StatelessWidget {
+  const _EmptyTakerPrompt({required this.onAdd});
+
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (context, constraints) {
+          final veryNarrow = constraints.maxWidth < 280;
+          final message = Column(
+            crossAxisAlignment: veryNarrow
+                ? CrossAxisAlignment.center
+                : CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Nenhum tomador cadastrado',
+                textAlign: TextAlign.start,
+                style: TextStyle(fontWeight: FontWeight.w900, height: 1.2),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Cadastre agora e reutilize nas próximas notas.',
+                textAlign: veryNarrow ? TextAlign.center : TextAlign.start,
+                style: TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 13,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          );
+
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.softPrimary,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (veryNarrow) ...[
+                  Align(
+                    child: _TakerPromptIcon(),
+                  ),
+                  const SizedBox(height: 10),
+                  message,
+                ] else
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const _TakerPromptIcon(),
+                      const SizedBox(width: 12),
+                      Expanded(child: message),
+                    ],
+                  ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add_rounded, size: 19),
+                    label: const Text(
+                      'Cadastrar tomador',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+}
+
+class _TakerPromptIcon extends StatelessWidget {
+  const _TakerPromptIcon();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(13),
+        ),
+        child: Icon(
+          Icons.business_outlined,
+          color: AppColors.primary,
+          size: 23,
+        ),
       );
 }
 

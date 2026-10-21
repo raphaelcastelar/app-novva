@@ -1,11 +1,11 @@
-import { BadRequestException, Body, Controller, Get, HttpCode, Param, Patch, Post, Query, Res, StreamableFile, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put, Query, Res, StreamableFile, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { AuthenticatedUser, CurrentUser } from '../../common/current-user.decorator';
 import { DOCUMENT_MAX_BYTES } from '../../common/storage.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, GenerateObligationDto, PageDto, SendMessageDto } from './resources.dto';
+import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, FavoriteInvoiceDescriptionDto, GenerateObligationDto, PageDto, SaveInvoiceDraftDto, SendMessageDto } from './resources.dto';
 import { ResourcesService } from './resources.service';
 
 @ApiTags('resources') @ApiBearerAuth() @UseGuards(JwtAuthGuard) @Controller()
@@ -50,6 +50,12 @@ export class ResourcesController {
   @Get('invoices') invoices(@CurrentUser() u: AuthenticatedUser, @Query() q: PageDto) { return this.service.invoices(u.id, q); }
   @Post('invoices') createInvoice(@CurrentUser() u: AuthenticatedUser, @Body() dto: CreateInvoiceDto) { return this.service.createInvoice(u.id, dto); }
   @Get('invoices/:id') invoice(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.invoice(u.id, id); }
+  @Get('invoice-draft') invoiceDraft(@CurrentUser() u: AuthenticatedUser) { return this.service.invoiceDraft(u.id); }
+  @Put('invoice-draft') saveInvoiceDraft(@CurrentUser() u: AuthenticatedUser, @Body() dto: SaveInvoiceDraftDto) { return this.service.saveInvoiceDraft(u.id, dto); }
+  @Delete('invoice-draft') @HttpCode(204) deleteInvoiceDraft(@CurrentUser() u: AuthenticatedUser) { return this.service.deleteInvoiceDraft(u.id); }
+  @Get('invoice-description-favorites') invoiceDescriptionFavorites(@CurrentUser() u: AuthenticatedUser) { return this.service.invoiceDescriptionFavorites(u.id); }
+  @Post('invoice-description-favorites') favoriteInvoiceDescription(@CurrentUser() u: AuthenticatedUser, @Body() dto: FavoriteInvoiceDescriptionDto) { return this.service.favoriteInvoiceDescription(u.id, dto.description); }
+  @Delete('invoice-description-favorites/:id') @HttpCode(204) removeInvoiceDescriptionFavorite(@CurrentUser() u: AuthenticatedUser, @Param('id') id: string) { return this.service.removeInvoiceDescriptionFavorite(u.id, id); }
   @Get('payments') payments(@CurrentUser() u: AuthenticatedUser, @Query() q: PageDto) { return this.service.payments(u.id, q); }
   @Get('reports/summary') reports(@CurrentUser() u: AuthenticatedUser) { return this.service.reports(u.id); }
   @Get('chat/messages') messages(@CurrentUser() u: AuthenticatedUser, @Query() q: PageDto) { return this.service.messages(u.id, q); }

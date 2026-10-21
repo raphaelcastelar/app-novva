@@ -31,6 +31,17 @@ class InvoiceRequestDraft {
   final String taxationCode;
   final String description;
 
+  factory InvoiceRequestDraft.fromJson(Map<String, dynamic> json) =>
+      InvoiceRequestDraft(
+        takerCnpj: json['takerCnpj'] as String,
+        takerName: json['takerName'] as String,
+        municipality: json['municipality'] as String,
+        serviceDate: DateTime.parse(json['serviceDate'] as String),
+        amount: (json['amount'] as num).toDouble(),
+        taxationCode: json['taxationCode'] as String,
+        description: json['description'] as String,
+      );
+
   InvoiceRequestDraft copyWith({String? description}) => InvoiceRequestDraft(
         takerCnpj: takerCnpj,
         takerName: takerName,
@@ -39,6 +50,22 @@ class InvoiceRequestDraft {
         amount: amount,
         taxationCode: taxationCode,
         description: description ?? this.description,
+      );
+}
+
+class InvoiceDescriptionFavorite {
+  const InvoiceDescriptionFavorite({
+    required this.id,
+    required this.description,
+  });
+
+  final String id;
+  final String description;
+
+  factory InvoiceDescriptionFavorite.fromJson(Map<String, dynamic> json) =>
+      InvoiceDescriptionFavorite(
+        id: json['id'] as String,
+        description: json['description'] as String,
       );
 }
 

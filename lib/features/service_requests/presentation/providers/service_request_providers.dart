@@ -34,3 +34,44 @@ final requestSubmissionProvider =
     StateProvider<AsyncValue<CreatedServiceRequest?>>(
   (_) => const AsyncData(null),
 );
+
+final invoiceDraftSavingProvider = StateProvider<AsyncValue<void>>(
+  (_) => const AsyncData(null),
+);
+
+final invoiceDescriptionFavoritesProvider = StateNotifierProvider.autoDispose<
+    InvoiceDescriptionFavoritesController,
+    AsyncValue<List<InvoiceDescriptionFavorite>>>(
+  (ref) => InvoiceDescriptionFavoritesController(
+    ref.watch(serviceRequestRepositoryProvider),
+  ),
+);
+
+class InvoiceDescriptionFavoritesController
+    extends StateNotifier<AsyncValue<List<InvoiceDescriptionFavorite>>> {
+  InvoiceDescriptionFavoritesController(this._repository)
+      : super(const AsyncLoading()) {
+    load();
+  }
+
+  final ServiceRequestRepository _repository;
+
+  Future<void> load() async {
+    state = await AsyncValue.guard(
+      _repository.fetchInvoiceDescriptionFavorites,
+    );
+  }
+
+  Future<void> toggle(String description) async {
+    final items = [...?state.valueOrNull];
+    final index = items.indexWhere((item) => item.description == description);
+    if (index >= 0) {
+      final favorite = items[index];
+      await _repository.removeInvoiceDescriptionFavorite(favorite.id);
+      items.removeAt(index);
+    } else {
+      items.add(await _repository.favoriteInvoiceDescription(description));
+    }
+    state = AsyncData(items);
+  }
+}

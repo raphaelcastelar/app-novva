@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Length, Max, MaxLength, Min } from 'class-validator';
+import { IsDateString, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Length, Max, MaxLength, Min, MinLength } from 'class-validator';
 export class PageDto {
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 30;
@@ -15,6 +15,12 @@ export class CreateInvoiceDto {
   @IsDateString() serviceDate!: string; @IsNumber() @Min(0.01) amount!: number;
   @IsString() @MaxLength(30) taxationCode!: string; @IsString() @MaxLength(2000) description!: string;
   @IsOptional() @IsString() issueTime?: string;
+}
+export class SaveInvoiceDraftDto extends CreateInvoiceDto {
+  @IsString() @MinLength(1) @MaxLength(180) takerName = '';
+}
+export class FavoriteInvoiceDescriptionDto {
+  @IsString() @MinLength(1) @MaxLength(2000) description!: string;
 }
 export class SendMessageDto { @IsString() @MaxLength(4000) body!: string; }
 export class DocumentUploadDto {

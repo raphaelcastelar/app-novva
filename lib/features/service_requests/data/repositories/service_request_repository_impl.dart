@@ -24,4 +24,38 @@ class ServiceRequestRepositoryImpl implements ServiceRequestRepository {
       status: json['status'] as String,
     );
   }
+
+  @override
+  Future<InvoiceRequestDraft?> fetchInvoiceDraft() async {
+    final json = await _remote.fetchInvoiceDraft();
+    return json == null ? null : InvoiceRequestDraft.fromJson(json);
+  }
+
+  @override
+  Future<void> saveInvoiceDraft(InvoiceRequestDraft draft) async {
+    await _remote.saveInvoiceDraft(draft);
+  }
+
+  @override
+  Future<void> deleteInvoiceDraft() => _remote.deleteInvoiceDraft();
+
+  @override
+  Future<List<InvoiceDescriptionFavorite>>
+      fetchInvoiceDescriptionFavorites() async {
+    final items = await _remote.fetchInvoiceDescriptionFavorites();
+    return items
+        .map(InvoiceDescriptionFavorite.fromJson)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<InvoiceDescriptionFavorite> favoriteInvoiceDescription(
+      String description) async {
+    final json = await _remote.favoriteInvoiceDescription(description);
+    return InvoiceDescriptionFavorite.fromJson(json);
+  }
+
+  @override
+  Future<void> removeInvoiceDescriptionFavorite(String id) =>
+      _remote.removeInvoiceDescriptionFavorite(id);
 }

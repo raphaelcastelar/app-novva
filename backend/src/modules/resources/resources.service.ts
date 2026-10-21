@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
 import { SerproService } from '../../common/serpro.service';
 import { isValidCnpj } from '../../common/validation';
-import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, GenerateObligationDto, PageDto } from './resources.dto';
+import { ConfirmDocumentUploadDto, CreateDocumentDto, CreateInvoiceDto, DocumentUploadDto, GenerateObligationDto, PageDto, SaveInvoiceDraftDto } from './resources.dto';
 import { StorageService } from '../../common/storage.service';
 
 @Injectable()
@@ -113,9 +113,21 @@ export class ResourcesService {
     if(!isValidCnpj(dto.takerCnpj))throw new BadRequestException('CNPJ do tomador inválido.');
     const item=await this.prisma.invoice.create({data:{userId,...dto,serviceDate:new Date(dto.serviceDate)}});
     await this.prisma.requestEvent.create({data:{requestKind:'INVOICE',requestId:item.id,status:item.status,note:'Solicitação recebida pelo app'}});
+    await this.prisma.invoiceDraft.deleteMany({where:{userId}});
     return this.decimal(item);
   }
   invoice(userId:string,id:string){return this.owned(this.prisma.invoice.findFirst({where:{id,userId}}),'Nota fiscal').then(this.decimal);}
+  async invoiceDraft(userId:string){const item=await this.prisma.invoiceDraft.findUnique({where:{userId}});return item?this.decimal(item):null;}
+  async saveInvoiceDraft(userId:string,dto:SaveInvoiceDraftDto){
+    if(!isValidCnpj(dto.takerCnpj))throw new BadRequestException('CNPJ do tomador inválido.');
+    const data={takerCnpj:dto.takerCnpj,takerName:dto.takerName,municipality:dto.municipality,serviceDate:new Date(dto.serviceDate),amount:dto.amount,taxationCode:dto.taxationCode,description:dto.description};
+    const item=await this.prisma.invoiceDraft.upsert({where:{userId},create:{userId,...data},update:data});
+    return this.decimal(item);
+  }
+  deleteInvoiceDraft(userId:string){return this.prisma.invoiceDraft.deleteMany({where:{userId}});}
+  invoiceDescriptionFavorites(userId:string){return this.prisma.invoiceDescriptionFavorite.findMany({where:{userId},orderBy:{createdAt:'asc'}});}
+  favoriteInvoiceDescription(userId:string,description:string){const value=description.trim();return this.prisma.invoiceDescriptionFavorite.upsert({where:{userId_description:{userId,description:value}},create:{userId,description:value},update:{}});}
+  async removeInvoiceDescriptionFavorite(userId:string,id:string){await this.owned(this.prisma.invoiceDescriptionFavorite.findFirst({where:{id,userId}}),'Favorito');await this.prisma.invoiceDescriptionFavorite.delete({where:{id}});}
   async payments(userId:string,q:PageDto){const where={userId};const [items,total]=await this.prisma.$transaction([this.prisma.payment.findMany({where,...this.paging(q),orderBy:{dueDate:'desc'}}),this.prisma.payment.count({where})]);return this.page(items.map(this.decimal),total,q);}
   async reports(userId:string){const [paid,open,invoices]=await Promise.all([this.prisma.payment.aggregate({where:{userId,status:'PAID'},_sum:{amount:true},_count:true}),this.prisma.payment.aggregate({where:{userId,status:{in:['OPEN','OVERDUE']}},_sum:{amount:true},_count:true}),this.prisma.invoice.aggregate({where:{userId,status:'ISSUED'},_sum:{amount:true},_count:true})]);return {paid:{count:paid._count,total:Number(paid._sum.amount??0)},open:{count:open._count,total:Number(open._sum.amount??0)},invoices:{count:invoices._count,total:Number(invoices._sum.amount??0)}};}
   async messages(userId:string,q:PageDto){const conversation=await this.prisma.conversation.upsert({where:{userId},create:{userId},update:{}});const where={conversationId:conversation.id};const [items,total]=await this.prisma.$transaction([this.prisma.message.findMany({where,...this.paging(q),orderBy:{createdAt:'desc'}}),this.prisma.message.count({where})]);return this.page(items,total,q);}
