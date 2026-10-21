@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/errors/error_handler.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
@@ -144,7 +145,7 @@ class _InvoiceDescriptionPageState
       state.state = AsyncError(error, stackTrace);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Não foi possível enviar: $error')),
+          SnackBar(content: Text(ErrorHandler.userMessage(error))),
         );
       }
     }

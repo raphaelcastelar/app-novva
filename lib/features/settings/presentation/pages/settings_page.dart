@@ -69,6 +69,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     final user = ref.watch(authControllerProvider).valueOrNull;
     const options = [
       (
+        'Tomadores',
+        'Hospitais, clínicas e empresas das suas notas',
+        Icons.business_outlined,
+        RouteNames.takers,
+      ),
+      (
         'Notificações',
         'Avisos e diagnóstico de entrega',
         Icons.notifications_outlined,

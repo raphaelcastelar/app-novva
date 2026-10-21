@@ -17,8 +17,10 @@ import {
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import {
   CreateCnpjDto,
+  CreateTakerDto,
   DeleteAccountDto,
   UpdateCnpjDto,
+  UpdateTakerDto,
   UpdateProfileDto,
   UpdateUserDto,
 } from "./users.dto";
@@ -81,5 +83,27 @@ export class UsersController {
     @Param("id") id: string,
   ) {
     return this.service.deleteCnpj(user.id, id);
+  }
+  @Get("takers") takers(@CurrentUser() user: AuthenticatedUser) {
+    return this.service.takers(user.id);
+  }
+  @Post("takers") createTaker(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: CreateTakerDto,
+  ) {
+    return this.service.createTaker(user.id, dto);
+  }
+  @Patch("takers/:id") updateTaker(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+    @Body() dto: UpdateTakerDto,
+  ) {
+    return this.service.updateTaker(user.id, id, dto);
+  }
+  @Delete("takers/:id") @HttpCode(204) deleteTaker(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("id") id: string,
+  ) {
+    return this.service.deleteTaker(user.id, id);
   }
 }

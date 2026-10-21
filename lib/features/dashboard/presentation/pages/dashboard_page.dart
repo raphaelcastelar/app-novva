@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../app/config/app_constants.dart';
 import '../../../../app/routes/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
@@ -880,7 +882,7 @@ class _QuickActions extends StatelessWidget {
               const SizedBox(width: 9),
               Expanded(
                 child: OutlinedButton.icon(
-                  onPressed: () => context.go(RouteNames.chat),
+                  onPressed: () => _openWhatsApp(context),
                   icon: Icon(
                     Icons.chat_bubble_outline_rounded,
                     size: 18,
@@ -892,6 +894,29 @@ class _QuickActions extends StatelessWidget {
           ),
         ],
       );
+
+  Future<void> _openWhatsApp(BuildContext context) async {
+    final uri = Uri.https(
+      'wa.me',
+      '/${AppConstants.whatsAppNumber}',
+      const {
+        'text': 'Olá! Vim pelo aplicativo da Novva e preciso de ajuda.',
+      },
+    );
+
+    try {
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (opened || !context.mounted) return;
+    } catch (_) {
+      if (!context.mounted) return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Não foi possível abrir o WhatsApp.'),
+      ),
+    );
+  }
 }
 
 String _pendingLabel(

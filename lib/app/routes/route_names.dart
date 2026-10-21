@@ -22,6 +22,7 @@ class RouteNames {
   static const privacy = '/settings/privacy';
   static const support = '/settings/support';
   static const cnpjs = '/settings/cnpjs';
+  static const takers = '/settings/takers';
   static const invoices = '/invoices/new';
   static const invoiceDescription = '/invoices/description';
   static const clients = '/admin/clients';

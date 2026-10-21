@@ -31,3 +31,15 @@ export class UpdateCnpjDto {
   @IsOptional() @IsString() @MinLength(2) @MaxLength(100) nickname?: string;
   @IsOptional() @IsString() @MaxLength(180) companyName?: string;
 }
+
+export class CreateTakerDto {
+  @IsString() @MinLength(2) @MaxLength(180) name!: string;
+  @IsString() @Length(14, 14) cnpj!: string;
+  @IsString() @MinLength(2) @MaxLength(120) municipality!: string;
+}
+
+export class UpdateTakerDto {
+  @IsOptional() @IsString() @MinLength(2) @MaxLength(180) name?: string;
+  @IsOptional() @IsString() @Length(14, 14) cnpj?: string;
+  @IsOptional() @IsString() @MinLength(2) @MaxLength(120) municipality?: string;
+}

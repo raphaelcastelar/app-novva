@@ -11,7 +11,7 @@ export class CreateDocumentDto {
   @IsOptional() @IsInt() @Min(2000) @Max(2200) year?: number;
 }
 export class CreateInvoiceDto {
-  @IsString() @Length(14,14) takerCnpj!: string; @IsString() @MaxLength(120) municipality!: string;
+  @IsString() @Length(14,14) takerCnpj!: string; @IsOptional() @IsString() @MaxLength(180) takerName?: string; @IsString() @MaxLength(120) municipality!: string;
   @IsDateString() serviceDate!: string; @IsNumber() @Min(0.01) amount!: number;
   @IsString() @MaxLength(30) taxationCode!: string; @IsString() @MaxLength(2000) description!: string;
   @IsOptional() @IsString() issueTime?: string;

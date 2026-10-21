@@ -18,6 +18,7 @@ import '../../features/settings/presentation/pages/settings_page.dart';
 import '../../features/settings/presentation/pages/privacy_page.dart';
 import '../../features/settings/presentation/pages/support_page.dart';
 import '../../features/settings/presentation/pages/splash_page.dart';
+import '../../features/takers/presentation/pages/takers_page.dart';
 import '../../core/widgets/app_scaffold.dart';
 import '../../core/widgets/error_state.dart';
 import 'route_names.dart';
@@ -97,6 +98,7 @@ final appRouter = GoRouter(
         _appRoute(RouteNames.settings, (_, __) => const SettingsPage()),
         _appRoute(RouteNames.privacy, (_, __) => const PrivacyPage()),
         _appRoute(RouteNames.support, (_, __) => const SupportPage()),
+        _appRoute(RouteNames.takers, (_, __) => const TakersPage()),
         _appRoute(RouteNames.invoices, (_, __) => const InvoiceRequestPage()),
         _appRoute(RouteNames.invoiceDescription,
             (_, __) => const InvoiceDescriptionPage()),

@@ -37,6 +37,7 @@ class DioServiceRequestRemoteDataSource
       'invoices',
       data: {
         'takerCnpj': draft.takerCnpj.replaceAll(RegExp(r'\D'), ''),
+        'takerName': draft.takerName,
         'municipality': draft.municipality,
         'serviceDate': draft.serviceDate.toIso8601String().split('T').first,
         'amount': draft.amount,

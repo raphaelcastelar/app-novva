@@ -10,7 +10,9 @@ import { StorageService } from "../../common/storage.service";
 import { isValidCnpj } from "../../common/validation";
 import {
   CreateCnpjDto,
+  CreateTakerDto,
   UpdateCnpjDto,
+  UpdateTakerDto,
   UpdateProfileDto,
   UpdateUserDto,
 } from "./users.dto";
@@ -160,6 +162,44 @@ export class UsersService {
   private async assertCnpj(userId: string, id: string) {
     const item = await this.prisma.cnpj.findFirst({ where: { id, userId } });
     if (!item) throw new NotFoundException("CNPJ não encontrado.");
+    return item;
+  }
+  takers(userId: string) {
+    return this.prisma.taker.findMany({
+      where: { userId },
+      orderBy: [{ name: "asc" }, { createdAt: "desc" }],
+    });
+  }
+  async createTaker(userId: string, dto: CreateTakerDto) {
+    if (!isValidCnpj(dto.cnpj))
+      throw new BadRequestException("CNPJ do tomador inválido.");
+    try {
+      return await this.prisma.taker.create({ data: { userId, ...dto } });
+    } catch (error: any) {
+      if (error?.code === "P2002")
+        throw new ConflictException("Este tomador já está cadastrado.");
+      throw error;
+    }
+  }
+  async updateTaker(userId: string, id: string, dto: UpdateTakerDto) {
+    await this.assertTaker(userId, id);
+    if (dto.cnpj && !isValidCnpj(dto.cnpj))
+      throw new BadRequestException("CNPJ do tomador inválido.");
+    try {
+      return await this.prisma.taker.update({ where: { id }, data: dto });
+    } catch (error: any) {
+      if (error?.code === "P2002")
+        throw new ConflictException("Este tomador já está cadastrado.");
+      throw error;
+    }
+  }
+  async deleteTaker(userId: string, id: string) {
+    await this.assertTaker(userId, id);
+    await this.prisma.taker.delete({ where: { id } });
+  }
+  private async assertTaker(userId: string, id: string) {
+    const item = await this.prisma.taker.findFirst({ where: { id, userId } });
+    if (!item) throw new NotFoundException("Tomador não encontrado.");
     return item;
   }
 }

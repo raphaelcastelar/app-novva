@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/config/app_constants.dart';
 import '../../../../app/routes/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/errors/error_handler.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
@@ -12,6 +14,9 @@ import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/premium_components.dart';
 import '../../../service_requests/domain/entities/service_request_drafts.dart';
 import '../../../service_requests/presentation/providers/service_request_providers.dart';
+import '../../../takers/domain/entities/taker.dart';
+import '../../../takers/presentation/providers/takers_providers.dart';
+import '../../../takers/presentation/widgets/taker_form_sheet.dart';
 
 class InvoiceRequestPage extends ConsumerStatefulWidget {
   const InvoiceRequestPage({super.key});
@@ -29,6 +34,7 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
   late DateTime _selectedDate;
   final _amount = TextEditingController();
   final _service = TextEditingController(text: 'Serviços médicos');
+  String? _selectedTakerId;
 
   @override
   void initState() {
@@ -54,6 +60,7 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
 
   @override
   Widget build(BuildContext context) {
+    final takers = ref.watch(takersProvider);
     return AppScaffold(
       title: 'Nova NFS-e',
       child: Stack(
@@ -69,37 +76,27 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
                   key: _formKey,
                   child: Column(
                     children: [
-                      AppTextField(
-                          label: 'Município',
-                          controller: _municipality,
-                          validator: _required,
-                          suffixIcon: _TipButton(
-                            tooltip: 'Dica sobre o município',
-                            onPressed: () => _showFieldTip(
-                              title: 'Qual município informar?',
-                              message:
-                                  'Informe o município onde o serviço foi prestado. Em caso de dúvida, confirme essa informação antes de solicitar a nota.',
-                            ),
-                          )),
+                      _TakerSelector(
+                        state: takers,
+                        selectedId: _selectedTakerId,
+                        onSelected: _selectTaker,
+                        onAdd: _addTaker,
+                        onRetry: () => ref.read(takersProvider.notifier).load(),
+                      ),
                       const SizedBox(height: 12),
                       AppTextField(
-                          label: 'Nome do tomador',
-                          controller: _takerName,
-                          validator: _required),
-                      const SizedBox(height: 12),
-                      AppTextField(
-                          label: 'CNPJ do tomador',
-                          controller: _takerCnpj,
-                          keyboardType: TextInputType.number,
-                          validator: _cnpj,
-                          suffixIcon: _TipButton(
-                            tooltip: 'Dica sobre o CNPJ',
-                            onPressed: () => _showFieldTip(
-                              title: 'CNPJ do tomador',
-                              message:
-                                  'Digite os 14 números do CNPJ do hospital, clínica ou empresa que receberá a nota fiscal.',
-                            ),
-                          )),
+                        label: 'Município do serviço',
+                        controller: _municipality,
+                        validator: _required,
+                        suffixIcon: _TipButton(
+                          tooltip: 'Dica sobre o município',
+                          onPressed: () => _showFieldTip(
+                            title: 'Qual município informar?',
+                            message:
+                                'O município salvo no tomador já foi preenchido. Altere somente se o serviço desta nota ocorreu em outro município.',
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       AppTextField(
                         label: 'Data do serviço',
@@ -158,9 +155,19 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
   String? _required(String? value) =>
       value == null || value.trim().isEmpty ? 'Campo obrigatório' : null;
 
-  String? _cnpj(String? value) {
-    final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
-    return digits.length == 14 ? null : 'Informe os 14 dígitos do CNPJ';
+  void _selectTaker(Taker? taker) {
+    if (taker == null) return;
+    setState(() {
+      _selectedTakerId = taker.id;
+      _takerName.text = taker.name;
+      _takerCnpj.text = taker.cnpj;
+      _municipality.text = taker.municipality;
+    });
+  }
+
+  Future<void> _addTaker() async {
+    final taker = await showTakerFormSheet(context);
+    if (taker != null && mounted) _selectTaker(taker);
   }
 
   String _formatDate(DateTime date) {
@@ -225,6 +232,12 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
   }
 
   void _continue() {
+    if (_selectedTakerId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione ou cadastre um tomador.')),
+      );
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final amount =
         double.tryParse(_amount.text.replaceAll('.', '').replaceAll(',', '.'));
@@ -245,6 +258,123 @@ class _InvoiceRequestPageState extends ConsumerState<InvoiceRequestPage> {
     );
     context.go(RouteNames.invoiceDescription);
   }
+}
+
+class _TakerSelector extends StatelessWidget {
+  const _TakerSelector({
+    required this.state,
+    required this.selectedId,
+    required this.onSelected,
+    required this.onAdd,
+    required this.onRetry,
+  });
+
+  final AsyncValue<List<Taker>> state;
+  final String? selectedId;
+  final ValueChanged<Taker?> onSelected;
+  final VoidCallback onAdd;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => state.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) => Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.softAccent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              Text(
+                ErrorHandler.userMessage(error),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
+        ),
+        data: (items) {
+          if (items.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.softPrimary,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: [
+                  Icon(Icons.business_outlined, color: AppColors.primary),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Cadastre seu primeiro tomador',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Você fará isso uma vez e poderá reutilizar nas próximas notas.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: onAdd,
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Cadastrar tomador'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final validSelection =
+              items.any((item) => item.id == selectedId) ? selectedId : null;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              DropdownButtonFormField<String>(
+                key: ValueKey(validSelection),
+                initialValue: validSelection,
+                isExpanded: true,
+                decoration: const InputDecoration(labelText: 'Tomador'),
+                hint: const Text('Selecione o tomador da nota'),
+                validator: (value) =>
+                    value == null ? 'Selecione um tomador' : null,
+                items: [
+                  for (final item in items)
+                    DropdownMenuItem(
+                      value: item.id,
+                      child: Text(
+                        '${item.name} · ${AppFormatters.cnpj(item.cnpj)}',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onChanged: (id) => onSelected(
+                  items.where((item) => item.id == id).firstOrNull,
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Novo tomador'),
+                ),
+              ),
+            ],
+          );
+        },
+      );
 }
 
 class _TipButton extends StatelessWidget {

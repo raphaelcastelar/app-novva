@@ -17,8 +17,32 @@ class Validators {
     return digit(cpf, 10) == cpf[9] && digit(cpf, 11) == cpf[10];
   }
 
-  static bool isValidCnpj(String value) =>
-      value.replaceAll(RegExp(r'\D'), '').length == 14;
+  static bool isValidCnpj(String value) {
+    final cnpj = value.replaceAll(RegExp(r'\D'), '');
+    if (cnpj.length != 14 || RegExp(r'^(\d)\1{13}$').hasMatch(cnpj)) {
+      return false;
+    }
+
+    int verificationDigit(List<int> weights) {
+      var sum = 0;
+      for (var index = 0; index < weights.length; index++) {
+        sum += int.parse(cnpj[index]) * weights[index];
+      }
+      final remainder = sum % 11;
+      return remainder < 2 ? 0 : 11 - remainder;
+    }
+
+    final firstDigit = verificationDigit(
+      const [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+    );
+    final secondDigit = verificationDigit(
+      const [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2],
+    );
+
+    return firstDigit == int.parse(cnpj[12]) &&
+        secondDigit == int.parse(cnpj[13]);
+  }
+
   static bool isValidEmail(String value) =>
       RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
   static bool isStrongPassword(String value) => value.length >= 8;
