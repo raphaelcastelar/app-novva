@@ -71,7 +71,9 @@ final appRouter = GoRouter(
         _appRoute(RouteNames.dashboard, (_, __) => const DashboardPage()),
         _appRoute(
           RouteNames.documents,
-          (_, __) => const DocumentsPage(),
+          (_, state) => DocumentsPage(
+            initialDocumentId: state.uri.queryParameters['documentId'],
+          ),
         ),
         _appRoute(
           RouteNames.documentDetails,

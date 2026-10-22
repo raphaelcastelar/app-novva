@@ -67,7 +67,19 @@ class NotificationsPage extends ConsumerWidget {
                             .markAsRead(items[index].id);
                         ref.invalidate(notificationsProvider);
                       }
-                      if (context.mounted) context.go(RouteNames.documents);
+                      if (context.mounted) {
+                        final documentId = items[index].entityId;
+                        context.go(
+                          documentId == null
+                              ? RouteNames.documents
+                              : Uri(
+                                  path: RouteNames.documents,
+                                  queryParameters: {
+                                    'documentId': documentId,
+                                  },
+                                ).toString(),
+                        );
+                      }
                     },
                   ),
                 ),

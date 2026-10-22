@@ -6,6 +6,7 @@ class NotificationItem {
     required this.kind,
     required this.createdAt,
     required this.isRead,
+    this.entityId,
   });
 
   final String id;
@@ -14,6 +15,7 @@ class NotificationItem {
   final String kind;
   final DateTime createdAt;
   final bool isRead;
+  final String? entityId;
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
     return NotificationItem(
@@ -23,6 +25,7 @@ class NotificationItem {
       kind: json['kind'] as String? ?? 'general',
       createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       isRead: json['readAt'] != null,
+      entityId: json['entityId'] as String?,
     );
   }
 }

@@ -32,6 +32,14 @@ class NotificationNavigationService {
 
     switch (type) {
       case 'document_available':
+        final documentId = data['entityId']?.toString();
+        if (documentId != null && documentId.isNotEmpty) {
+          return Uri(
+            path: RouteNames.documents,
+            queryParameters: {'documentId': documentId},
+          ).toString();
+        }
+        return RouteNames.documents;
       case 'document_rejected':
         return RouteNames.documents;
       case 'obligation_available':

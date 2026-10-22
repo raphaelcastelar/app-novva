@@ -134,4 +134,50 @@ void main() {
     expect(find.text('Solicitar documento'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('opens the notified document in the received tab',
+      (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final repository = _DocumentsRepository();
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, __) =>
+              const DocumentsPage(initialDocumentId: 'document-id'),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          documentsProvider.overrideWith(
+            (ref) => DocumentsController(
+              FetchDocuments(repository),
+              refreshInterval: null,
+            ),
+          ),
+          documentTypesProvider.overrideWith(
+            (ref) => repository.fetchDocumentTypes(),
+          ),
+        ],
+        child: MaterialApp.router(
+          theme: AppTheme.light,
+          routerConfig: router,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Escolha um documento'), findsNothing);
+    expect(find.text('Certidão de regularidade'), findsOneWidget);
+    expect(find.text('Baixar documento'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }

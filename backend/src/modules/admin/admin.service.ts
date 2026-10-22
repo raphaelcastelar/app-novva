@@ -87,8 +87,9 @@ export class AdminService {
               title: 'Documento disponível',
               body: `O documento ${availableDocumentTitle} está pronto e pode ser acessado no app.`,
               kind: 'document_available',
+              entityId: item.id,
             }
-          : { userId: item.userId, title: 'Solicitação atualizada', body: notificationBody, kind: 'request_status' },
+          : { userId: item.userId, title: 'Solicitação atualizada', body: notificationBody, kind: 'request_status', entityId: item.id },
       });
       await transaction.auditLog.create({ data: { action: 'REQUEST_STATUS_UPDATED', entity: kind, entityId: id, metadata: { previousStatus: current, status: dto.status, note: dto.note ?? '', actor } } });
       return createdNotification;

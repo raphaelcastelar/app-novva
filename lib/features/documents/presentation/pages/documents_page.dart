@@ -16,7 +16,9 @@ import '../../domain/entities/document_type.dart';
 import '../providers/documents_providers.dart';
 
 class DocumentsPage extends ConsumerWidget {
-  const DocumentsPage({super.key});
+  const DocumentsPage({this.initialDocumentId, super.key});
+
+  final String? initialDocumentId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -41,6 +43,7 @@ class DocumentsPage extends ConsumerWidget {
 
     return DefaultTabController(
       length: 4,
+      initialIndex: initialDocumentId == null ? 0 : 2,
       child: AppScaffold(
         title: 'Documentos',
         actions: [
@@ -98,6 +101,7 @@ class DocumentsPage extends ConsumerWidget {
                             .toList(),
                         documentTypes: documentTypes.valueOrNull,
                         emptyMessage: 'Nenhum documento recebido ainda.',
+                        initialExpandedDocumentId: initialDocumentId,
                       ),
                     ),
                     RefreshIndicator(
@@ -447,10 +451,12 @@ class _ExpandableDocumentType extends ConsumerStatefulWidget {
   const _ExpandableDocumentType({
     required this.type,
     required this.documents,
+    this.initialExpandedDocumentId,
   });
 
   final DocumentType type;
   final List<DocumentItem> documents;
+  final String? initialExpandedDocumentId;
 
   @override
   ConsumerState<_ExpandableDocumentType> createState() =>
@@ -459,8 +465,29 @@ class _ExpandableDocumentType extends ConsumerStatefulWidget {
 
 class _ExpandableDocumentTypeState
     extends ConsumerState<_ExpandableDocumentType> {
-  bool _expanded = false;
+  late bool _expanded;
   bool _downloading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = _containsInitialDocument;
+  }
+
+  @override
+  void didUpdateWidget(covariant _ExpandableDocumentType oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialExpandedDocumentId !=
+            widget.initialExpandedDocumentId &&
+        _containsInitialDocument) {
+      _expanded = true;
+    }
+  }
+
+  bool get _containsInitialDocument {
+    final id = widget.initialExpandedDocumentId;
+    return id != null && widget.documents.any((document) => document.id == id);
+  }
 
   List<DocumentItem> get _matchingDocuments => widget.documents
       .where((document) =>
@@ -811,11 +838,13 @@ class _DocumentList extends StatelessWidget {
     required this.documents,
     required this.documentTypes,
     this.emptyMessage = 'Nenhum documento encontrado.',
+    this.initialExpandedDocumentId,
   });
 
   final List<DocumentItem> documents;
   final List<DocumentType>? documentTypes;
   final String emptyMessage;
+  final String? initialExpandedDocumentId;
 
   @override
   Widget build(BuildContext context) {
@@ -837,6 +866,7 @@ class _DocumentList extends StatelessWidget {
         _ExpandableDocumentType(
           type: _typeForDocument(document, documentTypes),
           documents: [document],
+          initialExpandedDocumentId: initialExpandedDocumentId,
         ),
     ];
 

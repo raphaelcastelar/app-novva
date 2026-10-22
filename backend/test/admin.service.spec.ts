@@ -118,6 +118,7 @@ describe('AdminService document availability notifications', () => {
         title: 'Documento disponível',
         body: 'O documento Certidão negativa está pronto e pode ser acessado no app.',
         kind: 'document_available',
+        entityId: 'document-id',
       },
     });
     expect(pushNotifications.sendDocumentAvailable).toHaveBeenCalledWith({
@@ -173,7 +174,7 @@ describe('AdminService document availability notifications', () => {
     expect(transaction.notification.create).toHaveBeenCalledWith({
       data: {
         userId: 'user-id', title: 'Solicitação atualizada',
-        body: 'Observação adicional', kind: 'request_status',
+        body: 'Observação adicional', kind: 'request_status', entityId: 'document-id',
       },
     });
     expect(pushNotifications.sendDocumentAvailable).not.toHaveBeenCalled();
