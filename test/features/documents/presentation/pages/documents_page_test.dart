@@ -30,6 +30,7 @@ class _DocumentsRepository implements DocumentsRepository {
           expiresAt: DateTime(2026, 7, 10),
           validityMonths: 6,
           possiblyExpired: true,
+          adminNote: 'Utilize este arquivo até a data de validade.',
         ),
         const DocumentItem(
           id: 'pending-document-id',
@@ -104,6 +105,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Documento possivelmente vencido'), findsOneWidget);
+    expect(find.text('Observação da Novva'), findsOneWidget);
+    expect(find.text('Utilize este arquivo até a data de validade.'),
+        findsOneWidget);
     expect(find.text('Solicitar atualização'), findsOneWidget);
     expect(find.text('Baixar documento'), findsOneWidget);
 

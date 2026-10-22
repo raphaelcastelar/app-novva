@@ -49,6 +49,7 @@ export class PushNotificationsService {
     userId: string;
     documentId: string;
     documentTitle: string;
+    body: string;
     notificationId: string;
   }) {
     if (process.env.PUSH_NOTIFICATIONS_ENABLED !== 'true') {
@@ -71,7 +72,7 @@ export class PushNotificationsService {
           tokens: batchTokens,
           notification: {
             title: 'Documento disponível',
-            body: `O documento ${input.documentTitle} está pronto e pode ser acessado no app.`,
+            body: input.body,
           },
           data: {
             type: 'document_available',

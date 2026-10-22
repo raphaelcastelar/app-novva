@@ -165,6 +165,7 @@ model Document {
   title           String         @db.VarChar(160)
   category        String         @db.VarChar(100)
   description     String?
+  adminNote       String?        @map("admin_note")
   status          DocumentStatus @default(PENDING)
   month           Int?
   year            Int?

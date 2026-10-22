@@ -54,6 +54,7 @@ void main() {
         'validityMonths': 6,
         'possiblyExpired': true,
         'documentTypeId': 'type-id',
+        'adminNote': 'Confira a validade antes de utilizar.',
       });
 
       expect(item.validityMonths, 6);
@@ -61,6 +62,7 @@ void main() {
       expect(item.expiresAt, DateTime.utc(2026, 7, 10, 12));
       expect(item.possiblyExpired, isTrue);
       expect(item.documentTypeId, 'type-id');
+      expect(item.adminNote, 'Confira a validade antes de utilizar.');
     });
 
     test('rejects an unknown API status', () {

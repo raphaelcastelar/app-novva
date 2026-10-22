@@ -710,6 +710,7 @@ class _DocumentAvailabilityPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayedDocument = available ?? latest;
     final color = expired
         ? AppColors.warning
         : available != null
@@ -762,6 +763,45 @@ class _DocumentAvailabilityPanel extends StatelessWidget {
                 Text(description,
                     style: TextStyle(
                         color: AppColors.muted, height: 1.35, fontSize: 12)),
+                if (displayedDocument?.adminNote case final adminNote?) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .surface
+                          .withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(11),
+                      border: Border.all(
+                        color: color.withValues(alpha: 0.20),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Observação da Novva',
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          adminNote,
+                          style: TextStyle(
+                            color: AppColors.text,
+                            height: 1.35,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

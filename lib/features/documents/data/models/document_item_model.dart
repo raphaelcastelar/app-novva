@@ -17,6 +17,7 @@ class DocumentItemModel extends DocumentItem {
     super.validityMonths,
     super.possiblyExpired,
     super.documentTypeId,
+    super.adminNote,
   });
 
   factory DocumentItemModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +42,7 @@ class DocumentItemModel extends DocumentItem {
       possiblyExpired: json['possiblyExpired'] as bool? ?? false,
       documentTypeId: json['documentTypeId'] as String? ??
           (json['documentType'] as Map?)?['id'] as String?,
+      adminNote: json['adminNote'] as String?,
     );
   }
 

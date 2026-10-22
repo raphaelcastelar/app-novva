@@ -110,13 +110,24 @@ describe('AdminService document availability notifications', () => {
     const service = new AdminService(prisma as any, {} as any, pushNotifications as any);
     jest.spyOn(service, 'requestDetail').mockResolvedValue({ id: item.id } as any);
 
-    await service.updateStatus(item.id, { status: 'APPROVED' });
+    await service.updateStatus(item.id, {
+      status: 'APPROVED',
+      note: 'Documento válido até dezembro.',
+    });
+
+    expect(transaction.document.update).toHaveBeenCalledWith({
+      where: { id: 'document-id' },
+      data: {
+        status: 'APPROVED',
+        adminNote: 'Documento válido até dezembro.',
+      },
+    });
 
     expect(transaction.notification.create).toHaveBeenCalledWith({
       data: {
         userId: 'user-id',
         title: 'Documento disponível',
-        body: 'O documento Certidão negativa está pronto e pode ser acessado no app.',
+        body: 'O documento Certidão negativa está pronto e pode ser acessado no app. Observação: Documento válido até dezembro.',
         kind: 'document_available',
         entityId: 'document-id',
       },
@@ -125,6 +136,7 @@ describe('AdminService document availability notifications', () => {
       userId: 'user-id',
       documentId: 'document-id',
       documentTitle: 'Certidão negativa',
+      body: 'O documento Certidão negativa está pronto e pode ser acessado no app. Observação: Documento válido até dezembro.',
       notificationId: 'notification-id',
     });
   });

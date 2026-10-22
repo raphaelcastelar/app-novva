@@ -17,6 +17,7 @@ class DocumentItem {
     this.validityMonths,
     this.possiblyExpired = false,
     this.documentTypeId,
+    this.adminNote,
   });
 
   final String id;
@@ -34,4 +35,5 @@ class DocumentItem {
   final int? validityMonths;
   final bool possiblyExpired;
   final String? documentTypeId;
+  final String? adminNote;
 }

@@ -75,9 +75,13 @@ export class AdminService {
       throw new BadRequestException('Anexe o arquivo antes de concluir o documento.');
     }
     const availableDocumentTitle = documentBecameAvailable ? document!.title : null;
-    const notificationBody = dto.note?.trim() || `Sua solicitação foi atualizada para ${dto.status}.`;
+    const adminNote = dto.note?.trim() || null;
+    const notificationBody = adminNote || `Sua solicitação foi atualizada para ${dto.status}.`;
+    const availableNotificationBody = documentBecameAvailable
+      ? `O documento ${availableDocumentTitle} está pronto e pode ser acessado no app.${adminNote ? ` Observação: ${adminNote}` : ''}`
+      : null;
     const notification = await this.prisma.$transaction(async (transaction) => {
-      if (kind === 'DOCUMENT') await transaction.document.update({ where: { id }, data: { status: dto.status as any } });
+      if (kind === 'DOCUMENT') await transaction.document.update({ where: { id }, data: { status: dto.status as any, ...(adminNote ? { adminNote } : {}) } });
       else await transaction.invoice.update({ where: { id }, data: { status: dto.status as any } });
       await transaction.requestEvent.create({ data: { requestKind: kind, requestId: id, status: dto.status, note: dto.note, actor } });
       const createdNotification = await transaction.notification.create({
@@ -85,7 +89,7 @@ export class AdminService {
           ? {
               userId: item.userId,
               title: 'Documento disponível',
-              body: `O documento ${availableDocumentTitle} está pronto e pode ser acessado no app.`,
+              body: availableNotificationBody!,
               kind: 'document_available',
               entityId: item.id,
             }
@@ -99,6 +103,7 @@ export class AdminService {
         userId: item.userId,
         documentId: item.id,
         documentTitle: availableDocumentTitle!,
+        body: availableNotificationBody!,
         notificationId: notification.id,
       });
     }
