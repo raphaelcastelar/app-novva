@@ -36,8 +36,11 @@ import { PushNotificationsService } from './modules/push-devices/push-notificati
         if (env.SERPRO_ENABLED === 'true') {
           if (!env.SERPRO_CONSUMER_KEY || !env.SERPRO_CONSUMER_SECRET) throw new Error('Credenciais do Integra Contador são obrigatórias.');
           if (!/^\d{14}$/.test(String(env.SERPRO_CONTRACTOR_CNPJ ?? '').replace(/\D/g, ''))) throw new Error('SERPRO_CONTRACTOR_CNPJ deve ter 14 dígitos.');
-          if (!env.SERPRO_CERT_PEM && !env.SERPRO_CERT_PATH) throw new Error('Certificado do Integra Contador é obrigatório.');
-          if (!env.SERPRO_PRIVATE_KEY_PEM && !env.SERPRO_PRIVATE_KEY_PATH) throw new Error('Chave privada do Integra Contador é obrigatória.');
+          const hasPfx = Boolean(env.SERPRO_PFX_PATH);
+          const hasPemCertificate = Boolean(env.SERPRO_CERT_PEM || env.SERPRO_CERT_PATH);
+          const hasPemPrivateKey = Boolean(env.SERPRO_PRIVATE_KEY_PEM || env.SERPRO_PRIVATE_KEY_PATH);
+          if (!hasPfx && !hasPemCertificate) throw new Error('Certificado do Integra Contador é obrigatório.');
+          if (!hasPfx && !hasPemPrivateKey) throw new Error('Chave privada do Integra Contador é obrigatória.');
         }
         if (env.PUSH_NOTIFICATIONS_ENABLED === 'true') {
           const hasEncodedAccount = Boolean(env.FIREBASE_SERVICE_ACCOUNT_BASE64);

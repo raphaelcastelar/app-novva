@@ -136,6 +136,21 @@ export class SerproService {
   }
 
   private mtlsAgent() {
+    const pfxPath = process.env.SERPRO_PFX_PATH;
+    if (pfxPath) {
+      try {
+        return new Agent({
+          pfx: readFileSync(pfxPath),
+          passphrase: process.env.SERPRO_CERT_PASSWORD || undefined,
+          keepAlive: true,
+        });
+      } catch {
+        throw new ServiceUnavailableException(
+          'Não foi possível carregar o certificado PFX do Integra Contador.',
+        );
+      }
+    }
+
     const cert = this.pem('SERPRO_CERT_PEM', 'SERPRO_CERT_PATH');
     const key = this.pem('SERPRO_PRIVATE_KEY_PEM', 'SERPRO_PRIVATE_KEY_PATH');
     return new Agent({
