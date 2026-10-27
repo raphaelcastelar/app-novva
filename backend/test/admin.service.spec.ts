@@ -5,7 +5,7 @@ describe('AdminService doctor registration', () => {
   const dto = {
     cpf: '52998224725', name: 'Dra. Nova Médica', email: 'NOVA@EXAMPLE.COM',
     phone: '11999999999', crm: 'CRM 123-SP', specialty: 'Clínica médica',
-    companyName: 'Nova Medicina Ltda.',
+    companyName: 'Nova Medicina Ltda.', cnpj: '11222333000181',
   };
 
   it('creates a doctor without a password for first access', async () => {
@@ -13,6 +13,7 @@ describe('AdminService doctor registration', () => {
       user: { create: jest.fn().mockResolvedValue({
         id: 'doctor-id', name: dto.name, email: 'nova@example.com', status: 'ACTIVE',
         profile: { crm: dto.crm, specialty: dto.specialty, companyName: dto.companyName },
+        cnpjs: [{ cnpj: dto.cnpj, active: true }],
       }) },
       auditLog: { create: jest.fn().mockResolvedValue({}) },
     };
@@ -25,9 +26,11 @@ describe('AdminService doctor registration', () => {
     const result = await service.createDoctor(dto, 'Matheus Eler');
 
     expect(transaction.user.create).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.not.objectContaining({ passwordHash: expect.anything() }),
+      data: expect.objectContaining({
+        cnpjs: { create: expect.objectContaining({ cnpj: dto.cnpj, active: true }) },
+      }),
     }));
-    expect(result).toMatchObject({ id: 'doctor-id', email: 'nova@example.com', needsPasswordCreation: true });
+    expect(result).toMatchObject({ id: 'doctor-id', email: 'nova@example.com', cnpj: dto.cnpj, needsPasswordCreation: true });
     expect(transaction.auditLog.create).toHaveBeenCalled();
   });
 
@@ -35,6 +38,14 @@ describe('AdminService doctor registration', () => {
     const prisma = { user: { findFirst: jest.fn().mockResolvedValue({ cpf: dto.cpf, email: 'other@example.com' }) } };
     const service = new AdminService(prisma as any, {} as any, {} as any);
     await expect(service.createDoctor(dto)).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects an invalid CNPJ', async () => {
+    const prisma = { user: { findFirst: jest.fn() } };
+    const service = new AdminService(prisma as any, {} as any, {} as any);
+    await expect(service.createDoctor({ ...dto, cnpj: '11222333000182' }))
+      .rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.user.findFirst).not.toHaveBeenCalled();
   });
 });
 

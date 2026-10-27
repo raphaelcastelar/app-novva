@@ -14,6 +14,7 @@ export class AdminUpdateStatusDto {
 
 export class AdminCreateDoctorDto {
   @Matches(/^\d{11}$/) cpf!: string;
+  @Matches(/^\d{14}$/) cnpj!: string;
   @IsString() @MaxLength(160) name!: string;
   @IsEmail() @MaxLength(254) email!: string;
   @IsOptional() @IsString() @MaxLength(20) phone?: string;

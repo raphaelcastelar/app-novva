@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { RequestKind } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage.service';
-import { isValidCpf } from '../../common/validation';
+import { isValidCnpj, isValidCpf } from '../../common/validation';
 import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
 import { PushNotificationsService } from '../push-devices/push-notifications.service';
 
@@ -138,12 +138,13 @@ export class AdminService {
   async doctors(search?: string) {
     const users = await this.prisma.user.findMany({
       where: search ? { name: { contains: search, mode: 'insensitive' } } : undefined,
-      include: { profile: true, _count: { select: { documents: true, invoices: true } }, documents: { select: { status: true } }, invoices: { select: { status: true } } },
+      include: { profile: true, cnpjs: { where: { active: true }, take: 1 }, _count: { select: { documents: true, invoices: true } }, documents: { select: { status: true } }, invoices: { select: { status: true } } },
       orderBy: { name: 'asc' },
     });
     return users.map((user) => ({
       id: user.id, name: user.name, initials: this.initials(user.name), crm: user.profile?.crm ?? '',
       specialty: user.profile?.specialty ?? '', email: user.email, company: user.profile?.companyName ?? '',
+      cnpj: user.cnpjs[0]?.cnpj ?? '',
       requests: user._count.documents + user._count.invoices,
       open: [...user.documents, ...user.invoices].filter((request) => !CLOSED_STATUSES.has(request.status)).length,
       status: user.status,
@@ -152,6 +153,7 @@ export class AdminService {
 
   async createDoctor(dto: AdminCreateDoctorDto, actor = 'Equipe Novva') {
     if (!isValidCpf(dto.cpf)) throw new BadRequestException('CPF inválido.');
+    if (!isValidCnpj(dto.cnpj)) throw new BadRequestException('CNPJ inválido.');
     const email = dto.email.trim().toLowerCase();
     const existing = await this.prisma.user.findFirst({
       where: { OR: [{ cpf: dto.cpf }, { email: { equals: email, mode: 'insensitive' } }] },
@@ -174,8 +176,16 @@ export class AdminService {
               companyName: dto.companyName.trim(),
             },
           },
+          cnpjs: {
+            create: {
+              nickname: dto.companyName.trim(),
+              cnpj: dto.cnpj,
+              companyName: dto.companyName.trim(),
+              active: true,
+            },
+          },
         },
-        include: { profile: true },
+        include: { profile: true, cnpjs: true },
       });
       await transaction.auditLog.create({
         data: {
@@ -191,6 +201,7 @@ export class AdminService {
     return {
       id: user.id, name: user.name, initials: this.initials(user.name), crm: user.profile?.crm ?? '',
       specialty: user.profile?.specialty ?? '', email: user.email, company: user.profile?.companyName ?? '',
+      cnpj: user.cnpjs[0]?.cnpj ?? '',
       requests: 0, open: 0, status: user.status, needsPasswordCreation: true,
     };
   }
