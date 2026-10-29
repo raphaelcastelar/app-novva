@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import axios, { AxiosError, AxiosInstance } from 'axios';
@@ -20,6 +21,7 @@ type GeneratedDas = {
 
 @Injectable()
 export class SerproService {
+  private readonly logger = new Logger(SerproService.name);
   private readonly authUrl =
     process.env.SERPRO_AUTH_URL ??
     'https://autenticacao.sapi.serpro.gov.br/authenticate';
@@ -39,22 +41,41 @@ export class SerproService {
       throw new BadRequestException('CNPJ ou competência inválida.');
     }
 
+    const context = { cnpj: this.maskCnpj(cnpj), period };
+    this.logger.log(JSON.stringify({ event: 'serpro_das_started', ...context }));
+
     let tokens = await this.getTokens();
     let response;
     try {
       response = await this.emitDas(cnpj, period, tokens);
     } catch (error) {
-      if (!this.isUnauthorized(error)) throw this.mapCommunicationError(error);
+      if (!this.isUnauthorized(error)) {
+        this.logSerproFailure(error, context);
+        throw this.mapCommunicationError(error);
+      }
+      this.logger.warn(JSON.stringify({ event: 'serpro_token_expired_retrying', ...context }));
       this.tokens = undefined;
       tokens = await this.getTokens();
       try {
         response = await this.emitDas(cnpj, period, tokens);
       } catch (retryError) {
+        this.logSerproFailure(retryError, context);
         throw this.mapCommunicationError(retryError);
       }
     }
 
-    return this.parseGeneratedDas(response.data, cnpj, period);
+    try {
+      const generated = this.parseGeneratedDas(response.data, cnpj, period);
+      this.logger.log(JSON.stringify({
+        event: 'serpro_das_completed',
+        ...context,
+        httpStatus: response.status,
+      }));
+      return generated;
+    } catch (error) {
+      this.logSerproFailure(error, context, response.status);
+      throw error;
+    }
   }
 
   private async emitDas(cnpj: string, period: string, tokens: SerproTokens) {
@@ -249,5 +270,31 @@ export class SerproService {
       }
     }
     return new ServiceUnavailableException(fallback);
+  }
+
+  private logSerproFailure(
+    error: unknown,
+    context: { cnpj: string; period: string },
+    responseStatus?: number,
+  ) {
+    const apiMessage = error instanceof AxiosError
+      ? error.response?.data?.mensagens?.[0]
+      : undefined;
+    const exceptionMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    this.logger.error(JSON.stringify({
+      event: 'serpro_das_failed',
+      ...context,
+      httpStatus: error instanceof AxiosError ? error.response?.status ?? null : responseStatus ?? null,
+      serproCode: this.sanitizeLog(String(apiMessage?.codigo ?? '')) || null,
+      message: this.sanitizeLog(String(apiMessage?.texto ?? exceptionMessage)),
+    }));
+  }
+
+  private maskCnpj(cnpj: string) {
+    return `**********${cnpj.slice(-4)}`;
+  }
+
+  private sanitizeLog(value: string) {
+    return value.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 300);
   }
 }

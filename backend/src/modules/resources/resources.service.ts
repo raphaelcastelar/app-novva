@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../common/prisma.service';
 import { SerproService } from '../../common/serpro.service';
@@ -8,6 +8,8 @@ import { StorageService } from '../../common/storage.service';
 
 @Injectable()
 export class ResourcesService {
+  private readonly logger = new Logger(ResourcesService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
@@ -169,15 +171,43 @@ export class ResourcesService {
     dto: GenerateObligationDto,
     existing: { id: string; pdfKey: string | null } | null,
   ) {
+    const attemptId = randomUUID();
+    const period = `${dto.year}${String(dto.month).padStart(2, '0')}`;
+    this.logger.log(JSON.stringify({
+      event: 'das_generation_requested',
+      attemptId,
+      userId,
+      period,
+      operation: existing ? 'recalculate' : 'generate',
+    }));
     const company = await this.prisma.cnpj.findFirst({
       where: { userId, active: true },
       select: { cnpj: true },
     });
     if (!company) {
+      this.logger.warn(JSON.stringify({
+        event: 'das_generation_rejected',
+        attemptId,
+        userId,
+        period,
+        reason: 'no_active_cnpj',
+      }));
       throw new BadRequestException('Selecione um CNPJ ativo antes de gerar a guia.');
     }
-    const period = `${dto.year}${String(dto.month).padStart(2, '0')}`;
-    const generated = await this.serpro.generateDas(company.cnpj, period);
+    let generated;
+    try {
+      generated = await this.serpro.generateDas(company.cnpj, period);
+    } catch (error) {
+      this.logger.warn(JSON.stringify({
+        event: 'das_generation_failed',
+        attemptId,
+        userId,
+        cnpj: this.maskCnpj(company.cnpj),
+        period,
+        ...this.safeError(error),
+      }));
+      throw error;
+    }
     const obligationId = existing?.id ?? randomUUID();
     const newKey = await this.storage.storeObligationPdf(userId, obligationId, generated.content);
     const dueDate = new Date(Date.UTC(dto.year, dto.month, 20));
@@ -228,7 +258,35 @@ export class ResourcesService {
       throw error;
     });
     await this.storage.deleteDocument(existing?.pdfKey).catch(() => undefined);
+    this.logger.log(JSON.stringify({
+      event: 'das_generation_completed',
+      attemptId,
+      userId,
+      cnpj: this.maskCnpj(company.cnpj),
+      period,
+      obligationId: item.id,
+    }));
     return this.obligationView(item);
+  }
+  private maskCnpj(cnpj: string) {
+    return `**********${cnpj.slice(-4)}`;
+  }
+  private safeError(error: unknown) {
+    if (error instanceof HttpException) {
+      const response = error.getResponse();
+      const rawMessage = typeof response === 'string'
+        ? response
+        : (response as { message?: string | string[] })?.message;
+      const message = Array.isArray(rawMessage) ? rawMessage.join('; ') : rawMessage;
+      return { status: error.getStatus(), message: this.sanitizeLog(message ?? error.message) };
+    }
+    return {
+      status: null,
+      message: this.sanitizeLog(error instanceof Error ? error.message : 'Erro desconhecido'),
+    };
+  }
+  private sanitizeLog(value: string) {
+    return value.replace(/[\r\n\t]+/g, ' ').trim().slice(0, 300);
   }
   private obligationStatusFor(dueDate: Date) {
     const today = new Date();
