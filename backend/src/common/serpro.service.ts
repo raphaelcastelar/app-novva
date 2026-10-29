@@ -202,20 +202,14 @@ export class SerproService {
 
   private parseGeneratedDas(data: any, cnpj: string, period: string): GeneratedDas {
     const messages = Array.isArray(data?.mensagens) ? data.mensagens : [];
-    const noAmountDue = messages.find((message: any) =>
+    const noAmountDue = messages.some((message: any) =>
       String(message?.codigo ?? '').includes('MSG_E0139'),
     );
-    if (noAmountDue) {
-      const message = String(
-        noAmountDue?.texto ?? 'Não foi gerado DAS porque não há valor devido para o período informado.',
-      ).replace(/^MSG_E0139\s*-\s*/i, '');
-      throw new BadRequestException(message.slice(0, 500));
-    }
     const successful = messages.some((message: any) =>
       String(message?.texto ?? '').toLocaleLowerCase('pt-BR').includes('sucesso') ||
       String(message?.codigo ?? '').toLocaleLowerCase('pt-BR').includes('sucesso'),
     );
-    if (!successful) {
+    if (!noAmountDue && !successful) {
       const message = String(messages[0]?.texto ?? 'O Integra Contador não gerou a guia.');
       throw new BadRequestException(message.slice(0, 500));
     }
