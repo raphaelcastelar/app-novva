@@ -295,6 +295,62 @@ export class AdminService {
     return this.doctorDetail(id);
   }
 
+  async removeDoctor(id: string, actor = 'Equipe Novva') {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        documents: { select: { id: true, fileKey: true } },
+        invoices: { select: { id: true, pdfKey: true } },
+        obligations: { select: { pdfKey: true } },
+      },
+    });
+    if (!user) throw new NotFoundException('Médico não encontrado.');
+
+    const documentIds = user.documents.map((item) => item.id);
+    const invoiceIds = user.invoices.map((item) => item.id);
+    const requestEventFilters = [
+      ...(documentIds.length
+        ? [{ requestKind: 'DOCUMENT' as const, requestId: { in: documentIds } }]
+        : []),
+      ...(invoiceIds.length
+        ? [{ requestKind: 'INVOICE' as const, requestId: { in: invoiceIds } }]
+        : []),
+    ];
+    const fileKeys = [
+      ...user.documents.map((item) => item.fileKey),
+      ...user.invoices.map((item) => item.pdfKey),
+      ...user.obligations.map((item) => item.pdfKey),
+    ].filter((key): key is string => Boolean(key));
+
+    await this.prisma.$transaction(async (transaction) => {
+      if (requestEventFilters.length) {
+        await transaction.requestEvent.deleteMany({
+          where: { OR: requestEventFilters },
+        });
+      }
+      await transaction.auditLog.create({
+        data: {
+          userId: user.id,
+          action: 'DOCTOR_DELETED_BY_ADMIN',
+          entity: 'User',
+          entityId: user.id,
+          metadata: {
+            actor,
+            doctorName: user.name,
+            filesScheduledForDeletion: fileKeys.length,
+          },
+        },
+      });
+      await transaction.user.delete({ where: { id: user.id } });
+    });
+
+    await Promise.allSettled(
+      fileKeys.map((key) => this.storage.deleteDocument(key)),
+    );
+  }
+
   private doctorView(user: any) {
     return {
       id: user.id,

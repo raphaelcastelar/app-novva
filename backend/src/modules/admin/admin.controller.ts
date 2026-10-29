@@ -46,6 +46,10 @@ export class AdminController {
     @Body() dto: AdminUpdateDoctorDto,
     @Headers('x-admin-actor') actor?: string,
   ) { return this.service.updateDoctor(id, dto, actor); }
+  @Delete('doctors/:id') @HttpCode(204)
+  removeDoctor(@Param('id') id: string, @Headers('x-admin-actor') actor?: string) {
+    return this.service.removeDoctor(id, actor);
+  }
   @Get('document-types') documentTypes() { return this.service.documentTypes(); }
   @Post('document-types') createDocumentType(@Body() dto: AdminCreateDocumentTypeDto, @Headers('x-admin-actor') actor?: string) {
     return this.service.createDocumentType(dto, actor);

@@ -93,6 +93,42 @@ describe('AdminService doctor registration', () => {
     expect(transaction.auditLog.create).toHaveBeenCalled();
     expect(result).toEqual({ id: current.id, cnpj: '11444777000161' });
   });
+
+  it('deletes a doctor, related request events and stored files', async () => {
+    const user = {
+      id: 'doctor-id', name: dto.name,
+      documents: [{ id: 'document-id', fileKey: 'documents/file.pdf' }],
+      invoices: [{ id: 'invoice-id', pdfKey: 'invoices/file.pdf' }],
+      obligations: [{ pdfKey: 'obligations/file.pdf' }],
+    };
+    const transaction = {
+      requestEvent: { deleteMany: jest.fn().mockResolvedValue({ count: 2 }) },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+      user: { delete: jest.fn().mockResolvedValue(user) },
+    };
+    const prisma = {
+      user: { findUnique: jest.fn().mockResolvedValue(user) },
+      $transaction: jest.fn((callback) => callback(transaction)),
+    };
+    const storage = { deleteDocument: jest.fn().mockResolvedValue(undefined) };
+    const service = new AdminService(prisma as any, storage as any, {} as any);
+
+    await service.removeDoctor(user.id, 'Admin Novva');
+
+    expect(transaction.requestEvent.deleteMany).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { requestKind: 'DOCUMENT', requestId: { in: ['document-id'] } },
+          { requestKind: 'INVOICE', requestId: { in: ['invoice-id'] } },
+        ],
+      },
+    });
+    expect(transaction.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({ action: 'DOCTOR_DELETED_BY_ADMIN' }),
+    }));
+    expect(transaction.user.delete).toHaveBeenCalledWith({ where: { id: user.id } });
+    expect(storage.deleteDocument).toHaveBeenCalledTimes(3);
+  });
 });
 
 describe('AdminService document types', () => {
