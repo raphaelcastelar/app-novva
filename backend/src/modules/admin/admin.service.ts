@@ -3,7 +3,7 @@ import { RequestKind } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage.service';
 import { isValidCnpj, isValidCpf } from '../../common/validation';
-import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
+import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDoctorDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
 import { PushNotificationsService } from '../push-devices/push-notifications.service';
 
 const CLOSED_STATUSES = new Set(['APPROVED', 'ISSUED', 'REJECTED', 'CANCELED']);
@@ -141,14 +141,16 @@ export class AdminService {
       include: { profile: true, cnpjs: { where: { active: true }, take: 1 }, _count: { select: { documents: true, invoices: true } }, documents: { select: { status: true } }, invoices: { select: { status: true } } },
       orderBy: { name: 'asc' },
     });
-    return users.map((user) => ({
-      id: user.id, name: user.name, initials: this.initials(user.name), crm: user.profile?.crm ?? '',
-      specialty: user.profile?.specialty ?? '', email: user.email, company: user.profile?.companyName ?? '',
-      cnpj: user.cnpjs[0]?.cnpj ?? '',
-      requests: user._count.documents + user._count.invoices,
-      open: [...user.documents, ...user.invoices].filter((request) => !CLOSED_STATUSES.has(request.status)).length,
-      status: user.status,
-    }));
+    return users.map((user) => this.doctorView(user));
+  }
+
+  async doctorDetail(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: { profile: true, cnpjs: { where: { active: true }, take: 1 }, _count: { select: { documents: true, invoices: true } }, documents: { select: { status: true } }, invoices: { select: { status: true } } },
+    });
+    if (!user) throw new NotFoundException('Médico não encontrado.');
+    return this.doctorView(user);
   }
 
   async createDoctor(dto: AdminCreateDoctorDto, actor = 'Equipe Novva') {
@@ -200,9 +202,117 @@ export class AdminService {
     });
     return {
       id: user.id, name: user.name, initials: this.initials(user.name), crm: user.profile?.crm ?? '',
-      specialty: user.profile?.specialty ?? '', email: user.email, company: user.profile?.companyName ?? '',
+      specialty: user.profile?.specialty ?? '', email: user.email, phone: user.phone ?? '', cpf: user.cpf,
+      company: user.profile?.companyName ?? '', companyName: user.profile?.companyName ?? '',
       cnpj: user.cnpjs[0]?.cnpj ?? '',
-      requests: 0, open: 0, status: user.status, needsPasswordCreation: true,
+      requests: 0, open: 0, status: user.status, createdAt: user.createdAt, needsPasswordCreation: true,
+    };
+  }
+
+  async updateDoctor(id: string, dto: AdminUpdateDoctorDto, actor = 'Equipe Novva') {
+    const current = await this.prisma.user.findUnique({
+      where: { id },
+      include: { profile: true, cnpjs: { where: { active: true }, take: 1 } },
+    });
+    if (!current) throw new NotFoundException('Médico não encontrado.');
+    if (dto.cpf && !isValidCpf(dto.cpf)) throw new BadRequestException('CPF inválido.');
+    if (dto.cnpj && !isValidCnpj(dto.cnpj)) throw new BadRequestException('CNPJ inválido.');
+
+    const email = dto.email?.trim().toLowerCase();
+    if (dto.cpf || email) {
+      const duplicate = await this.prisma.user.findFirst({
+        where: {
+          id: { not: id },
+          OR: [
+            ...(dto.cpf ? [{ cpf: dto.cpf }] : []),
+            ...(email ? [{ email: { equals: email, mode: 'insensitive' as const } }] : []),
+          ],
+        },
+        select: { cpf: true, email: true },
+      });
+      if (duplicate?.cpf === dto.cpf) throw new ConflictException('Já existe um médico com este CPF.');
+      if (duplicate) throw new ConflictException('Já existe um médico com este e-mail.');
+    }
+
+    const companyName = dto.companyName?.trim();
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.user.update({
+        where: { id },
+        data: {
+          cpf: dto.cpf,
+          name: dto.name?.trim(),
+          email,
+          phone: dto.phone === undefined ? undefined : dto.phone.trim() || null,
+        },
+      });
+      await transaction.medicalProfile.upsert({
+        where: { userId: id },
+        create: {
+          userId: id,
+          crm: dto.crm?.trim() || null,
+          specialty: dto.specialty?.trim() || null,
+          companyName: companyName || null,
+        },
+        update: {
+          crm: dto.crm === undefined ? undefined : dto.crm.trim() || null,
+          specialty: dto.specialty === undefined ? undefined : dto.specialty.trim() || null,
+          companyName: dto.companyName === undefined ? undefined : companyName || null,
+        },
+      });
+      if (dto.cnpj) {
+        await transaction.cnpj.updateMany({ where: { userId: id }, data: { active: false } });
+        await transaction.cnpj.upsert({
+          where: { userId_cnpj: { userId: id, cnpj: dto.cnpj } },
+          create: {
+            userId: id,
+            cnpj: dto.cnpj,
+            nickname: companyName || current.profile?.companyName || 'Empresa',
+            companyName: companyName || current.profile?.companyName || null,
+            active: true,
+          },
+          update: {
+            nickname: companyName || current.profile?.companyName || 'Empresa',
+            companyName: companyName || current.profile?.companyName || null,
+            active: true,
+          },
+        });
+      } else if (companyName && current.cnpjs[0]) {
+        await transaction.cnpj.update({
+          where: { id: current.cnpjs[0].id },
+          data: { nickname: companyName, companyName },
+        });
+      }
+      await transaction.auditLog.create({
+        data: {
+          userId: id,
+          action: 'DOCTOR_UPDATED_BY_ADMIN',
+          entity: 'User',
+          entityId: id,
+          metadata: { actor },
+        },
+      });
+    });
+    return this.doctorDetail(id);
+  }
+
+  private doctorView(user: any) {
+    return {
+      id: user.id,
+      name: user.name,
+      initials: this.initials(user.name),
+      cpf: user.cpf,
+      cnpj: user.cnpjs?.[0]?.cnpj ?? '',
+      crm: user.profile?.crm ?? '',
+      specialty: user.profile?.specialty ?? '',
+      email: user.email,
+      phone: user.phone ?? '',
+      company: user.profile?.companyName ?? '',
+      companyName: user.profile?.companyName ?? '',
+      requests: (user._count?.documents ?? 0) + (user._count?.invoices ?? 0),
+      open: [...(user.documents ?? []), ...(user.invoices ?? [])]
+        .filter((request) => !CLOSED_STATUSES.has(request.status)).length,
+      status: user.status,
+      createdAt: user.createdAt,
     };
   }
 

@@ -47,6 +47,52 @@ describe('AdminService doctor registration', () => {
       .rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.user.findFirst).not.toHaveBeenCalled();
   });
+
+  it('updates the doctor and activates the edited CNPJ', async () => {
+    const current = {
+      id: 'doctor-id', cpf: dto.cpf, email: 'nova@example.com', phone: dto.phone,
+      name: dto.name, profile: { companyName: dto.companyName },
+      cnpjs: [{ id: 'cnpj-id', cnpj: dto.cnpj, active: true }],
+    };
+    const transaction = {
+      user: { update: jest.fn().mockResolvedValue({}) },
+      medicalProfile: { upsert: jest.fn().mockResolvedValue({}) },
+      cnpj: {
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+        upsert: jest.fn().mockResolvedValue({}),
+      },
+      auditLog: { create: jest.fn().mockResolvedValue({}) },
+    };
+    const prisma = {
+      user: {
+        findUnique: jest.fn().mockResolvedValue(current),
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
+      $transaction: jest.fn((callback) => callback(transaction)),
+    };
+    const service = new AdminService(prisma as any, {} as any, {} as any);
+    jest.spyOn(service, 'doctorDetail').mockResolvedValue({ id: current.id, cnpj: '11444777000161' } as any);
+
+    const result = await service.updateDoctor(current.id, {
+      ...dto,
+      companyName: 'Nova Medicina Atualizada Ltda.',
+      cnpj: '11444777000161',
+    }, 'Admin Novva');
+
+    expect(transaction.user.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: current.id },
+      data: expect.objectContaining({ cpf: dto.cpf, email: 'nova@example.com' }),
+    }));
+    expect(transaction.cnpj.updateMany).toHaveBeenCalledWith({
+      where: { userId: current.id }, data: { active: false },
+    });
+    expect(transaction.cnpj.upsert).toHaveBeenCalledWith(expect.objectContaining({
+      where: { userId_cnpj: { userId: current.id, cnpj: '11444777000161' } },
+      update: expect.objectContaining({ active: true }),
+    }));
+    expect(transaction.auditLog.create).toHaveBeenCalled();
+    expect(result).toEqual({ id: current.id, cnpj: '11444777000161' });
+  });
 });
 
 describe('AdminService document types', () => {

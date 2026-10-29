@@ -3,7 +3,7 @@ import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { DOCUMENT_MAX_BYTES } from '../../common/storage.service';
-import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
+import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDoctorDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
 import { AdminService } from './admin.service';
 import { InternalTokenGuard } from './internal-token.guard';
 
@@ -40,6 +40,12 @@ export class AdminController {
   @Post('doctors') createDoctor(@Body() dto: AdminCreateDoctorDto, @Headers('x-admin-actor') actor?: string) {
     return this.service.createDoctor(dto, actor);
   }
+  @Get('doctors/:id') doctor(@Param('id') id: string) { return this.service.doctorDetail(id); }
+  @Patch('doctors/:id') updateDoctor(
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateDoctorDto,
+    @Headers('x-admin-actor') actor?: string,
+  ) { return this.service.updateDoctor(id, dto, actor); }
   @Get('document-types') documentTypes() { return this.service.documentTypes(); }
   @Post('document-types') createDocumentType(@Body() dto: AdminCreateDocumentTypeDto, @Headers('x-admin-actor') actor?: string) {
     return this.service.createDocumentType(dto, actor);

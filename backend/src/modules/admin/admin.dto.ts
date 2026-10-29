@@ -23,6 +23,17 @@ export class AdminCreateDoctorDto {
   @IsString() @MaxLength(180) companyName!: string;
 }
 
+export class AdminUpdateDoctorDto {
+  @IsOptional() @Matches(/^\d{11}$/) cpf?: string;
+  @IsOptional() @Matches(/^\d{14}$/) cnpj?: string;
+  @IsOptional() @IsString() @MaxLength(160) name?: string;
+  @IsOptional() @IsEmail() @MaxLength(254) email?: string;
+  @IsOptional() @IsString() @MaxLength(20) phone?: string;
+  @IsOptional() @IsString() @MaxLength(40) crm?: string;
+  @IsOptional() @IsString() @MaxLength(100) specialty?: string;
+  @IsOptional() @IsString() @MaxLength(180) companyName?: string;
+}
+
 export class AdminCreateDocumentTypeDto {
   @IsString() @MaxLength(160) name!: string;
   @IsString() @MaxLength(100) category!: string;
