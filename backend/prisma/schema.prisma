@@ -49,6 +49,11 @@ enum MessageSender {
   SYSTEM
 }
 
+enum DocumentOrigin {
+  APP
+  OFFICE
+}
+
 enum RequestKind {
   DOCUMENT
   INVOICE
@@ -167,6 +172,7 @@ model Document {
   description     String?
   adminNote       String?        @map("admin_note")
   status          DocumentStatus @default(PENDING)
+  origin          DocumentOrigin @default(APP)
   month           Int?
   year            Int?
   rejectionReason String?        @map("rejection_reason")
@@ -181,6 +187,7 @@ model Document {
 
   @@index([userId, createdAt(sort: Desc)])
   @@index([documentTypeId])
+  @@index([userId, origin])
   @@map("documents")
 }
 
@@ -191,6 +198,7 @@ model DocumentType {
   category       String     @default("Documentos") @db.VarChar(100)
   validityMonths Int?       @map("validity_months")
   active         Boolean    @default(true)
+  requestable    Boolean    @default(true)
   sortOrder      Int        @default(0) @map("sort_order")
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @updatedAt @map("updated_at")

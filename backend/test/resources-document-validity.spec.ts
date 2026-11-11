@@ -28,12 +28,12 @@ describe('ResourcesService document validity', () => {
     expect(result.items[0]).not.toHaveProperty('fileKey');
   });
 
-  it('only exposes active document types to the app', async () => {
+  it('only exposes active, requestable document types to the app', async () => {
     const findMany = jest.fn().mockResolvedValue([]);
     const service = new ResourcesService({ documentType: { findMany } } as any, {} as any, {} as any);
 
     await service.documentTypes();
 
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { active: true } }));
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { active: true, requestable: true } }));
   });
 });

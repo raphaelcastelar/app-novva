@@ -3,7 +3,7 @@ import { ApiHeader, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { DOCUMENT_MAX_BYTES } from '../../common/storage.service';
-import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDoctorDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
+import { AdminClientDocumentDto, AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDoctorDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
 import { AdminService } from './admin.service';
 import { InternalTokenGuard } from './internal-token.guard';
 
@@ -50,6 +50,24 @@ export class AdminController {
   removeDoctor(@Param('id') id: string, @Headers('x-admin-actor') actor?: string) {
     return this.service.removeDoctor(id, actor);
   }
+  @Get('doctors/:id/folder') clientFolder(@Param('id') id: string) { return this.service.clientFolder(id); }
+  @Post('doctors/:id/folder')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: DOCUMENT_MAX_BYTES } }))
+  sendToClientFolder(
+    @Param('id') id: string,
+    @Body() dto: AdminClientDocumentDto,
+    @UploadedFile() file?: Express.Multer.File,
+    @Headers('x-admin-actor') actor?: string,
+  ) {
+    if (!file) throw new BadRequestException('Selecione um arquivo.');
+    return this.service.sendClientDocument(id, dto, file, actor);
+  }
+  @Delete('doctors/:id/folder/:documentId') @HttpCode(204)
+  removeClientDocument(
+    @Param('id') id: string,
+    @Param('documentId') documentId: string,
+    @Headers('x-admin-actor') actor?: string,
+  ) { return this.service.removeClientDocument(id, documentId, actor); }
   @Get('document-types') documentTypes() { return this.service.documentTypes(); }
   @Post('document-types') createDocumentType(@Body() dto: AdminCreateDocumentTypeDto, @Headers('x-admin-actor') actor?: string) {
     return this.service.createDocumentType(dto, actor);

@@ -39,6 +39,7 @@ export class AdminCreateDocumentTypeDto {
   @IsString() @MaxLength(100) category!: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(120) validityMonths?: number | null;
   @IsOptional() @IsBoolean() active?: boolean;
+  @IsOptional() @IsBoolean() requestable?: boolean;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(10000) sortOrder?: number;
 }
 
@@ -47,5 +48,16 @@ export class AdminUpdateDocumentTypeDto {
   @IsOptional() @IsString() @MaxLength(100) category?: string;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(120) validityMonths?: number | null;
   @IsOptional() @IsBoolean() active?: boolean;
+  @IsOptional() @IsBoolean() requestable?: boolean;
   @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(10000) sortOrder?: number;
+}
+
+/** Campos multipart do envio de um arquivo para a pasta do cliente. */
+export class AdminClientDocumentDto {
+  @IsOptional() @IsString() @MaxLength(64) documentTypeId?: string;
+  @IsOptional() @IsString() @MaxLength(100) documentTypeKey?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(12) month?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(2000) @Max(2100) year?: number;
+  @IsOptional() @IsString() @MaxLength(160) title?: string;
+  @IsOptional() @IsString() @MaxLength(2000) note?: string;
 }

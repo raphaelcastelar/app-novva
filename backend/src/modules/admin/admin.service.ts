@@ -1,9 +1,10 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { RequestKind } from '@prisma/client';
 import { PrismaService } from '../../common/prisma.service';
 import { StorageService } from '../../common/storage.service';
 import { isValidCnpj, isValidCpf } from '../../common/validation';
-import { AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDoctorDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
+import { AdminClientDocumentDto, AdminCreateDoctorDto, AdminCreateDocumentTypeDto, AdminRequestQueryDto, AdminUpdateDoctorDto, AdminUpdateDocumentTypeDto, AdminUpdateStatusDto } from './admin.dto';
 import { PushNotificationsService } from '../push-devices/push-notifications.service';
 
 const CLOSED_STATUSES = new Set(['APPROVED', 'ISSUED', 'REJECTED', 'CANCELED']);
@@ -28,7 +29,7 @@ export class AdminService {
 
   async listRequests(query: AdminRequestQueryDto) {
     const [documents, invoices] = await Promise.all([
-      query.kind === 'INVOICE' ? [] : this.prisma.document.findMany({ include: { user: { include: { profile: true } }, documentType: true }, orderBy: { createdAt: 'desc' }, take: 500 }),
+      query.kind === 'INVOICE' ? [] : this.prisma.document.findMany({ where: { origin: 'APP' }, include: { user: { include: { profile: true } }, documentType: true }, orderBy: { createdAt: 'desc' }, take: 500 }),
       query.kind === 'DOCUMENT' ? [] : this.prisma.invoice.findMany({ include: { user: { include: { profile: true } } }, orderBy: { createdAt: 'desc' }, take: 500 }),
     ]);
     const documentEvents = await this.events('DOCUMENT', documents.map((item) => item.id));
@@ -138,7 +139,7 @@ export class AdminService {
   async doctors(search?: string) {
     const users = await this.prisma.user.findMany({
       where: search ? { name: { contains: search, mode: 'insensitive' } } : undefined,
-      include: { profile: true, cnpjs: { where: { active: true }, take: 1 }, _count: { select: { documents: true, invoices: true } }, documents: { select: { status: true } }, invoices: { select: { status: true } } },
+      include: { profile: true, cnpjs: { where: { active: true }, take: 1 }, _count: { select: { documents: { where: { origin: 'APP' } }, invoices: true } }, documents: { where: { origin: 'APP' }, select: { status: true } }, invoices: { select: { status: true } } },
       orderBy: { name: 'asc' },
     });
     return users.map((user) => this.doctorView(user));
@@ -147,7 +148,7 @@ export class AdminService {
   async doctorDetail(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      include: { profile: true, cnpjs: { where: { active: true }, take: 1 }, _count: { select: { documents: true, invoices: true } }, documents: { select: { status: true } }, invoices: { select: { status: true } } },
+      include: { profile: true, cnpjs: { where: { active: true }, take: 1 }, _count: { select: { documents: { where: { origin: 'APP' } }, invoices: true } }, documents: { where: { origin: 'APP' }, select: { status: true } }, invoices: { select: { status: true } } },
     });
     if (!user) throw new NotFoundException('Médico não encontrado.');
     return this.doctorView(user);
@@ -372,6 +373,113 @@ export class AdminService {
     };
   }
 
+  async clientFolder(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true } });
+    if (!user) throw new NotFoundException('Médico não encontrado.');
+    const [documentTypes, documents] = await Promise.all([
+      this.prisma.documentType.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
+      this.prisma.document.findMany({
+        where: { userId, fileKey: { not: null } },
+        include: { documentType: true },
+        orderBy: [{ fileUploadedAt: 'desc' }, { createdAt: 'desc' }],
+      }),
+    ]);
+    return { doctor: user, documentTypes, documents: documents.map((item) => this.folderDocumentView(item)) };
+  }
+
+  /**
+   * Publica um arquivo na pasta do cliente. Um novo envio do mesmo tipo e
+   * competência substitui o arquivo anterior em vez de duplicar o documento.
+   */
+  async sendClientDocument(userId: string, dto: AdminClientDocumentDto, file: Express.Multer.File, actor = 'Equipe Novva') {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!user) throw new NotFoundException('Médico não encontrado.');
+    if (!dto.documentTypeId && !dto.documentTypeKey) throw new BadRequestException('Informe o tipo de documento.');
+    if ((dto.month == null) !== (dto.year == null)) throw new BadRequestException('Informe mês e ano da competência juntos.');
+    const documentType = await this.prisma.documentType.findFirst({
+      where: dto.documentTypeId ? { id: dto.documentTypeId } : { key: dto.documentTypeKey },
+    });
+    if (!documentType || !documentType.active) throw new BadRequestException('Tipo de documento indisponível.');
+
+    const month = dto.month ?? null;
+    const year = dto.year ?? null;
+    const existing = await this.prisma.document.findFirst({
+      where: { userId, origin: 'OFFICE', documentTypeId: documentType.id, month, year },
+      orderBy: { createdAt: 'desc' },
+    });
+    const documentId = existing?.id ?? randomUUID();
+    const title = dto.title?.trim() || documentType.name;
+    const adminNote = dto.note?.trim() || null;
+    const competence = month && year ? `${String(month).padStart(2, '0')}/${year}` : null;
+    const body = `O documento ${title}${competence ? ` (${competence})` : ''} está disponível na sua pasta do app.${adminNote ? ` Observação: ${adminNote}` : ''}`;
+
+    const key = await this.storage.storeDocument(userId, documentId, file);
+    let result: { document: any; notificationId: string };
+    try {
+      result = await this.prisma.$transaction(async (transaction) => {
+        const data = {
+          documentTypeId: documentType.id, title, category: documentType.category,
+          status: 'APPROVED' as const, origin: 'OFFICE' as const, month, year, adminNote,
+          rejectionReason: null, fileKey: key, mimeType: file.mimetype,
+          originalName: file.originalname, fileUploadedAt: new Date(),
+        };
+        const document = existing
+          ? await transaction.document.update({ where: { id: documentId }, data, include: { documentType: true } })
+          : await transaction.document.create({ data: { id: documentId, userId, ...data }, include: { documentType: true } });
+        await transaction.requestEvent.create({
+          data: {
+            requestKind: 'DOCUMENT', requestId: documentId, status: 'APPROVED', actor,
+            note: `Arquivo ${file.originalname} ${existing ? 'substituído' : 'enviado'} na pasta do cliente`,
+          },
+        });
+        const notification = await transaction.notification.create({
+          data: { userId, title: 'Documento disponível', body, kind: 'document_available', entityId: documentId },
+        });
+        await transaction.auditLog.create({
+          data: {
+            userId, action: existing ? 'CLIENT_DOCUMENT_REPLACED' : 'CLIENT_DOCUMENT_SENT', entity: 'DOCUMENT', entityId: documentId,
+            metadata: { actor, documentTypeKey: documentType.key, month, year, originalName: file.originalname },
+          },
+        });
+        return { document, notificationId: notification.id };
+      });
+    } catch (error) {
+      await this.storage.deleteDocument(key);
+      throw error;
+    }
+    if (existing?.fileKey && existing.fileKey !== key) await this.storage.deleteDocument(existing.fileKey).catch(() => undefined);
+    await this.pushNotifications.sendDocumentAvailable({
+      userId, documentId, documentTitle: title, body, notificationId: result.notificationId,
+    });
+    return this.folderDocumentView(result.document);
+  }
+
+  async removeClientDocument(userId: string, documentId: string, actor = 'Equipe Novva') {
+    const item = await this.prisma.document.findFirst({ where: { id: documentId, userId } });
+    if (!item) throw new NotFoundException('Documento não encontrado.');
+    if (item.origin !== 'OFFICE') throw new BadRequestException('Somente documentos enviados pelo escritório podem ser removidos da pasta.');
+    await this.prisma.$transaction(async (transaction) => {
+      await transaction.requestEvent.deleteMany({ where: { requestKind: 'DOCUMENT', requestId: documentId } });
+      await transaction.document.delete({ where: { id: documentId } });
+      await transaction.auditLog.create({
+        data: { userId, action: 'CLIENT_DOCUMENT_REMOVED', entity: 'DOCUMENT', entityId: documentId, metadata: { actor, title: item.title, month: item.month, year: item.year } },
+      });
+    });
+    await this.storage.deleteDocument(item.fileKey).catch(() => undefined);
+  }
+
+  private folderDocumentView(item: any) {
+    return {
+      id: item.id, title: item.title, category: item.category, origin: item.origin, status: item.status,
+      month: item.month, year: item.year, originalName: item.originalName, mimeType: item.mimeType,
+      uploadedAt: item.fileUploadedAt, adminNote: item.adminNote ?? null,
+      documentType: item.documentType ? {
+        id: item.documentType.id, key: item.documentType.key,
+        name: item.documentType.name, category: item.documentType.category,
+      } : null,
+    };
+  }
+
   async documentTypes() {
     return this.prisma.documentType.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] });
   }
@@ -387,7 +495,7 @@ export class AdminService {
     let suffix = 2;
     while (await this.prisma.documentType.findUnique({ where: { key } })) key = `${baseKey}-${suffix++}`;
     const item = await this.prisma.documentType.create({
-      data: { key, name, category, validityMonths: dto.validityMonths ?? null, active: dto.active ?? true, sortOrder: dto.sortOrder ?? 0 },
+      data: { key, name, category, validityMonths: dto.validityMonths ?? null, active: dto.active ?? true, requestable: dto.requestable ?? true, sortOrder: dto.sortOrder ?? 0 },
     });
     await this.prisma.auditLog.create({ data: { action: 'DOCUMENT_TYPE_CREATED', entity: 'DocumentType', entityId: item.id, metadata: { actor } } });
     return item;
@@ -410,6 +518,7 @@ export class AdminService {
         ...(category !== undefined ? { category } : {}),
         ...('validityMonths' in dto ? { validityMonths: dto.validityMonths ?? null } : {}),
         ...(dto.active !== undefined ? { active: dto.active } : {}),
+        ...(dto.requestable !== undefined ? { requestable: dto.requestable } : {}),
         ...(dto.sortOrder !== undefined ? { sortOrder: dto.sortOrder } : {}),
       },
     });

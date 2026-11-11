@@ -19,7 +19,7 @@ export class ResourcesService {
   private async page<T>(items: T[], total: number, q: PageDto) { return { items, meta: { page: q.page, limit: q.limit, total, pages: Math.ceil(total / q.limit) } }; }
   async documentTypes() {
     return this.prisma.documentType.findMany({
-      where: { active: true },
+      where: { active: true, requestable: true },
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       select: { id: true, key: true, name: true, category: true, validityMonths: true },
     });
@@ -27,7 +27,7 @@ export class ResourcesService {
   async documents(userId: string, q: PageDto) { const where = { userId }; const [items,total] = await this.prisma.$transaction([this.prisma.document.findMany({ where, include:{documentType:true}, ...this.paging(q), orderBy:{createdAt:'desc'} }),this.prisma.document.count({where})]); return this.page(items.map((item) => this.documentView(item)),total,q); }
   async createDocument(userId: string, dto: CreateDocumentDto) {
     const documentType = dto.documentTypeId
-      ? await this.prisma.documentType.findFirst({ where: { id: dto.documentTypeId, active: true } })
+      ? await this.prisma.documentType.findFirst({ where: { id: dto.documentTypeId, active: true, requestable: true } })
       : null;
     if (dto.documentTypeId && !documentType) throw new BadRequestException('Tipo de documento indisponível.');
     const { documentTypeId: _documentTypeId, ...legacyData } = dto;
