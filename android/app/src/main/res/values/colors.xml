@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Fundo do ícone adaptativo, igual ao ícone do iOS. -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Fundo da splash, igual à SplashPage Flutter (0xFF031923). -->
+    <color name="splash_background">#031923</color>
+    <!-- AppColors.lightPrimary. -->
+    <color name="notification_color">#145C73</color>
+</resources>

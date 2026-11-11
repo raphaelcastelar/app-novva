@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- O ID do canal também é enviado pelo backend (android.notification.channelId). -->
+    <string name="notification_channel_documents_id" translatable="false">novva_documents</string>
+    <string name="notification_channel_documents_name">Documentos</string>
+    <string name="notification_channel_documents_description">Avisos de documentos concluídos e atualizações da sua conta Novva.</string>
+</resources>

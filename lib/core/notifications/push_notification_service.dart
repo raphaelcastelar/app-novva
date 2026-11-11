@@ -27,13 +27,21 @@ class PushNotificationService {
   StreamSubscription<String>? _tokenSubscription;
   StreamSubscription<RemoteMessage>? _foregroundSubscription;
   StreamSubscription<RemoteMessage>? _openedSubscription;
+  final StreamController<RemoteMessage> _foregroundMessages =
+      StreamController<RemoteMessage>.broadcast();
   RemoteMessage? _initialMessage;
   bool _initialized = false;
 
   NotificationOpenedCallback? onNotificationOpened;
 
-  bool get isSupported =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+  bool get isSupported => !kIsWeb && (_isIOS || _isAndroid);
+  bool get _isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+  bool get _isAndroid => defaultTargetPlatform == TargetPlatform.android;
+
+  /// Mensagens recebidas com o app em primeiro plano. No Android o FCM não
+  /// exibe notificação do sistema nesse caso, então o app mostra um aviso
+  /// interno (ver `NovvaApp`). No iOS o sistema já apresenta o banner.
+  Stream<RemoteMessage> get foregroundMessages => _foregroundMessages.stream;
   bool get isInitialized => _initialized;
 
   Future<void> initialize() async {
@@ -66,6 +74,7 @@ class PushNotificationService {
         final title = notification?.title ?? 'Mensagem sem título';
         final body = notification?.body ?? message.data.toString();
         lastForegroundMessage.value = '$title — $body';
+        _foregroundMessages.add(message);
         debugPrint(
             'Notificação recebida em primeiro plano: ${message.messageId}');
       });
@@ -85,7 +94,14 @@ class PushNotificationService {
     if (!_initialized || messaging == null) return null;
 
     var settings = await messaging.getNotificationSettings();
-    if (settings.authorizationStatus == AuthorizationStatus.notDetermined) {
+    // No Android o plugin informa `denied` (e não `notDetermined`) antes da
+    // primeira solicitação no Android 13+. Pedir de novo é seguro: o sistema
+    // deixa de exibir o diálogo depois que o usuário recusa definitivamente.
+    final shouldRequest =
+        settings.authorizationStatus == AuthorizationStatus.notDetermined ||
+            (_isAndroid &&
+                settings.authorizationStatus == AuthorizationStatus.denied);
+    if (shouldRequest) {
       settings = await messaging.requestPermission(
         alert: true,
         announcement: false,
@@ -104,17 +120,25 @@ class PushNotificationService {
         registrationError.value = null;
         await messaging.setAutoInitEnabled(true);
 
-        final apnsToken = await _waitForApnsToken(messaging);
-        if (apnsToken == null) {
-          registrationError.value =
-              'O token de notificações da Apple ainda não foi recebido.';
-          debugPrint('Token APNs ainda não disponível após o registro.');
-        } else {
+        if (_isIOS) {
+          // No iOS o token FCM só existe depois que o APNs entrega o token.
+          final apnsToken = await _waitForApnsToken(messaging);
+          if (apnsToken == null) {
+            registrationError.value =
+                'O token de notificações da Apple ainda não foi recebido.';
+            debugPrint('Token APNs ainda não disponível após o registro.');
+            return settings.authorizationStatus;
+          }
           this.apnsToken.value = apnsToken;
           debugPrint('Token APNs recebido com sucesso.');
+        }
 
-          // ignore: deprecated_member_use
-          final token = await messaging.getToken();
+        // ignore: deprecated_member_use
+        final token = await messaging.getToken();
+        if (token == null || token.isEmpty) {
+          registrationError.value =
+              'O token de notificações ainda não foi recebido.';
+        } else {
           registrationToken.value = token;
         }
       } catch (error, stackTrace) {
@@ -123,8 +147,9 @@ class PushNotificationService {
         debugPrintStack(stackTrace: stackTrace);
       }
     } else {
-      registrationError.value =
-          'As notificações estão desativadas nos Ajustes do iPhone.';
+      registrationError.value = _isIOS
+          ? 'As notificações estão desativadas nos Ajustes do iPhone.'
+          : 'As notificações estão desativadas nas configurações do Android.';
     }
 
     return settings.authorizationStatus;
@@ -153,6 +178,7 @@ class PushNotificationService {
     await _tokenSubscription?.cancel();
     await _foregroundSubscription?.cancel();
     await _openedSubscription?.cancel();
+    await _foregroundMessages.close();
     registrationToken.dispose();
     apnsToken.dispose();
     registrationError.dispose();

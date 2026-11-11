@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:local_auth_android/local_auth_android.dart';
 
+import 'biometric_copy.dart';
 import 'secure_storage_service.dart';
 import 'token_manager.dart';
 
@@ -35,12 +38,29 @@ class BiometricAuthService {
 
   Future<bool> canCheckBiometrics() async {
     try {
-      if (!await _localAuthentication.canCheckBiometrics) return false;
+      if (!await _localAuthentication.isDeviceSupported() ||
+          !await _localAuthentication.canCheckBiometrics) {
+        return false;
+      }
       final biometrics = await _localAuthentication.getAvailableBiometrics();
-      return biometrics.contains(BiometricType.face);
+      return isSupportedBiometricSet(biometrics, defaultTargetPlatform);
     } catch (_) {
       return false;
     }
+  }
+
+  /// No iOS o produto usa somente Face ID. No Android a biometria pode ser
+  /// reportada como `fingerprint`, `face`, `iris`, `strong` ou `weak`, então
+  /// qualquer biometria cadastrada é aceita.
+  @visibleForTesting
+  static bool isSupportedBiometricSet(
+    List<BiometricType> biometrics,
+    TargetPlatform platform,
+  ) {
+    if (platform == TargetPlatform.iOS) {
+      return biometrics.contains(BiometricType.face);
+    }
+    return biometrics.isNotEmpty;
   }
 
   Future<bool> canUseForLogin() async =>
@@ -63,9 +83,16 @@ class BiometricAuthService {
   Future<bool> authenticate() async {
     try {
       return await _localAuthentication.authenticate(
-        localizedReason: 'Use o Face ID para acessar sua conta Novva.',
+        localizedReason: BiometricCopy.current.authReason,
         biometricOnly: true,
         persistAcrossBackgrounding: true,
+        authMessages: const [
+          AndroidAuthMessages(
+            signInTitle: 'Acesso ao Novva',
+            signInHint: 'Confirme sua biometria',
+            cancelButton: 'Usar senha',
+          ),
+        ],
       );
     } catch (_) {
       return false;

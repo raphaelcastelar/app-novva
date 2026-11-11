@@ -1,10 +1,14 @@
 import 'dart:async';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/notifications/notification_navigation_service.dart';
 import '../core/notifications/push_notification_service.dart';
+import '../core/security/biometric_copy.dart';
 import '../features/auth/presentation/providers/auth_providers.dart';
 import 'routes/app_router.dart';
 import 'theme/app_theme.dart';
@@ -21,6 +25,7 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
   bool _registering = false;
   String? _registeredToken;
   Timer? _registrationRetry;
+  StreamSubscription<RemoteMessage>? _foregroundMessageSubscription;
 
   @override
   void initState() {
@@ -28,6 +33,40 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
     _pushNotifications.registrationToken.addListener(_scheduleRegistration);
     authListenable.addListener(_scheduleRegistration);
     authListenable.addListener(_scheduleBiometricOffer);
+    // No Android o FCM não mostra a notificação com o app aberto; no iOS o
+    // sistema já exibe o banner (setForegroundNotificationPresentationOptions).
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      _foregroundMessageSubscription =
+          _pushNotifications.foregroundMessages.listen(_showForegroundMessage);
+    }
+  }
+
+  void _showForegroundMessage(RemoteMessage message) {
+    if (!mounted || !authListenable.isAuthenticated) return;
+    final context = rootNavigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    final notification = message.notification;
+    final title = notification?.title?.trim();
+    final body = notification?.body?.trim();
+    final text = [
+      if (title != null && title.isNotEmpty) title,
+      if (body != null && body.isNotEmpty) body,
+    ].join('\n');
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+          content: Text(text.isEmpty ? 'Você tem uma nova notificação.' : text),
+          action: SnackBarAction(
+            label: 'Ver',
+            onPressed: () =>
+                NotificationNavigationService.instance.handle(message),
+          ),
+        ),
+      );
   }
 
   bool _offeringBiometrics = false;
@@ -50,14 +89,13 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
       if (!await biometrics.shouldOfferSetup()) return;
       final context = rootNavigatorKey.currentContext;
       if (context == null || !context.mounted) return;
+      final copy = BiometricCopy.current;
       final activate = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          icon: Icon(Icons.face_outlined),
-          title: Text('Ativar Face ID?'),
-          content: Text(
-            'Nas próximas vezes, confirme o CPF salvo e use o Face ID no lugar da senha.',
-          ),
+          icon: Icon(copy.icon),
+          title: Text(copy.offerTitle),
+          content: Text(copy.offerBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -79,9 +117,8 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
       if (currentContext != null && currentContext.mounted) {
         ScaffoldMessenger.of(currentContext).showSnackBar(
           SnackBar(
-            content: Text(enabled
-                ? 'Face ID ativado com sucesso.'
-                : 'Não foi possível ativar o Face ID.'),
+            content:
+                Text(enabled ? copy.enabledMessage : copy.enableFailedMessage),
           ),
         );
       }
@@ -132,6 +169,7 @@ class _NovvaAppState extends ConsumerState<NovvaApp> {
   @override
   void dispose() {
     _registrationRetry?.cancel();
+    _foregroundMessageSubscription?.cancel();
     _pushNotifications.registrationToken.removeListener(_scheduleRegistration);
     authListenable.removeListener(_scheduleRegistration);
     authListenable.removeListener(_scheduleBiometricOffer);

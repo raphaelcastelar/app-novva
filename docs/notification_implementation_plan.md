@@ -28,7 +28,7 @@ O projeto já possui uma base relevante:
 - endpoints autenticados para listar comunicados, marcar como lido e baixar anexos;
 - criação e edição de comunicados pela área administrativa;
 - listagem de comunicados no dashboard Flutter;
-- identificador Android atual: `br.com.novva.novva_app`;
+- identificador Android: `br.com.novva.app` (igual ao Bundle ID iOS);
 - Bundle ID iOS documentado: `br.com.novva.app`.
 
 Pendências encontradas:

@@ -1,8 +1,7 @@
-gradle-wrapper.jar
+# O Gradle Wrapper (gradlew, gradlew.bat e gradle-wrapper.jar) é versionado
+# para que um clone limpo compile no Windows sem `flutter create`.
 /.gradle
 /captures/
-/gradlew
-/gradlew.bat
 /local.properties
 GeneratedPluginRegistrant.java
 .cxx/

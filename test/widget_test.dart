@@ -20,6 +20,7 @@ void main() {
     expect(find.text('CPF'), findsOneWidget);
     expect(find.text('Continuar'), findsOneWidget);
     expect(find.text('Entrar com Face ID'), findsNothing);
+    expect(find.text('Entrar com biometria'), findsNothing);
     expect(find.byType(NovvaBrandMark), findsNothing);
   });
 

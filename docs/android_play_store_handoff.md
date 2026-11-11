@@ -4,6 +4,32 @@
 >
 > Este documento descreve o estado real do repositório neste momento. Não trate a pasta `android/` atual como pronta para produção.
 
+## 0. Status da implementação (atualizado em 10/11/2026)
+
+Os bloqueadores de código da seção 3 foram resolvidos no repositório:
+
+| Item | Status |
+| --- | --- |
+| 3.1 Package `br.com.novva.app`, `MainActivity` movida | Feito |
+| 3.2 `INTERNET` no manifest principal | Feito |
+| 3.3 Assinatura release via `android/key.properties` | Feito — o build release **falha** se o arquivo não existir (nunca usa a chave debug) |
+| 3.4 Plugin Google Services 4.5.0 | Feito — aplicado automaticamente quando `android/app/google-services.json` existir; release falha sem ele |
+| 3.5 Push no Android | Feito — token FCM sem APNs, plataforma `ANDROID`, canal `novva_documents` criado na `MainActivity`, ícone/cor padrão no manifest, aviso interno (SnackBar com "Ver") em primeiro plano, backend envia `android.priority=high` + `channelId` |
+| 3.6 Biometria | Feito — `FlutterFragmentActivity`, `USE_BIOMETRIC`, tema AppCompat, aceita qualquer biometria no Android, textos "biometria" no Android e "Face ID" no iOS |
+| 3.7 Ícone e splash | Feito — gerados por `python scripts/generate_android_assets.py` (ícone adaptativo + monochrome, ícone de notificação, splash Android < 12 e 12+, ícone 512 e feature graphic em `app_store/google_play/`) |
+| 3.8 Label `Novva` | Feito |
+| 3.9 Gradle Wrapper versionado | Feito — `gradlew`, `gradlew.bat` e `gradle-wrapper.jar` (9.1.0, SHA-256 conferido) |
+| Permissões de mídia do `open_filex` | Removidas (`READ_MEDIA_*` e `READ_EXTERNAL_STORAGE`); PDFs ficam no cache do app, então não há declaração de fotos/vídeos na Play |
+| 13 Página web de exclusão | Feito — `docs/delete-account/index.html`, linkada no suporte e na privacidade |
+| 14 Política de privacidade | Atualizada (Android/Google Play, FCM, biometria local, SERPRO, exclusão web) |
+
+Continuam manuais (dependem de consoles/segredos):
+
+1. Registrar o app Android `br.com.novva.app` no Firebase e salvar `android/app/google-services.json` (etapa 4).
+2. Gerar a upload key e criar `android/key.properties` (etapa 8).
+3. Publicar as páginas (`git push` para o GitHub Pages) e conferir `https://raphaelcastelar.github.io/app-novva/delete-account/`.
+4. Testes em aparelhos (seção 8), Play Console (seções 9 a 17).
+
 ## 1. Objetivo
 
 Entregar a versão Android do Novva com as mesmas funções da versão iOS publicada, testar em aparelhos Android reais, distribuir primeiro em uma faixa de testes da Google Play e depois publicar para usuários no Brasil.

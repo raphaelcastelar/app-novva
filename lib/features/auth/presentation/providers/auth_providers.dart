@@ -141,7 +141,7 @@ class AuthController extends StateNotifier<AsyncValue<AuthUser?>> {
       return true;
     } catch (error) {
       state = const AsyncData(null);
-      debugPrint('Não foi possível restaurar a sessão com Face ID: $error');
+      debugPrint('Não foi possível restaurar a sessão com biometria: $error');
       return false;
     }
   }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes/route_names.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/security/biometric_copy.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_scaffold.dart';
 import '../../../../core/widgets/profile_avatar.dart';
@@ -17,6 +18,7 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
+  final _biometricCopy = BiometricCopy.current;
   bool? _faceIdAvailable;
   bool _faceIdEnabled = false;
   bool _updatingFaceId = false;
@@ -56,9 +58,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         content: Text(
           enabled
               ? changed
-                  ? 'Face ID ativado com sucesso.'
-                  : 'Não foi possível ativar o Face ID.'
-              : 'Face ID desativado.',
+                  ? _biometricCopy.enabledMessage
+                  : _biometricCopy.enableFailedMessage
+              : _biometricCopy.disabledMessage,
         ),
       ),
     );
@@ -137,16 +139,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               contentPadding: EdgeInsets.zero,
               secondary: CircleAvatar(
                 backgroundColor: AppColors.softPrimary,
-                child: Icon(Icons.face_outlined, color: AppColors.primary),
+                child: Icon(_biometricCopy.icon, color: AppColors.primary),
               ),
-              title: Text('Entrar com Face ID',
+              title: Text(_biometricCopy.settingsTitle,
                   style: TextStyle(fontWeight: FontWeight.w900)),
               subtitle: Text(
                 _faceIdAvailable == null
                     ? 'Verificando disponibilidade...'
                     : _faceIdAvailable!
-                        ? 'Use o Face ID após confirmar o CPF salvo'
-                        : 'Face ID não está configurado neste aparelho',
+                        ? _biometricCopy.settingsAvailable
+                        : _biometricCopy.settingsUnavailable,
               ),
               value: _faceIdEnabled,
               onChanged: _faceIdAvailable == true && !_updatingFaceId

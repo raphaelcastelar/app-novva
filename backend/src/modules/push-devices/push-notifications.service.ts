@@ -9,6 +9,8 @@ const INVALID_TOKEN_CODES = new Set([
   'messaging/registration-token-not-registered',
 ]);
 
+const ANDROID_DOCUMENTS_CHANNEL_ID = 'novva_documents';
+
 @Injectable()
 export class PushNotificationsService {
   private readonly logger = new Logger(PushNotificationsService.name);
@@ -78,6 +80,14 @@ export class PushNotificationsService {
             type: 'document_available',
             entityId: input.documentId,
             notificationId: input.notificationId,
+          },
+          android: {
+            priority: 'high',
+            notification: {
+              // Canal criado pelo app Android em MainActivity (novva_documents).
+              channelId: ANDROID_DOCUMENTS_CHANNEL_ID,
+              sound: 'default',
+            },
           },
           apns: { payload: { aps: { sound: 'default' } } },
         });

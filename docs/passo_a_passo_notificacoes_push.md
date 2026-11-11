@@ -36,7 +36,7 @@ O primeiro fluxo deve funcionar assim:
 - endpoints para listar comunicados, marcar como lido e baixar anexos;
 - endpoints de notificações persistidas em `resources/notifications`;
 - tela de notificações criada, ainda com conteúdo estático;
-- Application ID Android atual: `br.com.novva.novva_app`.
+- Application ID Android: `br.com.novva.app` (o provisório `br.com.novva.novva_app` foi descartado).
 
 ### Ainda falta
 
@@ -100,7 +100,7 @@ Antes de alterar o código, separar:
 - [ ] Key ID da chave APNs;
 - [x] Team ID Apple: `4UQ4KUM5R5`;
 - [x] Bundle ID iOS: `br.com.novva.app`;
-- [x] Application ID Android: `br.com.novva.novva_app`;
+- [x] Application ID Android: `br.com.novva.app`;
 - [ ] `GoogleService-Info.plist` do app iOS;
 - [ ] `google-services.json` do app Android;
 - [ ] credencial de serviço do Firebase usada pelo backend.
@@ -215,11 +215,11 @@ O arquivo deve estar incluído no bundle do app. Ele pode ficar versionado no pr
 ### 6.4 Cadastrar o aplicativo Android
 
 1. No mesmo projeto Firebase, adicionar um app Android.
-2. Informar exatamente `br.com.novva.novva_app`.
+2. Informar exatamente `br.com.novva.app`.
 3. Apelido sugerido: `Novva Android`.
 4. Baixar `google-services.json`.
 5. Colocar o arquivo em `android/app/google-services.json`.
-6. Aplicar o plugin Google Services na configuração Gradle conforme as instruções atuais do Firebase.
+6. O plugin Google Services já está configurado no Gradle e é aplicado automaticamente quando o arquivo existe.
 
 Antes de publicar o Android, também será necessário substituir a assinatura de debug atual por uma assinatura release própria. Isso não impede a implementação e os testes iniciais do push.
 
